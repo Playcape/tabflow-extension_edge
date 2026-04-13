@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TabFlow — Tab Manager",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A beautiful new tab manager with spaces, collections, drag & drop, and hotkeys.",
   "permissions": ["tabs", "storage", "windows", "webNavigation"],
   "omnibox": { "keyword": "to" },
