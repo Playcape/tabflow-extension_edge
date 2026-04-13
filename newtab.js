@@ -1135,9 +1135,9 @@ function initDropZones() {
 
     card.addEventListener('drop', e => {
       e.preventDefault();
-      e.stopPropagation();
       clearDropIndicators();
       if (!dragData || dragData.type === 'collection') return;
+      e.stopPropagation(); // only stop propagation for non-collection drops
       const spId = card.dataset.spId;
       const colId = card.dataset.colId;
       handleDrop(spId, colId);
@@ -1283,6 +1283,7 @@ function onCardDragStart(e) {
   c.classList.add('dragging');
   e.dataTransfer.effectAllowed='move';
   e.dataTransfer.setData('text/plain', c.dataset.tabId);
+  e.stopPropagation(); // prevent bubbling to .collection dragstart which would cancel this drag
 }
 
 function onCardDragEnd(e) { e.currentTarget.classList.remove('dragging'); }
