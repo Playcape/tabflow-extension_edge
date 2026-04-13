@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TabFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="newtab.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">TabFlow</span>
+      </div>
+      <div class="sidebar-header-actions">
+        <button id="btn-sidebar-toggle" class="icon-btn" title="Toggle sidebar"></button>
+      </div>
+    </div>
+
+    <div class="sidebar-search">
+      <span class="search-icon-wrap"></span>
+      <input type="text" id="search-input" placeholder="Search all tabs…" autocomplete="off" spellcheck="false" />
+      <button id="search-clear" class="icon-btn search-clear" style="display:none;"></button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="collections">
+        <span class="nav-icon" data-icon="layout-grid"></span><span>Collections</span>
+      </button>
+      <button class="nav-item" data-view="links">
+        <span class="nav-icon" data-icon="link"></span><span>To / Links</span>
+      </button>
+      <button class="nav-item" data-view="next">
+        <span class="nav-icon" data-icon="check-square"></span><span>Next</span>
+      </button>
+    </nav>
+
+    <div class="spaces-section">
+      <div class="spaces-label">
+        <span>SPACES</span>
+        <button id="btn-add-space" class="icon-btn small" title="Add space"></button>
+      </div>
+      <div id="spaces-list"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" data-view="settings">
+        <span class="nav-icon" data-icon="settings"></span><span>Settings</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main-content">
+    <div id="toolbar">
+      <div class="toolbar-left">
+        <div id="space-breadcrumb"></div>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-expand-all" class="toolbar-btn" title="Expand all"></button>
+        <button id="btn-collapse-all" class="toolbar-btn" title="Collapse all"></button>
+        <div class="toolbar-divider"></div>
+        <div class="dropdown" id="view-dropdown">
+          <button class="toolbar-btn" id="view-trigger"></button>
+          <div class="dropdown-menu" id="view-menu"></div>
+        </div>
+        <button class="toolbar-btn" id="btn-dnd-toggle" title="Toggle drag & drop"></button>
+        <div class="toolbar-divider"></div>
+        <button id="btn-add-collection" class="toolbar-btn accent"></button>
+      </div>
+    </div>
+
+    <div id="view-collections" class="view-panel active">
+      <div id="collections-area"></div>
+    </div>
+
+    <div id="view-links" class="view-panel">
+      <div class="panel-inner">
+        <div class="panel-title">To / Links</div>
+        <div class="links-add-form">
+          <input type="text" id="link-name-input" placeholder="Keyword / name" />
+          <input type="text" id="link-url-input" placeholder="https://…" />
+          <button id="btn-add-link" class="accent-btn">Add</button>
+        </div>
+        <div id="links-list"></div>
+      </div>
+    </div>
+
+    <div id="view-next" class="view-panel">
+      <div class="panel-inner">
+        <div class="panel-title">Next</div>
+        <div class="next-add-form">
+          <input type="text" id="next-title-input" placeholder="Title…" />
+          <input type="text" id="next-url-input" placeholder="URL (optional)" />
+          <button id="btn-add-next" class="accent-btn">Add</button>
+        </div>
+        <div id="next-list"></div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="view-panel">
+      <!-- Settings Tab Bar -->
+      <div id="settings-tabbar">
+        <button class="stab active" data-stab="appearance">Appearance</button>
+        <button class="stab" data-stab="typography">Typography</button>
+        <button class="stab" data-stab="layout">Layout</button>
+        <button class="stab" data-stab="effects">Effects</button>
+        <button class="stab" data-stab="backup">Backup</button>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="stab-panel active" id="stab-appearance">
+        <div class="settings-section">
+          <div class="settings-section-title">Prefab Themes</div>
+          <div id="theme-grid" class="theme-grid"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Custom Themes
+            <button id="btn-new-theme" class="sml-btn">+ New</button>
+          </div>
+          <div id="custom-theme-grid" class="theme-grid"></div>
+
+          <!-- Theme Editor -->
+          <div id="theme-editor" style="display:none">
+            <div class="te-header">
+              <input type="text" id="te-name" placeholder="Theme name…" class="te-name-input" />
+              <div class="te-hdr-btns">
+                <button id="te-save" class="accent-btn">Save</button>
+                <button id="te-cancel" class="settings-btn">Cancel</button>
+              </div>
+            </div>
+            <div class="te-grid" id="te-color-grid"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Accent Color</div>
+          <div id="accent-grid" class="accent-grid"></div>
+          <div class="custom-accent-row">
+            <label class="settings-row-label" for="custom-accent-input">Custom</label>
+            <input type="color" id="custom-accent-input" class="color-picker-input" value="#7c6af5" />
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPOGRAPHY -->
+      <div class="stab-panel" id="stab-typography">
+        <div class="settings-section">
+          <div class="settings-section-title">Font Family</div>
+          <div id="font-grid" class="font-grid"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Font Size</div>
+          <div class="pill-row" id="fontsize-pills">
+            <button class="pill" data-val="small">Small</button>
+            <button class="pill" data-val="normal">Normal</button>
+            <button class="pill" data-val="large">Large</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Font Weight</div>
+          <div class="pill-row" id="fontweight-pills">
+            <button class="pill" data-val="light">Light</button>
+            <button class="pill" data-val="normal">Normal</button>
+            <button class="pill" data-val="medium">Medium</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYOUT -->
+      <div class="stab-panel" id="stab-layout">
+        <div class="settings-section">
+          <div class="settings-section-title">Border Radius</div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-radius" min="0" max="20" step="1" class="sl" />
+            <span class="slider-label">20px</span>
+            <span class="slider-val" id="sl-radius-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Card Gap</div>
+          <div class="slider-row">
+            <span class="slider-label">4px</span>
+            <input type="range" id="sl-gap" min="4" max="24" step="2" class="sl" />
+            <span class="slider-label">24px</span>
+            <span class="slider-val" id="sl-gap-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Card Min-Width (Card/Grid views)</div>
+          <div class="slider-row">
+            <span class="slider-label">80px</span>
+            <input type="range" id="sl-cardw" min="80" max="220" step="10" class="sl" />
+            <span class="slider-label">220px</span>
+            <span class="slider-val" id="sl-cardw-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Sidebar Width</div>
+          <div class="slider-row">
+            <span class="slider-label">160px</span>
+            <input type="range" id="sl-sidebar" min="160" max="320" step="10" class="sl" />
+            <span class="slider-label">320px</span>
+            <span class="slider-val" id="sl-sidebar-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Default View Mode</div>
+          <div class="pill-row" id="defview-pills">
+            <button class="pill" data-val="card">Card</button>
+            <button class="pill" data-val="compact">Compact</button>
+            <button class="pill" data-val="list">List</button>
+            <button class="pill" data-val="grid">Grid</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EFFECTS -->
+      <div class="stab-panel" id="stab-effects">
+        <div class="settings-section">
+          <div class="settings-section-title">Shadow Intensity</div>
+          <div class="pill-row" id="shadow-pills">
+            <button class="pill" data-val="none">None</button>
+            <button class="pill" data-val="soft">Soft</button>
+            <button class="pill" data-val="medium">Medium</button>
+            <button class="pill" data-val="strong">Strong</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Card Hover Style</div>
+          <div class="pill-row" id="hover-pills">
+            <button class="pill" data-val="none">None</button>
+            <button class="pill" data-val="glow">Glow</button>
+            <button class="pill" data-val="lift">Lift</button>
+            <button class="pill" data-val="border">Border only</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Animation Speed</div>
+          <div class="pill-row" id="anim-pills">
+            <button class="pill" data-val="off">Off</button>
+            <button class="pill" data-val="fast">Fast</button>
+            <button class="pill" data-val="normal">Normal</button>
+            <button class="pill" data-val="slow">Slow</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Background Pattern</div>
+          <div class="pill-row" id="bgpat-pills">
+            <button class="pill" data-val="none">None</button>
+            <button class="pill" data-val="dots">Dots</button>
+            <button class="pill" data-val="grid">Grid</button>
+            <button class="pill" data-val="noise">Noise</button>
+            <button class="pill" data-val="topography">Lines</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Card Style</div>
+          <div class="pill-row" id="cardstyle-pills">
+            <button class="pill" data-val="default">Default</button>
+            <button class="pill" data-val="glass">Glassmorphism</button>
+            <button class="pill" data-val="flat">Flat</button>
+            <button class="pill" data-val="outline">Outline only</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Scrollbar</div>
+          <div class="pill-row" id="scrollbar-pills">
+            <button class="pill" data-val="thin">Thin</button>
+            <button class="pill" data-val="normal">Normal</button>
+            <button class="pill" data-val="hidden">Hidden</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACKUP -->
+      <div class="stab-panel" id="stab-backup">
+        <div class="settings-section">
+          <div class="settings-section-title">Edge / Chrome Homepage</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Set as homepage</div>
+              <div class="settings-row-desc">Copy this URL → Edge Settings → Start, home &amp; new tabs → Home button URL</div>
+            </div>
+            <button id="btn-copy-homepage" class="settings-btn">Copy URL</button>
+          </div>
+          <div id="homepage-url-display" class="url-display"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Backup &amp; Restore</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Export collections</div>
+              <div class="settings-row-desc">Download all spaces, collections and tabs as JSON</div>
+            </div>
+            <button id="btn-export" class="settings-btn">Export JSON</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Import collections</div>
+              <div class="settings-row-desc">Restore from a previously exported JSON file (merges or replaces)</div>
+            </div>
+            <button id="btn-import" class="settings-btn">Import JSON</button>
+            <input type="file" id="import-file-input" accept=".json" style="display:none" />
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Danger Zone</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Reset all settings</div>
+              <div class="settings-row-desc">Resets theme, font, layout and effects to defaults (keeps collections)</div>
+            </div>
+            <button id="btn-reset-settings" class="settings-btn danger">Reset Settings</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Clear all data</div>
+              <div class="settings-row-desc">Permanently deletes all spaces, collections and tabs</div>
+            </div>
+            <button id="btn-clear-all" class="settings-btn danger">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside id="right-panel" class="open">
+    <div class="right-panel-header">
+      <span class="right-panel-title">Open Tabs</span>
+      <div class="right-panel-actions">
+        <button id="btn-refresh-tabs" class="icon-btn" title="Refresh open tabs"></button>
+        <button id="btn-save-session" class="icon-btn" title="Save all tabs as collection"></button>
+        <button id="btn-right-toggle" class="icon-btn" title="Hide panel"></button>
+      </div>
+    </div>
+    <div id="open-tabs-list"></div>
+  </aside>
+
+  <button id="right-panel-show-btn" class="right-show-btn" title="Show open tabs panel"></button>
+
+</div>
+
+<div id="context-menu" class="context-menu" style="display:none">
+  <button class="context-item" id="ctx-rename">Rename</button>
+  <button class="context-item danger" id="ctx-delete">Delete</button>
+</div>
+
+<!-- Hotkey capture overlay -->
+<div id="hotkey-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal">
+    <div class="hotkey-modal-title">Assign Hotkey Slot</div>
+    <div class="hotkey-tab-name" id="hk-tab-name"></div>
+
+    <div id="hk-slot-grid" class="hk-slot-grid"></div>
+
+    <div class="hotkey-hint">
+      Default keys are <kbd>Alt+1</kbd> – <kbd>Alt+9</kbd> and work <strong>globally</strong> in any tab.<br>
+      Remap them anytime at <a class="hk-shortcut-link" id="hk-open-shortcuts">chrome://extensions/shortcuts</a>
+    </div>
+
+    <div class="hotkey-actions">
+      <button id="hk-clear" class="settings-btn" style="display:none">Remove</button>
+      <button id="hk-cancel" class="settings-btn">Cancel</button>
+      <button id="hk-save" class="settings-btn accent-save" style="display:none">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="snackbar" class="snackbar" style="display:none"></div>
+
+<script src="icons.js"></script>
+<script src="newtab.js"></script>
+</body>
+</html>
