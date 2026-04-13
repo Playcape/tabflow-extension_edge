@@ -166,6 +166,206 @@ const THEMES = {
     },
     preview: { sidebar:'#1e241e', main:'#1a1f1a', card:'#252c25', card2:'#2d362d' }
   },
+  catppuccin: {
+    name: 'Catppuccin',
+    vars: {
+      '--bg':            '#1e1e2e',
+      '--sidebar-bg':    '#181825',
+      '--main-bg':       '#1e1e2e',
+      '--card-bg':       '#313244',
+      '--card-hover':    '#45475a',
+      '--border':        '#45475a',
+      '--text':          '#cdd6f4',
+      '--text-muted':    '#a6adc8',
+      '--text-faint':    '#585b70',
+      '--divider':       '#313244',
+      '--sidebar-active':'#45475a',
+      '--shadow':        'rgba(0,0,0,.5)',
+      '--scrollbar':     '#45475a',
+      '--input-bg':      '#181825',
+    },
+    preview: { sidebar:'#181825', main:'#1e1e2e', card:'#313244', card2:'#45475a' }
+  },
+  'catppuccin-latte': {
+    name: 'Catppuccin Latte',
+    vars: {
+      '--bg':            '#eff1f5',
+      '--sidebar-bg':    '#e6e9ef',
+      '--main-bg':       '#eff1f5',
+      '--card-bg':       '#dce0e8',
+      '--card-hover':    '#ccd0da',
+      '--border':        '#bcc0cc',
+      '--text':          '#4c4f69',
+      '--text-muted':    '#6c6f85',
+      '--text-faint':    '#9ca0b0',
+      '--divider':       '#ccd0da',
+      '--sidebar-active':'#ccd0da',
+      '--shadow':        'rgba(76,79,105,.12)',
+      '--scrollbar':     '#bcc0cc',
+      '--input-bg':      '#dce0e8',
+    },
+    preview: { sidebar:'#e6e9ef', main:'#eff1f5', card:'#dce0e8', card2:'#ccd0da' }
+  },
+  'tokyo-night': {
+    name: 'Tokyo Night',
+    vars: {
+      '--bg':            '#1a1b26',
+      '--sidebar-bg':    '#16161e',
+      '--main-bg':       '#1a1b26',
+      '--card-bg':       '#24283b',
+      '--card-hover':    '#2f3354',
+      '--border':        '#292e42',
+      '--text':          '#c0caf5',
+      '--text-muted':    '#787c99',
+      '--text-faint':    '#414868',
+      '--divider':       '#292e42',
+      '--sidebar-active':'#2f3354',
+      '--shadow':        'rgba(0,0,0,.5)',
+      '--scrollbar':     '#292e42',
+      '--input-bg':      '#16161e',
+    },
+    preview: { sidebar:'#16161e', main:'#1a1b26', card:'#24283b', card2:'#2f3354' }
+  },
+  'one-dark': {
+    name: 'One Dark',
+    vars: {
+      '--bg':            '#282c34',
+      '--sidebar-bg':    '#21252b',
+      '--main-bg':       '#282c34',
+      '--card-bg':       '#2c313c',
+      '--card-hover':    '#3a3f4b',
+      '--border':        '#3a3f4b',
+      '--text':          '#abb2bf',
+      '--text-muted':    '#636d83',
+      '--text-faint':    '#4b5263',
+      '--divider':       '#3a3f4b',
+      '--sidebar-active':'#3a3f4b',
+      '--shadow':        'rgba(0,0,0,.45)',
+      '--scrollbar':     '#3a3f4b',
+      '--input-bg':      '#21252b',
+    },
+    preview: { sidebar:'#21252b', main:'#282c34', card:'#2c313c', card2:'#3a3f4b' }
+  },
+  gruvbox: {
+    name: 'Gruvbox',
+    vars: {
+      '--bg':            '#282828',
+      '--sidebar-bg':    '#1d2021',
+      '--main-bg':       '#282828',
+      '--card-bg':       '#3c3836',
+      '--card-hover':    '#504945',
+      '--border':        '#504945',
+      '--text':          '#ebdbb2',
+      '--text-muted':    '#a89984',
+      '--text-faint':    '#665c54',
+      '--divider':       '#3c3836',
+      '--sidebar-active':'#504945',
+      '--shadow':        'rgba(0,0,0,.5)',
+      '--scrollbar':     '#504945',
+      '--input-bg':      '#1d2021',
+    },
+    preview: { sidebar:'#1d2021', main:'#282828', card:'#3c3836', card2:'#504945' }
+  },
+  'ayu-mirage': {
+    name: 'Ayu Mirage',
+    vars: {
+      '--bg':            '#1f2430',
+      '--sidebar-bg':    '#1a1f2e',
+      '--main-bg':       '#1f2430',
+      '--card-bg':       '#2a3140',
+      '--card-hover':    '#343e51',
+      '--border':        '#343e51',
+      '--text':          '#cccac2',
+      '--text-muted':    '#707a8c',
+      '--text-faint':    '#3d4756',
+      '--divider':       '#2a3140',
+      '--sidebar-active':'#343e51',
+      '--shadow':        'rgba(0,0,0,.5)',
+      '--scrollbar':     '#343e51',
+      '--input-bg':      '#1a1f2e',
+    },
+    preview: { sidebar:'#1a1f2e', main:'#1f2430', card:'#2a3140', card2:'#343e51' }
+  },
+  'material-ocean': {
+    name: 'Material Ocean',
+    vars: {
+      '--bg':            '#0f111a',
+      '--sidebar-bg':    '#090b11',
+      '--main-bg':       '#0f111a',
+      '--card-bg':       '#1a1c25',
+      '--card-hover':    '#222537',
+      '--border':        '#2a2d3b',
+      '--text':          '#8f93a2',
+      '--text-muted':    '#5a5f78',
+      '--text-faint':    '#3a3d50',
+      '--divider':       '#1a1c25',
+      '--sidebar-active':'#222537',
+      '--shadow':        'rgba(0,0,0,.6)',
+      '--scrollbar':     '#2a2d3b',
+      '--input-bg':      '#090b11',
+    },
+    preview: { sidebar:'#090b11', main:'#0f111a', card:'#1a1c25', card2:'#222537' }
+  },
+  synthwave: {
+    name: 'Synthwave',
+    vars: {
+      '--bg':            '#1a0533',
+      '--sidebar-bg':    '#12012a',
+      '--main-bg':       '#1a0533',
+      '--card-bg':       '#2a1040',
+      '--card-hover':    '#3a1d52',
+      '--border':        '#4a2060',
+      '--text':          '#f0d0ff',
+      '--text-muted':    '#a070c0',
+      '--text-faint':    '#6040a0',
+      '--divider':       '#2a1040',
+      '--sidebar-active':'#3a1d52',
+      '--shadow':        'rgba(0,0,0,.6)',
+      '--scrollbar':     '#4a2060',
+      '--input-bg':      '#12012a',
+    },
+    preview: { sidebar:'#12012a', main:'#1a0533', card:'#2a1040', card2:'#3a1d52' }
+  },
+  midnight: {
+    name: 'Midnight',
+    vars: {
+      '--bg':            '#0a0e1a',
+      '--sidebar-bg':    '#070b14',
+      '--main-bg':       '#0a0e1a',
+      '--card-bg':       '#111827',
+      '--card-hover':    '#1e2740',
+      '--border':        '#1e2740',
+      '--text':          '#c9d1e0',
+      '--text-muted':    '#5d6b8a',
+      '--text-faint':    '#2e3a50',
+      '--divider':       '#111827',
+      '--sidebar-active':'#1e2740',
+      '--shadow':        'rgba(0,0,0,.7)',
+      '--scrollbar':     '#1e2740',
+      '--input-bg':      '#070b14',
+    },
+    preview: { sidebar:'#070b14', main:'#0a0e1a', card:'#111827', card2:'#1e2740' }
+  },
+  paper: {
+    name: 'Paper',
+    vars: {
+      '--bg':            '#f7f4ef',
+      '--sidebar-bg':    '#ede8e0',
+      '--main-bg':       '#f7f4ef',
+      '--card-bg':       '#ffffff',
+      '--card-hover':    '#f0ebe0',
+      '--border':        '#ddd8cc',
+      '--text':          '#2d2a25',
+      '--text-muted':    '#6b6560',
+      '--text-faint':    '#a09a90',
+      '--divider':       '#e5e0d5',
+      '--sidebar-active':'#e0d8c8',
+      '--shadow':        'rgba(0,0,0,.07)',
+      '--scrollbar':     '#c8c0b0',
+      '--input-bg':      '#f0ebe0',
+    },
+    preview: { sidebar:'#ede8e0', main:'#f7f4ef', card:'#ffffff', card2:'#f0ebe0' }
+  },
 };
 
 const ACCENT_COLORS = [
@@ -179,6 +379,12 @@ const ACCENT_COLORS = [
   { name:'Pink',    hex:'#f472b6' },
   { name:'Rose',    hex:'#e11d48' },
   { name:'Teal',    hex:'#2dd4bf' },
+  { name:'Indigo',  hex:'#6366f1' },
+  { name:'Emerald', hex:'#10b981' },
+  { name:'Amber',   hex:'#f59e0b' },
+  { name:'Fuchsia', hex:'#d946ef' },
+  { name:'Lime',    hex:'#84cc16' },
+  { name:'Sky',     hex:'#0ea5e9' },
 ];
 
 /* ============================================================
@@ -305,6 +511,12 @@ function scheduleSave() {
       cardStyle: S.cardStyle,
       scrollbar: S.scrollbar,
       customThemes: S.customThemes,
+      bgStyle: S.bgStyle,
+      customBgColor: S.customBgColor,
+      toolbarStyle: S.toolbarStyle,
+      cardDensity: S.cardDensity,
+      sidebarStyle: S.sidebarStyle,
+      customCss: S.customCss,
       sidebarOpen: S.sidebarOpen,
       rightPanelOpen: S.rightPanelOpen,
       dndEnabled: S.dndEnabled,
@@ -493,6 +705,8 @@ function renderSpaces() {
 
     const dot = document.createElement('div');
     dot.className = 'space-dot';
+    if (sp.color) dot.style.background = sp.color;
+    if (sp.icon) { dot.textContent = sp.icon; dot.style.background = 'none'; dot.style.width = 'auto'; dot.style.height = 'auto'; dot.style.fontSize = '14px'; }
 
     const nm = document.createElement('span');
     nm.className = 'space-name';
@@ -515,6 +729,7 @@ function renderSpaces() {
       showCtx(e.clientX, e.clientY, {
         rename: () => editInline(nm, sp, 'name', renderSpaces),
         delete: () => deleteSpace(sp.id),
+        customize: () => openSpaceCustomize(sp.id),
       });
     });
     list.appendChild(el);
@@ -601,6 +816,7 @@ function buildColEl(col, sp, vm) {
   const el = document.createElement('div');
   el.className = 'collection' + (col.collapsed ? ' collapsed' : '');
   el.dataset.id = col.id;
+  if (col.color) el.dataset.color = col.color;
 
   // header
   const hdr = document.createElement('div');
@@ -643,6 +859,7 @@ function buildColEl(col, sp, vm) {
       rename: () => editInline(nm, col, 'name', renderCollections),
       delete: () => deleteCol(sp.id, col.id),
       moveToSpace: S.spaces.length > 1 ? () => openSpacePicker(col.id, sp.id) : null,
+      color: (c) => { if (c) col.color = c; else delete col.color; scheduleSave(); renderCollections(); },
     });
   });
   acts.appendChild(moreBtn);
@@ -950,6 +1167,104 @@ function openSpacePicker(colId, spId) {
 
 function closeSpacePicker() {
   q('#space-picker-overlay').style.display = 'none';
+}
+
+/* ============================================================
+   SPACE CUSTOMIZE MODAL
+   ============================================================ */
+const SPACE_COLORS = [
+  '#7c6af5','#4f8ef7','#22d3ee','#4ade80',
+  '#facc15','#fb923c','#f87171','#f472b6',
+];
+const SPACE_EMOJIS = ['🌐','📌','📚','💼','🔖','⭐','🎯','🚀','💡','🎨'];
+
+let scSpaceId = null;
+let scColor = null;
+let scIcon  = null;
+
+function openSpaceCustomize(spId) {
+  const sp = S.spaces.find(s => s.id === spId);
+  if (!sp) return;
+  scSpaceId = spId;
+  scColor = sp.color || null;
+  scIcon  = sp.icon  || null;
+
+  // Render color row
+  const colorRow = q('#sc-color-row');
+  colorRow.innerHTML = '';
+  // "None" swatch
+  const noneBtn = document.createElement('button');
+  noneBtn.className = 'sc-swatch sc-swatch-none' + (!scColor ? ' selected' : '');
+  noneBtn.textContent = '✕';
+  noneBtn.title = 'No color';
+  noneBtn.addEventListener('click', () => { scColor = null; renderScColors(); });
+  colorRow.appendChild(noneBtn);
+  SPACE_COLORS.forEach(hex => {
+    const sw = document.createElement('button');
+    sw.className = 'sc-swatch' + (scColor === hex ? ' selected' : '');
+    sw.style.background = hex;
+    sw.title = hex;
+    sw.addEventListener('click', () => { scColor = hex; renderScColors(); });
+    colorRow.appendChild(sw);
+  });
+
+  // Render emoji row
+  const emojiRow = q('#sc-emoji-row');
+  emojiRow.innerHTML = '';
+  // "None" emoji
+  const noneEm = document.createElement('button');
+  noneEm.className = 'sc-emoji-btn' + (!scIcon ? ' selected' : '');
+  noneEm.textContent = '✕';
+  noneEm.title = 'No icon';
+  noneEm.addEventListener('click', () => { scIcon = null; renderScEmojis(); });
+  emojiRow.appendChild(noneEm);
+  SPACE_EMOJIS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.className = 'sc-emoji-btn' + (scIcon === em ? ' selected' : '');
+    btn.textContent = em;
+    btn.addEventListener('click', () => { scIcon = em; renderScEmojis(); });
+    emojiRow.appendChild(btn);
+  });
+
+  q('#space-customize-overlay').style.display = 'flex';
+}
+
+function renderScColors() {
+  const colorRow = q('#sc-color-row');
+  colorRow.querySelectorAll('.sc-swatch').forEach(sw => {
+    const isNone = sw.classList.contains('sc-swatch-none');
+    sw.classList.toggle('selected', isNone ? !scColor : sw.style.background && hexFromRgb(sw.style.background) === scColor);
+  });
+}
+
+function renderScEmojis() {
+  const emojiRow = q('#sc-emoji-row');
+  emojiRow.querySelectorAll('.sc-emoji-btn').forEach(btn => {
+    const isNone = btn.textContent === '✕';
+    btn.classList.toggle('selected', isNone ? !scIcon : btn.textContent === scIcon);
+  });
+}
+
+function hexFromRgb(rgb) {
+  const m = rgb.match(/\d+/g);
+  if (!m || m.length < 3) return rgb;
+  return '#' + m.slice(0,3).map(v => parseInt(v).toString(16).padStart(2,'0')).join('');
+}
+
+function saveSpaceCustomize() {
+  const sp = S.spaces.find(s => s.id === scSpaceId);
+  if (sp) {
+    if (scColor) sp.color = scColor; else delete sp.color;
+    if (scIcon)  sp.icon  = scIcon;  else delete sp.icon;
+    scheduleSave();
+    renderSpaces();
+  }
+  closeSpaceCustomize();
+}
+
+function closeSpaceCustomize() {
+  q('#space-customize-overlay').style.display = 'none';
+  scSpaceId = null;
 }
 
 function moveColToSpace(colId, srcSpId, tgtSpId) {
@@ -1547,6 +1862,12 @@ const SETTING_DEFAULTS = {
   cardStyle: 'default',
   scrollbar: 'thin',
   customThemes: [],
+  bgStyle: 'solid',
+  customBgColor: '',
+  toolbarStyle: 'default',
+  cardDensity: 'comfortable',
+  sidebarStyle: 'default',
+  customCss: '',
 };
 
 const FONTS = [
@@ -1598,6 +1919,11 @@ function applyAllSettings() {
   applyShadow(S.shadowIntensity);
   applyAnimSpeed(S.animSpeed);
   applyScrollbar(S.scrollbar);
+  applyBgStyle(S.bgStyle, S.customBgColor);
+  applyToolbarStyle(S.toolbarStyle);
+  applyCardDensity(S.cardDensity);
+  applySidebarStyle(S.sidebarStyle);
+  applyCustomCss(S.customCss);
 }
 
 function applyFont(font) {
@@ -1664,7 +1990,7 @@ function applySidebarWidth(w) {
 
 function applyBgPattern(pat) {
   const main = q('#main-content');
-  main.classList.remove('bg-dots','bg-grid','bg-noise','bg-topography');
+  main.classList.remove('bg-dots','bg-grid','bg-noise','bg-topography','bg-hexagons','bg-diamonds','bg-crosshatch','bg-waves','bg-circles');
   if (pat !== 'none') main.classList.add('bg-' + pat);
 }
 
@@ -1693,6 +2019,43 @@ function applyScrollbar(style) {
   document.body.classList.add('scroll-' + style);
 }
 
+function applyBgStyle(style, customColor) {
+  const main = q('#main-content');
+  main.classList.remove('bg-style-gradient-diag','bg-style-gradient-radial','bg-style-gradient-sunset');
+  main.style.backgroundColor = '';
+  if (style === 'gradient-diag')    main.classList.add('bg-style-gradient-diag');
+  else if (style === 'gradient-radial')  main.classList.add('bg-style-gradient-radial');
+  else if (style === 'gradient-sunset')  main.classList.add('bg-style-gradient-sunset');
+  else if (style === 'custom' && customColor) main.style.backgroundColor = customColor;
+}
+
+function applyToolbarStyle(style) {
+  const toolbar = q('#toolbar');
+  if (!toolbar) return;
+  toolbar.classList.remove('toolbar-minimal','toolbar-floating','toolbar-glass');
+  if (style !== 'default') toolbar.classList.add('toolbar-' + style);
+}
+
+function applyCardDensity(density) {
+  document.body.classList.remove('density-comfortable','density-cozy','density-compact');
+  document.body.classList.add('density-' + density);
+}
+
+function applySidebarStyle(style) {
+  document.body.classList.remove('sidebar-glass','sidebar-bordered','sidebar-seamless');
+  if (style !== 'default') document.body.classList.add('sidebar-' + style);
+}
+
+function applyCustomCss(css) {
+  let el = document.getElementById('custom-css');
+  if (!el) {
+    el = document.createElement('style');
+    el.id = 'custom-css';
+    document.head.appendChild(el);
+  }
+  el.textContent = css || '';
+}
+
 /* ============================================================
    SETTINGS — RENDER ALL TABS
    ============================================================ */
@@ -1707,13 +2070,23 @@ function renderSettings() {
   renderSlider('#sl-gap',     '#sl-gap-val',     'cardGap',       S.cardGap,       v=>v+'px');
   renderSlider('#sl-cardw',   '#sl-cardw-val',   'cardMinWidth',  S.cardMinWidth,  v=>v+'px');
   renderSlider('#sl-sidebar', '#sl-sidebar-val', 'sidebarWidth',  S.sidebarWidth,  v=>v+'px');
-  renderPills('#defview-pills',  'defaultView',    S.defaultView);
-  renderPills('#shadow-pills',   'shadowIntensity',S.shadowIntensity);
-  renderPills('#hover-pills',    'cardHover',      S.cardHover);
-  renderPills('#anim-pills',     'animSpeed',      S.animSpeed);
-  renderPills('#bgpat-pills',    'bgPattern',      S.bgPattern);
-  renderPills('#cardstyle-pills','cardStyle',      S.cardStyle);
-  renderPills('#scrollbar-pills','scrollbar',      S.scrollbar);
+  renderPills('#defview-pills',       'defaultView',    S.defaultView);
+  renderPills('#shadow-pills',        'shadowIntensity',S.shadowIntensity);
+  renderPills('#hover-pills',         'cardHover',      S.cardHover);
+  renderPills('#anim-pills',          'animSpeed',      S.animSpeed);
+  renderPills('#bgpat-pills',         'bgPattern',      S.bgPattern);
+  renderPills('#cardstyle-pills',     'cardStyle',      S.cardStyle);
+  renderPills('#scrollbar-pills',     'scrollbar',      S.scrollbar);
+  renderPills('#bgstyle-pills',       'bgStyle',        S.bgStyle);
+  renderPills('#toolbar-pills',       'toolbarStyle',   S.toolbarStyle);
+  renderPills('#density-pills',       'cardDensity',    S.cardDensity);
+  renderPills('#sidebar-style-pills', 'sidebarStyle',   S.sidebarStyle);
+  // Custom bg color input
+  const cbgInput = q('#custom-bg-input');
+  if (cbgInput) cbgInput.value = S.customBgColor || '#000000';
+  // Custom CSS textarea
+  const cssInput = q('#custom-css-input');
+  if (cssInput) cssInput.value = S.customCss || '';
   const hd = q('#homepage-url-display');
   if (hd) hd.textContent = location.href;
 }
@@ -1731,6 +2104,10 @@ function renderPills(sel, stateKey, currentVal) {
         shadowIntensity: applyShadow, cardHover: applyCardHover,
         animSpeed: applyAnimSpeed, bgPattern: applyBgPattern,
         cardStyle: applyCardStyle, scrollbar: applyScrollbar,
+        bgStyle: v => applyBgStyle(v, S.customBgColor),
+        toolbarStyle: applyToolbarStyle,
+        cardDensity: applyCardDensity,
+        sidebarStyle: applySidebarStyle,
         defaultView: v => {
           S.viewModes = Object.fromEntries(S.spaces.map(s=>[s.id,v]));
           scheduleSave();
@@ -1998,6 +2375,9 @@ function exportData() {
       defaultView: S.defaultView, shadowIntensity: S.shadowIntensity,
       cardHover: S.cardHover, animSpeed: S.animSpeed, bgPattern: S.bgPattern,
       cardStyle: S.cardStyle, scrollbar: S.scrollbar, customThemes: S.customThemes,
+      bgStyle: S.bgStyle, customBgColor: S.customBgColor,
+      toolbarStyle: S.toolbarStyle, cardDensity: S.cardDensity,
+      sidebarStyle: S.sidebarStyle, customCss: S.customCss,
     }
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
@@ -2060,15 +2440,22 @@ function resetSettings() {
 /* ============================================================
    CONTEXT MENU
    ============================================================ */
-function showCtx(x, y, { rename, delete: del, moveToSpace }) {
-  ctxTarget = { rename, delete:del, moveToSpace };
+function showCtx(x, y, { rename, delete: del, moveToSpace, color, customize }) {
+  ctxTarget = { rename, delete:del, moveToSpace, color, customize };
   const moveBtn = q('#ctx-move-space');
   if (moveBtn) moveBtn.style.display = moveToSpace ? 'flex' : 'none';
+  const colorBtn = q('#ctx-color');
+  if (colorBtn) colorBtn.style.display = color ? 'flex' : 'none';
+  const customizeBtn = q('#ctx-customize');
+  if (customizeBtn) customizeBtn.style.display = customize ? 'flex' : 'none';
+  // hide sub-picker when re-opening
+  const ccp = q('#ctx-color-picker');
+  if (ccp) ccp.style.display = 'none';
   const menu = q('#context-menu');
   menu.style.display = 'block';
   const vw=window.innerWidth, vh=window.innerHeight;
   menu.style.left = Math.min(x, vw-160) + 'px';
-  menu.style.top  = Math.min(y, vh-110)  + 'px';
+  menu.style.top  = Math.min(y, vh-120)  + 'px';
 }
 
 function hideCtx() {
@@ -2258,10 +2645,58 @@ function bindEvents() {
     qa('.accent-swatch').forEach(sw=>sw.classList.remove('selected'));
   });
 
+  // Custom background color
+  q('#custom-bg-input')?.addEventListener('input', e => {
+    S.customBgColor = e.target.value;
+    S.bgStyle = 'custom';
+    scheduleSave();
+    applyBgStyle('custom', e.target.value);
+    renderPills('#bgstyle-pills', 'bgStyle', 'custom');
+  });
+
+  // Advanced: Custom CSS apply button
+  q('#btn-apply-css')?.addEventListener('click', () => {
+    const cssInput = q('#custom-css-input');
+    if (cssInput) {
+      S.customCss = cssInput.value;
+      scheduleSave();
+      applyCustomCss(S.customCss);
+      showSnack('Custom CSS applied!');
+    }
+  });
+
+  // Advanced: Clear CSS
+  q('#btn-clear-css')?.addEventListener('click', () => {
+    const cssInput = q('#custom-css-input');
+    if (cssInput) cssInput.value = '';
+    S.customCss = '';
+    scheduleSave();
+    applyCustomCss('');
+    showSnack('Custom CSS cleared.');
+  });
+
+  // Space customize modal
+  q('#sc-save')?.addEventListener('click', saveSpaceCustomize);
+  q('#sc-cancel')?.addEventListener('click', closeSpaceCustomize);
+  q('#space-customize-overlay')?.addEventListener('click', e => {
+    if (e.target === q('#space-customize-overlay')) closeSpaceCustomize();
+  });
+
   // Context menu
   q('#ctx-rename').addEventListener('click', () => { if(ctxTarget?.rename){ctxTarget.rename();} hideCtx(); });
   q('#ctx-move-space').addEventListener('click', () => { if(ctxTarget?.moveToSpace){ctxTarget.moveToSpace();} hideCtx(); });
   q('#ctx-delete').addEventListener('click', () => { if(ctxTarget?.delete){ctxTarget.delete();} hideCtx(); });
+  q('#ctx-color').addEventListener('click', () => {
+    const ccp = q('#ctx-color-picker');
+    if (ccp) ccp.style.display = ccp.style.display === 'flex' ? 'none' : 'flex';
+  });
+  q('#ctx-color-picker').addEventListener('click', e => {
+    const sw = e.target.closest('.ctx-cp-swatch');
+    if (!sw) return;
+    if (ctxTarget?.color) ctxTarget.color(sw.dataset.color || undefined);
+    hideCtx();
+  });
+  q('#ctx-customize').addEventListener('click', () => { if(ctxTarget?.customize){ctxTarget.customize();} hideCtx(); });
 
   // Card edit modal
   q('#card-edit-save').addEventListener('click', saveCardEdit);
