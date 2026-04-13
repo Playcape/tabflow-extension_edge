@@ -339,6 +339,23 @@ function activeSpace() { return S.spaces.find(s=>s.id===S.activeSpaceId) || S.sp
 function viewMode() { const sp=activeSpace(); return sp ? (S.viewModes[sp.id]||'card') : 'card'; }
 function domain(url) { try { return new URL(url).hostname.replace(/^www\./,''); } catch { return ''; } }
 function favUrl(url) { const d=domain(url); return d ? `https://www.google.com/s2/favicons?domain=${d}&sz=32` : ''; }
+function isTabFlowTab(tab) {
+  const url = (tab?.url || '').toLowerCase();
+  const title = (tab?.title || '').toLowerCase();
+
+  if (url.includes('/newtab.html')) return true;
+
+  const extId = (typeof chrome !== 'undefined' && chrome.runtime?.id)
+    ? chrome.runtime.id.toLowerCase()
+    : '';
+
+  if (extId) {
+    if (url.startsWith(`chrome-extension://${extId}/`)) return true;
+    if (url.startsWith(`edge-extension://${extId}/`)) return true;
+  }
+
+  return title.includes('tabflow') && (url.startsWith('chrome-extension://') || url.startsWith('edge-extension://'));
+}
 function findCol(cid) {
   for (const sp of S.spaces) {
     const c = (sp.collections||[]).find(c=>c.id===cid);
@@ -594,10 +611,19 @@ function buildColEl(col, sp, vm) {
   nm.className = 'col-name';
   nm.textContent = col.name;
   nm.addEventListener('dblclick', () => editInline(nm, col, 'name', renderCollections));
+  const restoreBtn = document.createElement('button');
+  restoreBtn.className = 'col-restore-btn';
+  restoreBtn.innerHTML = ic('refresh', 11) + ' Restore';
+  restoreBtn.title = 'Restore all tabs in this collection';
+  restoreBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    restoreCollection(sp.id, col.id);
+  });
   const cnt = document.createElement('span');
   cnt.className = 'col-count';
   cnt.textContent = (col.tabs||[]).length;
   nameWrap.appendChild(nm);
+  nameWrap.appendChild(restoreBtn);
   nameWrap.appendChild(cnt);
 
   const acts = document.createElement('div');
@@ -783,6 +809,34 @@ function deleteCol(spId, colId) {
   sp.collections.splice(idx,1);
   scheduleSave(); renderCollections();
   showSnack('Collection deleted.', true);
+}
+
+function restoreCollection(spId, colId) {
+  const sp = S.spaces.find(s=>s.id===spId); if (!sp) return;
+  const col = sp.collections?.find(c=>c.id===colId); if (!col) return;
+
+  const urls = (col.tabs || [])
+    .map(t => (t.url || '').trim())
+    .filter(Boolean);
+
+  if (!urls.length) {
+    showSnack('This collection has no tabs to restore.');
+    return;
+  }
+
+  let opened = 0;
+  urls.forEach(url => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+      opened += 1;
+    } catch {}
+  });
+
+  showSnack(`Restored ${opened} tab${opened !== 1 ? 's' : ''} from "${col.name}".`);
 }
 
 function editTabTitle(tab, el) {
@@ -1091,7 +1145,9 @@ function renderOpenTabs() {
   const list = q('#open-tabs-list');
   list.innerHTML = '';
 
-  if (!openTabs.length) {
+  const visibleTabs = openTabs.filter(t => !isTabFlowTab(t));
+
+  if (!visibleTabs.length) {
     const e=document.createElement('div');
     e.style.cssText='padding:14px 10px;font-size:12px;color:var(--text-faint)';
     e.textContent='No open tabs found.';
@@ -1100,7 +1156,7 @@ function renderOpenTabs() {
 
   // group by window
   const wins = {};
-  openTabs.forEach(t => { (wins[t.windowId]||(wins[t.windowId]=[])).push(t); });
+  visibleTabs.forEach(t => { (wins[t.windowId]||(wins[t.windowId]=[])).push(t); });
 
   let wi=1;
   Object.entries(wins).forEach(([wid, tabs]) => {
@@ -1165,14 +1221,37 @@ function buildTabRow(tab) {
     } catch {}
   });
 
+  const makeTabListFallback = () => {
+    const fallbackImg = document.createElement('img');
+    fallbackImg.src = 'icons/icon16.png';
+    fallbackImg.alt = '';
+    fallbackImg.onerror = () => {
+      const f = buildFavFallback(tab.url, 'tab-fav');
+      fallbackImg.parentNode?.replaceChild(f, fallbackImg);
+    };
+    return fallbackImg;
+  };
+
+  const isTabFlowPage = (() => {
+    const u = (tab.url || '').toLowerCase();
+    const t = (tab.title || '').toLowerCase();
+    return u.includes('/newtab.html') || u.startsWith('chrome-extension://') || t.includes('tabflow');
+  })();
+
   const src = tab.favIconUrl || favUrl(tab.url);
   let fav;
-  if (src) {
+  if (isTabFlowPage) {
+    fav = makeTabListFallback();
+  } else if (src) {
     fav = document.createElement('img');
     fav.src = src;
-    fav.onerror = () => { const f=buildFavFallback(tab.url,'tab-fav'); fav.parentNode?.replaceChild(f,fav); };
+    fav.alt = '';
+    fav.onerror = () => {
+      const f = makeTabListFallback();
+      fav.parentNode?.replaceChild(f, fav);
+    };
   } else {
-    fav = buildFavFallback(tab.url, 'tab-fav');
+    fav = makeTabListFallback();
   }
 
   const title = document.createElement('span');
