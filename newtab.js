@@ -344,6 +344,10 @@ function isTabFlowTab(tab) {
   const title = (tab?.title || '').toLowerCase();
 
   if (url.includes('/newtab.html')) return true;
+  if (url.startsWith('edge://newtab')) return true;
+  if (url.startsWith('chrome://newtab')) return true;
+  if (url === 'about:newtab') return true;
+  if (title.includes('tabflow')) return true;
 
   const extId = (typeof chrome !== 'undefined' && chrome.runtime?.id)
     ? chrome.runtime.id.toLowerCase()
@@ -354,7 +358,7 @@ function isTabFlowTab(tab) {
     if (url.startsWith(`edge-extension://${extId}/`)) return true;
   }
 
-  return title.includes('tabflow') && (url.startsWith('chrome-extension://') || url.startsWith('edge-extension://'));
+  return false;
 }
 function findCol(cid) {
   for (const sp of S.spaces) {
