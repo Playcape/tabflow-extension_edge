@@ -659,7 +659,10 @@ function buildColEl(col, sp, vm) {
     colDh.title = 'Drag to reorder';
 
     let colHandleActive = false;
-    colDh.addEventListener('mousedown', () => { colHandleActive = true; });
+    colDh.addEventListener('mousedown', () => {
+      colHandleActive = true;
+      document.addEventListener('mouseup', () => { colHandleActive = false; }, { once: true });
+    });
 
     el.draggable = true;
     el.addEventListener('dragstart', e => {
@@ -1157,7 +1160,7 @@ function initDropZones() {
 
     colEl.addEventListener('dragleave', e => {
       if (dragData?.type !== 'collection') return;
-      if (!colEl.contains(e.relatedTarget)) {
+      if (!e.relatedTarget || !colEl.contains(e.relatedTarget)) {
         colEl.classList.remove('col-drop-before', 'col-drop-after');
       }
     });
@@ -2269,8 +2272,9 @@ function bindEvents() {
   q('#card-edit-save').addEventListener('click', saveCardEdit);
   q('#card-edit-cancel').addEventListener('click', closeCardEditModal);
   q('#card-edit-overlay').addEventListener('click', e => { if (e.target === q('#card-edit-overlay')) closeCardEditModal(); });
-  q('#card-edit-title').addEventListener('keydown', e => { if (e.key === 'Enter') saveCardEdit(); if (e.key === 'Escape') closeCardEditModal(); });
-  q('#card-edit-url').addEventListener('keydown', e => { if (e.key === 'Enter') saveCardEdit(); if (e.key === 'Escape') closeCardEditModal(); });
+  const onCardEditKey = e => { if (e.key === 'Enter') saveCardEdit(); if (e.key === 'Escape') closeCardEditModal(); };
+  q('#card-edit-title').addEventListener('keydown', onCardEditKey);
+  q('#card-edit-url').addEventListener('keydown', onCardEditKey);
 
   // Space picker modal
   q('#space-picker-cancel').addEventListener('click', closeSpacePicker);
