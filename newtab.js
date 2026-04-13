@@ -396,6 +396,7 @@ function setIcon(el, name, size) { if (el) el.innerHTML = ic(name, size||14); }
 function initStaticIcons() {
   // Sidebar toggle
   setIcon(q('#btn-sidebar-toggle'), 'panel-left');
+  setIcon(q('#sidebar-show-btn'), 'panel-left', 13);
   // Search clear
   setIcon(q('#search-clear'), 'x', 12);
   // Search icon wrap
@@ -451,6 +452,9 @@ function updateLayoutClasses() {
   q('#right-panel').classList.toggle('open', S.rightPanelOpen);
   const showBtn = q('#right-panel-show-btn');
   showBtn.style.display = S.rightPanelOpen ? 'none' : 'flex';
+  const sidebarShowBtn = q('#sidebar-show-btn');
+  sidebarShowBtn.style.display = S.sidebarOpen ? 'none' : 'flex';
+  applySidebarWidth(S.sidebarWidth);
 }
 
 /* ============================================================
@@ -1404,11 +1408,16 @@ function applySidebarWidth(w) {
   const app = q('#app');
   const collapsed = app.classList.contains('sidebar-collapsed');
   const rightHidden = app.classList.contains('right-hidden');
+  const sidebar = q('#sidebar');
+  const sidebarWidth = collapsed ? 0 : w;
   const right = rightHidden ? '0px' : '240px';
-  app.style.gridTemplateColumns = `${collapsed?'0':w}px 1fr ${right}`;
-  // Also update the sidebar element itself
-  q('#sidebar').style.width = w + 'px';
-  q('#sidebar').style.minWidth = w + 'px';
+
+  app.style.gridTemplateColumns = `${sidebarWidth}px minmax(0, 1fr) ${right}`;
+
+  // Collapse visually without removing the grid item; otherwise grid placement jumps.
+  sidebar.style.display = 'flex';
+  sidebar.style.width = sidebarWidth + 'px';
+  sidebar.style.minWidth = sidebarWidth + 'px';
   document.documentElement.style.setProperty('--sidebar-w', w + 'px');
 }
 
@@ -1900,6 +1909,9 @@ function bindEvents() {
   // Sidebar
   q('#btn-sidebar-toggle').addEventListener('click', () => {
     S.sidebarOpen=!S.sidebarOpen; scheduleSave(); updateLayoutClasses();
+  });
+  q('#sidebar-show-btn').addEventListener('click', () => {
+    S.sidebarOpen=true; scheduleSave(); updateLayoutClasses();
   });
 
   // Right panel
