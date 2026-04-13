@@ -242,6 +242,8 @@ let S = {
 
 let openTabs = [];
 let dragData = null;
+let colDropTarget = null; // { colId, before: boolean } — for collection reordering
+let cardEditState = null; // { tab, col, sp } — for card edit modal
 let saveTimer = null;
 let snackTimer = null;
 let undoBuf = null;
@@ -640,6 +642,7 @@ function buildColEl(col, sp, vm) {
     showCtx(e.clientX, e.clientY, {
       rename: () => editInline(nm, col, 'name', renderCollections),
       delete: () => deleteCol(sp.id, col.id),
+      moveToSpace: S.spaces.length > 1 ? () => openSpacePicker(col.id, sp.id) : null,
     });
   });
   acts.appendChild(moreBtn);
@@ -647,6 +650,36 @@ function buildColEl(col, sp, vm) {
   hdr.appendChild(chev);
   hdr.appendChild(nameWrap);
   hdr.appendChild(acts);
+
+  // Collection drag handle (shown only when DnD is enabled)
+  if (S.dndEnabled) {
+    const colDh = document.createElement('span');
+    colDh.className = 'col-drag-handle';
+    colDh.innerHTML = ic('grip-vertical', 11);
+    colDh.title = 'Drag to reorder';
+
+    let colHandleActive = false;
+    colDh.addEventListener('mousedown', () => { colHandleActive = true; });
+
+    el.draggable = true;
+    el.addEventListener('dragstart', e => {
+      if (!colHandleActive) { e.preventDefault(); return; }
+      colHandleActive = false;
+      e.stopPropagation();
+      dragData = { type: 'collection', colId: col.id, spId: sp.id };
+      el.classList.add('col-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', col.id);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('col-dragging');
+      colHandleActive = false;
+      clearColDropIndicators();
+      if (dragData?.type === 'collection') { dragData = null; colDropTarget = null; }
+    });
+
+    hdr.insertBefore(colDh, chev);
+  }
 
   // drop zone
   const dz = document.createElement('div');
@@ -735,7 +768,7 @@ function buildCard(tab, col, sp) {
     return b;
   };
 
-  acts.appendChild(mkAct('pencil',        'Edit title',  () => editTabTitle(tab, title)));
+  acts.appendChild(mkAct('pencil',        'Edit tab',    () => openCardEditModal(tab, col, sp)));
   acts.appendChild(mkAct('copy',          'Copy URL',    () => { try { navigator.clipboard.writeText(tab.url); showSnack('URL copied!'); } catch {} }));
   acts.appendChild(mkAct('external-link', 'Open',        () => window.open(tab.url, '_blank')));
 
@@ -870,6 +903,72 @@ function removeTab(spId, colId, tabId) {
   showSnack('Tab removed.', true);
 }
 
+/* ============================================================
+   CARD EDIT MODAL
+   ============================================================ */
+function openCardEditModal(tab, col, sp) {
+  cardEditState = { tab, col, sp };
+  q('#card-edit-title').value = tab.title || '';
+  q('#card-edit-url').value = tab.url || '';
+  q('#card-edit-overlay').style.display = 'flex';
+  setTimeout(() => { q('#card-edit-title').focus(); q('#card-edit-title').select(); }, 30);
+}
+
+function saveCardEdit() {
+  if (!cardEditState) return;
+  const { tab } = cardEditState;
+  const title = q('#card-edit-title').value.trim();
+  const rawUrl = q('#card-edit-url').value.trim();
+  if (title) tab.title = title;
+  if (rawUrl) tab.url = /^https?:\/\//i.test(rawUrl) ? rawUrl : 'https://' + rawUrl;
+  scheduleSave();
+  renderCollections();
+  closeCardEditModal();
+}
+
+function closeCardEditModal() {
+  q('#card-edit-overlay').style.display = 'none';
+  cardEditState = null;
+}
+
+/* ============================================================
+   SPACE PICKER (cross-space collection move)
+   ============================================================ */
+function openSpacePicker(colId, spId) {
+  const list = q('#space-picker-list');
+  list.innerHTML = '';
+  S.spaces.filter(s => s.id !== spId).forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'space-picker-item';
+    const dot = document.createElement('span');
+    dot.className = 'space-dot';
+    const nm = document.createElement('span');
+    nm.textContent = s.name;
+    item.append(dot, nm);
+    item.addEventListener('click', () => { moveColToSpace(colId, spId, s.id); closeSpacePicker(); });
+    list.appendChild(item);
+  });
+  q('#space-picker-overlay').style.display = 'flex';
+}
+
+function closeSpacePicker() {
+  q('#space-picker-overlay').style.display = 'none';
+}
+
+function moveColToSpace(colId, srcSpId, tgtSpId) {
+  const srcSp = S.spaces.find(s => s.id === srcSpId);
+  const tgtSp = S.spaces.find(s => s.id === tgtSpId);
+  if (!srcSp || !tgtSp) return;
+  const colIdx = srcSp.collections.findIndex(c => c.id === colId);
+  if (colIdx === -1) return;
+  const [col] = srcSp.collections.splice(colIdx, 1);
+  if (!tgtSp.collections) tgtSp.collections = [];
+  tgtSp.collections.unshift(col);
+  scheduleSave();
+  renderCollections();
+  showSnack(`Collection moved to "${tgtSp.name}".`);
+}
+
 function addTabToCol(spId, colId, tabData) {
   const sp = S.spaces.find(s=>s.id===spId); if (!sp) return;
   const col = sp.collections?.find(c=>c.id===colId); if (!col) return;
@@ -997,7 +1096,7 @@ function initDropZones() {
       e.preventDefault();
       dz.classList.remove('drop-active');
       clearDropIndicators();
-      if (!dragData) return;
+      if (!dragData || dragData.type === 'collection') return;
       handleDrop(dz.dataset.spId, dz.dataset.colId);
     });
   });
@@ -1035,10 +1134,40 @@ function initDropZones() {
       e.preventDefault();
       e.stopPropagation();
       clearDropIndicators();
-      if (!dragData) return;
+      if (!dragData || dragData.type === 'collection') return;
       const spId = card.dataset.spId;
       const colId = card.dataset.colId;
       handleDrop(spId, colId);
+    });
+  });
+
+  // Collection reordering drop zones
+  qa('.collection').forEach(colEl => {
+    colEl.addEventListener('dragover', e => {
+      if (!S.dndEnabled || !dragData || dragData.type !== 'collection') return;
+      if (colEl.dataset.id === dragData.colId) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = colEl.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      clearColDropIndicators();
+      colEl.classList.add(before ? 'col-drop-before' : 'col-drop-after');
+      colDropTarget = { colId: colEl.dataset.id, before };
+    });
+
+    colEl.addEventListener('dragleave', e => {
+      if (dragData?.type !== 'collection') return;
+      if (!colEl.contains(e.relatedTarget)) {
+        colEl.classList.remove('col-drop-before', 'col-drop-after');
+      }
+    });
+
+    colEl.addEventListener('drop', e => {
+      if (!dragData || dragData.type !== 'collection') return;
+      e.preventDefault();
+      e.stopPropagation();
+      clearColDropIndicators();
+      handleCollectionReorder();
     });
   });
 }
@@ -1048,6 +1177,37 @@ function clearDropIndicators() {
     c.classList.remove('drop-before', 'drop-after');
   });
   qa('.drop-zone.drop-active').forEach(z => z.classList.remove('drop-active'));
+}
+
+function clearColDropIndicators() {
+  qa('.collection.col-drop-before, .collection.col-drop-after').forEach(c => {
+    c.classList.remove('col-drop-before', 'col-drop-after');
+  });
+}
+
+function handleCollectionReorder() {
+  if (!dragData || dragData.type !== 'collection' || !colDropTarget) {
+    dragData = null; colDropTarget = null; return;
+  }
+  const sp = S.spaces.find(s => s.id === dragData.spId);
+  if (!sp) { dragData = null; colDropTarget = null; return; }
+
+  const cols = sp.collections;
+  const srcIdx = cols.findIndex(c => c.id === dragData.colId);
+  if (srcIdx === -1) { dragData = null; colDropTarget = null; return; }
+
+  const [moved] = cols.splice(srcIdx, 1);
+  const tgtIdx = cols.findIndex(c => c.id === colDropTarget.colId);
+  if (tgtIdx === -1) {
+    cols.push(moved);
+  } else {
+    cols.splice(colDropTarget.before ? tgtIdx : tgtIdx + 1, 0, moved);
+  }
+
+  scheduleSave();
+  renderCollections();
+  dragData = null;
+  colDropTarget = null;
 }
 
 function handleDrop(targetSpId, targetColId) {
@@ -1902,13 +2062,15 @@ function resetSettings() {
 /* ============================================================
    CONTEXT MENU
    ============================================================ */
-function showCtx(x, y, { rename, delete: del }) {
-  ctxTarget = { rename, delete:del };
+function showCtx(x, y, { rename, delete: del, moveToSpace }) {
+  ctxTarget = { rename, delete:del, moveToSpace };
+  const moveBtn = q('#ctx-move-space');
+  if (moveBtn) moveBtn.style.display = moveToSpace ? 'flex' : 'none';
   const menu = q('#context-menu');
   menu.style.display = 'block';
   const vw=window.innerWidth, vh=window.innerHeight;
   menu.style.left = Math.min(x, vw-160) + 'px';
-  menu.style.top  = Math.min(y, vh-90)  + 'px';
+  menu.style.top  = Math.min(y, vh-110)  + 'px';
 }
 
 function hideCtx() {
@@ -2100,7 +2262,19 @@ function bindEvents() {
 
   // Context menu
   q('#ctx-rename').addEventListener('click', () => { if(ctxTarget?.rename){ctxTarget.rename();} hideCtx(); });
+  q('#ctx-move-space').addEventListener('click', () => { if(ctxTarget?.moveToSpace){ctxTarget.moveToSpace();} hideCtx(); });
   q('#ctx-delete').addEventListener('click', () => { if(ctxTarget?.delete){ctxTarget.delete();} hideCtx(); });
+
+  // Card edit modal
+  q('#card-edit-save').addEventListener('click', saveCardEdit);
+  q('#card-edit-cancel').addEventListener('click', closeCardEditModal);
+  q('#card-edit-overlay').addEventListener('click', e => { if (e.target === q('#card-edit-overlay')) closeCardEditModal(); });
+  q('#card-edit-title').addEventListener('keydown', e => { if (e.key === 'Enter') saveCardEdit(); if (e.key === 'Escape') closeCardEditModal(); });
+  q('#card-edit-url').addEventListener('keydown', e => { if (e.key === 'Enter') saveCardEdit(); if (e.key === 'Escape') closeCardEditModal(); });
+
+  // Space picker modal
+  q('#space-picker-cancel').addEventListener('click', closeSpacePicker);
+  q('#space-picker-overlay').addEventListener('click', e => { if (e.target === q('#space-picker-overlay')) closeSpacePicker(); });
 
   // Close dropdowns on outside click
   document.addEventListener('click', e => {
@@ -2112,6 +2286,8 @@ function bindEvents() {
     if (e.key === 'Escape') {
       // Only handle Escape here for dropdowns/ctx; hotkey modal handled by global handler
       if (q('#hotkey-overlay').style.display !== 'none') return; // global handler takes it
+      if (q('#card-edit-overlay').style.display !== 'none') { closeCardEditModal(); return; }
+      if (q('#space-picker-overlay').style.display !== 'none') { closeSpacePicker(); return; }
       hideCtx();
       q('#view-menu').classList.remove('open');
     }
