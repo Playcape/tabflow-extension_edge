@@ -86,6 +86,69 @@ chrome.commands.onCommand.addListener(async (command) => {
   await focusOrOpen(tab.url);
 });
 
+/* ---------- Link alias redirect via Omnibox (to <alias>) ---------- */
+chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
+  if (!text || text.length === 0) return;
+  
+  try {
+    const result = await chrome.storage.local.get('tabflow_v2');
+    const data = result['tabflow_v2'];
+    const links = (data?.links || []);
+    
+    // Filter links that start with the user's input (case-insensitive)
+    const suggestions = links
+      .filter(l => l.name.toLowerCase().startsWith(text.toLowerCase()))
+      .map(l => ({
+        content: l.name,
+        description: `Open: ${l.name} → ${l.url}`
+      }))
+      .slice(0, 8); // Limit to 8 suggestions
+    
+    suggest(suggestions);
+  } catch (err) {
+    console.error('TabFlow omnibox error:', err);
+  }
+});
+
+chrome.omnibox.onInputEntered.addListener(async (text) => {
+  const alias = text.trim();
+  if (!alias) return;
+  
+  try {
+    const result = await chrome.storage.local.get('tabflow_v2');
+    const data = result['tabflow_v2'];
+    const links = (data?.links || []);
+    
+    // Find exact match (case-insensitive)
+    const link = links.find(l => l.name.toLowerCase() === alias.toLowerCase());
+    if (link && link.url) {
+      // Open in current tab or new tab
+      await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+          chrome.tabs.update(tabs[0].id, { url: link.url });
+        } else {
+          chrome.tabs.create({ url: link.url });
+        }
+      });
+    } else {
+      console.warn(`TabFlow: Alias "${alias}" not found. Available: ${links.map(l => l.name).join(', ')}`);
+      // Open a suggestion anyway - first partial match
+      const partial = links.find(l => l.name.toLowerCase().includes(alias.toLowerCase()));
+      if (partial && partial.url) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs.length > 0) {
+            chrome.tabs.update(tabs[0].id, { url: partial.url });
+          } else {
+            chrome.tabs.create({ url: partial.url });
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.error('TabFlow omnibox navigation error:', err);
+  }
+});
+
 /* ---------- Keep service worker alive ---------- */
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TabFlow installed / updated.');
