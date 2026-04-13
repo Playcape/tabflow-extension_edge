@@ -241,6 +241,7 @@ let S = {
 };
 
 let openTabs = [];
+let loadTabsError = false;
 let dragData = null;
 let saveTimer = null;
 let snackTimer = null;
@@ -1070,9 +1071,15 @@ function onCardDragEnd(e) { e.currentTarget.classList.remove('dragging'); }
    OPEN TABS
    ============================================================ */
 async function loadOpenTabs() {
+  loadTabsError = false;
   try {
     if (typeof chrome !== 'undefined' && chrome.tabs) {
-      openTabs = await new Promise(res => chrome.tabs.query({}, tabs => res(tabs||[])));
+      openTabs = await new Promise((res, rej) => {
+        chrome.tabs.query({}, tabs => {
+          if (chrome.runtime.lastError) { rej(new Error(chrome.runtime.lastError.message)); }
+          else { res(tabs || []); }
+        });
+      });
     } else {
       // Demo data when not in extension
       openTabs = [
@@ -1083,13 +1090,29 @@ async function loadOpenTabs() {
         { id:5, windowId:2, title:'HN',      url:'https://news.ycombinator.com', favIconUrl:'' },
       ];
     }
-  } catch { openTabs = []; }
+  } catch (err) { console.error('TabFlow: failed to load open tabs:', err); openTabs = []; loadTabsError = true; }
   renderOpenTabs();
 }
 
 function renderOpenTabs() {
   const list = q('#open-tabs-list');
   list.innerHTML = '';
+
+  if (loadTabsError) {
+    const wrap = document.createElement('div');
+    wrap.className = 'tabs-error-state';
+    const msg = document.createElement('div');
+    msg.className = 'tabs-error-msg';
+    msg.textContent = 'Could not load open tabs.';
+    const btn = document.createElement('button');
+    btn.className = 'tabs-retry-btn';
+    btn.textContent = 'Try Again';
+    btn.addEventListener('click', loadOpenTabs);
+    wrap.appendChild(msg);
+    wrap.appendChild(btn);
+    list.appendChild(wrap);
+    return;
+  }
 
   if (!openTabs.length) {
     const e=document.createElement('div');
