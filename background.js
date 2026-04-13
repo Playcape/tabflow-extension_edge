@@ -4,6 +4,19 @@
    This runs as a service worker, active across ALL browser tabs.
    ================================================================ */
 
+/* ---------- URL safety ---------- */
+// Only allow navigation to safe protocols to prevent javascript:/data: injection.
+const SAFE_PROTOCOLS = new Set(['http:', 'https:', 'ftp:', 'ftps:', 'mailto:']);
+function safeUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return null;
+  try {
+    const parsed = new URL(rawUrl);
+    return SAFE_PROTOCOLS.has(parsed.protocol) ? rawUrl : null;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------- Domain matching ---------- */
 // Plain chrome.tabs.query({url: x}) requires match patterns.
 // Instead we query all tabs and compare manually.
@@ -83,7 +96,9 @@ chrome.commands.onCommand.addListener(async (command) => {
   const tab = await getTabForSlot(slot);
   if (!tab) return; // slot not assigned, do nothing
 
-  await focusOrOpen(tab.url);
+  const url = safeUrl(tab.url);
+  if (!url) return; // skip unsafe/invalid URLs
+  await focusOrOpen(url);
 });
 
 /* ---------- Link alias redirect via Omnibox (to <alias>) ---------- */
@@ -97,7 +112,7 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
     
     // Filter links that start with the user's input (case-insensitive)
     const suggestions = links
-      .filter(l => l.name.toLowerCase().startsWith(text.toLowerCase()))
+      .filter(l => l.name.toLowerCase().startsWith(text.toLowerCase()) && safeUrl(l.url))
       .map(l => ({
         content: l.name,
         description: `Open: ${l.name} → ${l.url}`
@@ -121,7 +136,7 @@ chrome.omnibox.onInputEntered.addListener(async (text) => {
     
     // Find exact match (case-insensitive)
     const link = links.find(l => l.name.toLowerCase() === alias.toLowerCase());
-    if (link && link.url) {
+    if (link && safeUrl(link.url)) {
       // Open in current tab or new tab
       await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
@@ -132,9 +147,9 @@ chrome.omnibox.onInputEntered.addListener(async (text) => {
       });
     } else {
       console.warn(`TabFlow: Alias "${alias}" not found. Available: ${links.map(l => l.name).join(', ')}`);
-      // Open a suggestion anyway - first partial match
-      const partial = links.find(l => l.name.toLowerCase().includes(alias.toLowerCase()));
-      if (partial && partial.url) {
+      // Open a suggestion anyway - first partial match with a safe URL
+      const partial = links.find(l => l.name.toLowerCase().includes(alias.toLowerCase()) && safeUrl(l.url));
+      if (partial) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs.length > 0) {
             chrome.tabs.update(tabs[0].id, { url: partial.url });

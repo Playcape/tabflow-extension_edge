@@ -339,6 +339,18 @@ function activeSpace() { return S.spaces.find(s=>s.id===S.activeSpaceId) || S.sp
 function viewMode() { const sp=activeSpace(); return sp ? (S.viewModes[sp.id]||'card') : 'card'; }
 function domain(url) { try { return new URL(url).hostname.replace(/^www\./,''); } catch { return ''; } }
 function favUrl(url) { const d=domain(url); return d ? `https://www.google.com/s2/favicons?domain=${d}&sz=32` : ''; }
+
+// Returns the URL unchanged if it uses an allowed protocol, otherwise returns null.
+const SAFE_PROTOCOLS = new Set(['http:', 'https:', 'ftp:', 'ftps:', 'mailto:']);
+function safeUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return null;
+  try {
+    const parsed = new URL(rawUrl);
+    return SAFE_PROTOCOLS.has(parsed.protocol) ? rawUrl : null;
+  } catch {
+    return null;
+  }
+}
 function findCol(cid) {
   for (const sp of S.spaces) {
     const c = (sp.collections||[]).find(c=>c.id===cid);
@@ -1237,7 +1249,7 @@ function renderLinks() {
   (S.links||[]).forEach((lnk,i) => {
     const row=document.createElement('div'); row.className='link-item';
     const nm=document.createElement('span'); nm.className='link-name'; nm.textContent=lnk.name;
-    nm.addEventListener('click',()=>{ try{window.open(lnk.url,'_blank')}catch{} });
+    nm.addEventListener('click',()=>{ const safe=safeUrl(lnk.url); if(safe) try{window.open(safe,'_blank')}catch{} });
     const url=document.createElement('span'); url.className='link-url'; url.textContent=lnk.url;
     const del=document.createElement('button'); del.className='link-del'; del.innerHTML=ic('x',11);
     del.addEventListener('click',()=>{ S.links.splice(i,1); scheduleSave(); renderLinks(); });
@@ -1248,9 +1260,11 @@ function renderLinks() {
 function addLink() {
   const n=q('#link-name-input').value.trim(), u=q('#link-url-input').value.trim();
   if(!n||!u){showSnack('Enter both name and URL.');return;}
-  const url=u.startsWith('http')?u:'https://'+u;
+  const normalized=safeUrl(u)?u:'https://'+u;
+  const safe=safeUrl(normalized);
+  if(!safe){showSnack('Invalid or unsafe URL. Only http, https, ftp, and mailto are allowed.');return;}
   if(!S.links) S.links=[];
-  S.links.push({id:uid(),name:n,url});
+  S.links.push({id:uid(),name:n,url:safe});
   q('#link-name-input').value=''; q('#link-url-input').value='';
   scheduleSave(); renderLinks();
 }
@@ -1265,7 +1279,7 @@ function renderNextItems() {
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
     cb.addEventListener('change',()=>{ S.nextItems[i].done=cb.checked; scheduleSave(); renderNextItems(); });
     const title=document.createElement('span'); title.className='next-title'; title.textContent=item.title; title.title=item.url||'';
-    if(item.url) title.addEventListener('click',()=>{ try{window.open(item.url,'_blank')}catch{} });
+    if(item.url) title.addEventListener('click',()=>{ const safe=safeUrl(item.url); if(safe) try{window.open(safe,'_blank')}catch{} });
     const del=document.createElement('button'); del.className='next-del'; del.innerHTML=ic('x',11);
     del.addEventListener('click',()=>{ S.nextItems.splice(i,1); scheduleSave(); renderNextItems(); });
     row.append(cb,title,del); el.appendChild(row);
@@ -1275,8 +1289,15 @@ function renderNextItems() {
 function addNext() {
   const t=q('#next-title-input').value.trim(), u=q('#next-url-input').value.trim();
   if(!t){showSnack('Enter a title.');return;}
+  let safeUrlVal='';
+  if(u){
+    const normalized=safeUrl(u)?u:'https://'+u;
+    const safe=safeUrl(normalized);
+    if(!safe){showSnack('Invalid or unsafe URL. Only http, https, ftp, and mailto are allowed.');return;}
+    safeUrlVal=safe;
+  }
   if(!S.nextItems) S.nextItems=[];
-  S.nextItems.push({id:uid(),title:t,url:u,done:false});
+  S.nextItems.push({id:uid(),title:t,url:safeUrlVal,done:false});
   q('#next-title-input').value=''; q('#next-url-input').value='';
   scheduleSave(); renderNextItems();
 }
@@ -1766,6 +1787,16 @@ function importData(file) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.spaces || !Array.isArray(data.spaces)) { showSnack('Invalid backup file.'); return; }
+      // Sanitize all URLs in imported spaces to prevent unsafe protocol injection
+      data.spaces.forEach(sp => {
+        (sp.collections || []).forEach(col => {
+          (col.tabs || []).forEach(tab => {
+            tab.url = safeUrl(tab.url) || '';
+          });
+        });
+      });
+      (data.links || []).forEach(lnk => { lnk.url = safeUrl(lnk.url) || ''; });
+      (data.nextItems || []).forEach(item => { item.url = safeUrl(item.url) || ''; });
       S.spaces = data.spaces;
       S.links = data.links || [];
       S.nextItems = data.nextItems || [];

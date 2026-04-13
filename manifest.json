@@ -14,6 +14,9 @@
   "action": {
     "default_title": "TabFlow"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://www.google.com data:; connect-src 'none';"
+  },
   "commands": {
     "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: Hotkey slot 1" },
     "tabflow-slot-2": { "suggested_key": { "default": "Alt+2" }, "description": "TabFlow: Hotkey slot 2" },
