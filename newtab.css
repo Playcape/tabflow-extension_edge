@@ -354,13 +354,6 @@ mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;
 .tab-card[draggable="true"]:active{cursor:grabbing}
 .tab-card.dragging{opacity:.4;border-color:var(--accent)}
 
-.drag-handle{
-  position:absolute;top:6px;left:4px;opacity:0;color:var(--text-faint);
-  transition:opacity var(--tr);pointer-events:none;
-}
-.tab-card:hover .drag-handle{opacity:1}
-.drag-handle svg{width:11px;height:11px}
-
 .card-remove{
   position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:4px;
   display:flex;align-items:center;justify-content:center;

@@ -727,11 +727,6 @@ function buildCard(tab, col, sp) {
     try { window.open(tab.url, '_blank'); } catch {}
   });
 
-  // drag handle
-  const dh = document.createElement('span');
-  dh.className = 'drag-handle';
-  dh.innerHTML = ic('grip-vertical', 11);
-
   // remove btn
   const rm = document.createElement('button');
   rm.className = 'card-remove';
@@ -798,7 +793,6 @@ function buildCard(tab, col, sp) {
     favRow.appendChild(badge);
   }
 
-  card.appendChild(dh);
   card.appendChild(rm);
   card.appendChild(body);
   card.appendChild(acts);
