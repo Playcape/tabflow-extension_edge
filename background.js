@@ -4,19 +4,38 @@
    This runs as a service worker, active across ALL browser tabs.
    ================================================================ */
 
-/* ---------- URL matching ---------- */
+/* ---------- Domain matching ---------- */
 // Plain chrome.tabs.query({url: x}) requires match patterns.
 // Instead we query all tabs and compare manually.
-function urlsMatch(a, b) {
-  if (!a || !b) return false;
-  if (a === b) return true;
+function topLevelDomain(rawUrl) {
+  if (!rawUrl) return '';
   try {
-    const pa = new URL(a);
-    const pb = new URL(b);
-    // Match on protocol + host + pathname (ignore query/hash)
-    const norm = u => u.protocol + '//' + u.hostname + u.pathname.replace(/\/$/, '');
-    return norm(pa) === norm(pb);
-  } catch { return false; }
+    const host = new URL(rawUrl).hostname.toLowerCase().replace(/^www\./, '');
+    const parts = host.split('.').filter(Boolean);
+    if (parts.length <= 2) return host;
+
+    // Handle common multi-part country suffixes (e.g. example.co.uk).
+    const multiPartSuffixes = new Set([
+      'co.uk', 'org.uk', 'gov.uk', 'ac.uk',
+      'com.au', 'net.au', 'org.au',
+      'co.jp', 'ne.jp', 'or.jp',
+      'com.br', 'com.mx', 'com.tr',
+    ]);
+    const last2 = parts.slice(-2).join('.');
+    if (multiPartSuffixes.has(last2) && parts.length >= 3) {
+      return parts.slice(-3).join('.');
+    }
+
+    return last2;
+  } catch {
+    return '';
+  }
+}
+
+function urlsMatch(a, b) {
+  const da = topLevelDomain(a);
+  const db = topLevelDomain(b);
+  return !!da && da === db;
 }
 
 /* ---------- Core: focus existing tab or open new one ---------- */
