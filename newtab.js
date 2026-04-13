@@ -706,7 +706,7 @@ function renderSpaces() {
     const dot = document.createElement('div');
     dot.className = 'space-dot';
     if (sp.color) dot.style.background = sp.color;
-    if (sp.icon) { dot.textContent = sp.icon; dot.style.background = 'none'; dot.style.width = 'auto'; dot.style.height = 'auto'; dot.style.fontSize = '14px'; }
+    if (sp.icon) { dot.className = 'space-dot space-icon'; dot.textContent = sp.icon; }
 
     const nm = document.createElement('span');
     nm.className = 'space-name';
@@ -1232,8 +1232,11 @@ function openSpaceCustomize(spId) {
 function renderScColors() {
   const colorRow = q('#sc-color-row');
   colorRow.querySelectorAll('.sc-swatch').forEach(sw => {
-    const isNone = sw.classList.contains('sc-swatch-none');
-    sw.classList.toggle('selected', isNone ? !scColor : sw.style.background && hexFromRgb(sw.style.background) === scColor);
+    if (sw.classList.contains('sc-swatch-none')) {
+      sw.classList.toggle('selected', !scColor);
+    } else {
+      sw.classList.toggle('selected', hexFromRgb(sw.style.background) === scColor);
+    }
   });
 }
 
@@ -1245,10 +1248,12 @@ function renderScEmojis() {
   });
 }
 
+/* Convert a CSS rgb() or rgba() string to a 6-digit hex string (#rrggbb). Returns
+   the input unchanged if it doesn't match the expected format. */
 function hexFromRgb(rgb) {
   const m = rgb.match(/\d+/g);
   if (!m || m.length < 3) return rgb;
-  return '#' + m.slice(0,3).map(v => parseInt(v).toString(16).padStart(2,'0')).join('');
+  return '#' + m.slice(0, 3).map(v => parseInt(v).toString(16).padStart(2, '0')).join('');
 }
 
 function saveSpaceCustomize() {

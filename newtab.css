@@ -1240,6 +1240,16 @@ body.anim-slow * { transition-duration: 400ms !important; }
 }
 .hotkey-badge:hover { background: rgba(var(--accent-rgb), .28); }
 
+/* Space icon (emoji) replaces the coloured dot */
+.space-icon {
+  background: none !important;
+  width: auto;
+  height: auto;
+  font-size: 14px;
+  line-height: 1;
+  min-width: 14px;
+}
+
 /* ================================================================
    BACKGROUND GRADIENT STYLES
    ================================================================ */
