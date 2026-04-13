@@ -236,7 +236,10 @@ input{font-family:inherit;color:inherit;font-size:inherit}
 mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;padding:0 1px}
 
 /* ===== COLLECTION ===== */
-.collection{display:flex;flex-direction:column}
+.collection{display:flex;flex-direction:column;border-top:2px solid transparent;border-bottom:2px solid transparent;transition:border-color 120ms ease,opacity 120ms ease}
+.collection.col-drop-before{border-top-color:var(--accent)}
+.collection.col-drop-after {border-bottom-color:var(--accent)}
+.collection.col-dragging   {opacity:0.4}
 .collection-header{
   display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:2px 0;user-select:none;
 }
@@ -278,6 +281,37 @@ mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;
 .col-actions{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity var(--tr)}
 .collection:hover .col-actions{opacity:1}
 .col-actions .icon-btn svg{width:13px;height:13px}
+.col-drag-handle{
+  display:flex;align-items:center;color:var(--text-faint);cursor:grab;
+  padding:2px 2px;border-radius:4px;flex-shrink:0;
+  transition:color var(--tr),background var(--tr);
+}
+.col-drag-handle:hover{color:var(--text-muted);background:var(--card-hover)}
+.col-drag-handle:active{cursor:grabbing}
+.col-drag-handle svg{pointer-events:none}
+
+/* ===== CARD EDIT MODAL ===== */
+.card-edit-fields{display:flex;flex-direction:column;gap:4px}
+.card-edit-label{font-size:11px;color:var(--text-muted);margin-top:6px}
+.card-edit-fields input{
+  background:var(--input-bg);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;color:var(--text);width:100%;
+  transition:border-color var(--tr);
+}
+.card-edit-fields input:focus{outline:none;border-color:var(--accent)}
+
+/* ===== SPACE PICKER ===== */
+.space-picker-list{display:flex;flex-direction:column;gap:4px;margin-bottom:4px}
+.space-picker-item{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:6px;
+  cursor:pointer;background:var(--card-hover);
+  transition:background var(--tr),color var(--tr);font-size:13px;
+}
+.space-picker-item:hover{background:var(--accent);color:#fff}
+.space-picker-item .space-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;
+}
+.space-picker-item:hover .space-dot{background:#fff}
 
 /* ===== DROP ZONE ===== */
 .drop-zone{

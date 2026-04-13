@@ -357,6 +357,7 @@
 
 <div id="context-menu" class="context-menu" style="display:none">
   <button class="context-item" id="ctx-rename">Rename</button>
+  <button class="context-item" id="ctx-move-space" style="display:none">Move to space…</button>
   <button class="context-item danger" id="ctx-delete">Delete</button>
 </div>
 
@@ -382,6 +383,34 @@
 </div>
 
 <div id="snackbar" class="snackbar" style="display:none"></div>
+
+<!-- Card edit modal -->
+<div id="card-edit-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal">
+    <div class="hotkey-modal-title">Edit Tab</div>
+    <div class="card-edit-fields">
+      <label class="card-edit-label">Title</label>
+      <input type="text" id="card-edit-title" placeholder="Tab title…" />
+      <label class="card-edit-label">URL</label>
+      <input type="text" id="card-edit-url" placeholder="https://…" />
+    </div>
+    <div class="hotkey-actions">
+      <button id="card-edit-cancel" class="settings-btn">Cancel</button>
+      <button id="card-edit-save" class="settings-btn accent-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Space picker modal -->
+<div id="space-picker-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal">
+    <div class="hotkey-modal-title">Move Collection to Space</div>
+    <div id="space-picker-list" class="space-picker-list"></div>
+    <div class="hotkey-actions">
+      <button id="space-picker-cancel" class="settings-btn">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script src="icons.js"></script>
 <script src="newtab.js"></script>
