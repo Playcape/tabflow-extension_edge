@@ -12,7 +12,12 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "TabFlow"
+    "default_title": "TabFlow",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "commands": {
     "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: Hotkey slot 1" },
