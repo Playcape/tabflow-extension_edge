@@ -115,6 +115,7 @@
         <button class="stab" data-stab="layout">Layout</button>
         <button class="stab" data-stab="effects">Effects</button>
         <button class="stab" data-stab="backup">Backup</button>
+        <button class="stab" data-stab="advanced">Advanced</button>
       </div>
 
       <!-- APPEARANCE -->
@@ -149,6 +150,31 @@
           <div class="custom-accent-row">
             <label class="settings-row-label" for="custom-accent-input">Custom</label>
             <input type="color" id="custom-accent-input" class="color-picker-input" value="#7c6af5" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Background Style</div>
+          <div class="pill-row" id="bgstyle-pills">
+            <button class="pill" data-val="solid">Solid</button>
+            <button class="pill" data-val="gradient-diag">Diagonal</button>
+            <button class="pill" data-val="gradient-radial">Radial</button>
+            <button class="pill" data-val="gradient-sunset">Sunset</button>
+            <button class="pill" data-val="custom">Custom</button>
+          </div>
+          <div class="custom-accent-row" style="margin-top:10px">
+            <label class="settings-row-label" for="custom-bg-input">Custom BG Color</label>
+            <input type="color" id="custom-bg-input" class="color-picker-input" value="#000000" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Sidebar Style</div>
+          <div class="pill-row" id="sidebar-style-pills">
+            <button class="pill" data-val="default">Default</button>
+            <button class="pill" data-val="glass">Blurred Glass</button>
+            <button class="pill" data-val="bordered">Bordered</button>
+            <button class="pill" data-val="seamless">Seamless</button>
           </div>
         </div>
       </div>
@@ -224,6 +250,25 @@
             <button class="pill" data-val="grid">Grid</button>
           </div>
         </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Toolbar Style</div>
+          <div class="pill-row" id="toolbar-pills">
+            <button class="pill" data-val="default">Default</button>
+            <button class="pill" data-val="minimal">Minimal</button>
+            <button class="pill" data-val="floating">Floating</button>
+            <button class="pill" data-val="glass">Glass</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Card Density</div>
+          <div class="pill-row" id="density-pills">
+            <button class="pill" data-val="comfortable">Comfortable</button>
+            <button class="pill" data-val="cozy">Cozy</button>
+            <button class="pill" data-val="compact">Compact</button>
+          </div>
+        </div>
       </div>
 
       <!-- EFFECTS -->
@@ -263,6 +308,11 @@
             <button class="pill" data-val="grid">Grid</button>
             <button class="pill" data-val="noise">Noise</button>
             <button class="pill" data-val="topography">Lines</button>
+            <button class="pill" data-val="hexagons">Hexagons</button>
+            <button class="pill" data-val="diamonds">Diamonds</button>
+            <button class="pill" data-val="crosshatch">Crosshatch</button>
+            <button class="pill" data-val="waves">Waves</button>
+            <button class="pill" data-val="circles">Circles</button>
           </div>
         </div>
         <div class="settings-section">
@@ -333,6 +383,19 @@
           </div>
         </div>
       </div>
+
+      <!-- ADVANCED -->
+      <div class="stab-panel" id="stab-advanced">
+        <div class="settings-section">
+          <div class="settings-section-title">Custom CSS</div>
+          <div class="settings-row-desc" style="margin-bottom:10px">Inject raw CSS to override any styles. Changes are applied immediately on Save and persisted across sessions.</div>
+          <textarea id="custom-css-input" class="custom-css-textarea" placeholder="/* your custom CSS */&#10;.tab-card { border-radius: 0; }&#10;#sidebar { font-size: 12px; }"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+            <button id="btn-clear-css" class="settings-btn danger">Clear</button>
+            <button id="btn-apply-css" class="settings-btn accent-save">Apply</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -357,6 +420,19 @@
 
 <div id="context-menu" class="context-menu" style="display:none">
   <button class="context-item" id="ctx-rename">Rename</button>
+  <button class="context-item" id="ctx-color" style="display:none">Color…</button>
+  <div id="ctx-color-picker" class="ctx-color-picker" style="display:none">
+    <button class="ctx-cp-swatch ctx-cp-none" data-color="" title="None">✕</button>
+    <button class="ctx-cp-swatch" data-color="red"    style="background:#f87171" title="Red"></button>
+    <button class="ctx-cp-swatch" data-color="orange" style="background:#fb923c" title="Orange"></button>
+    <button class="ctx-cp-swatch" data-color="yellow" style="background:#facc15" title="Yellow"></button>
+    <button class="ctx-cp-swatch" data-color="green"  style="background:#4ade80" title="Green"></button>
+    <button class="ctx-cp-swatch" data-color="cyan"   style="background:#22d3ee" title="Cyan"></button>
+    <button class="ctx-cp-swatch" data-color="blue"   style="background:#60a5fa" title="Blue"></button>
+    <button class="ctx-cp-swatch" data-color="purple" style="background:#a78bfa" title="Purple"></button>
+    <button class="ctx-cp-swatch" data-color="pink"   style="background:#f472b6" title="Pink"></button>
+  </div>
+  <button class="context-item" id="ctx-customize" style="display:none">Customize…</button>
   <button class="context-item" id="ctx-move-space" style="display:none">Move to space…</button>
   <button class="context-item danger" id="ctx-delete">Delete</button>
 </div>
@@ -408,6 +484,25 @@
     <div id="space-picker-list" class="space-picker-list"></div>
     <div class="hotkey-actions">
       <button id="space-picker-cancel" class="settings-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Space customize modal -->
+<div id="space-customize-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal">
+    <div class="hotkey-modal-title">Customize Space</div>
+    <div class="sc-section">
+      <div class="sc-label">Dot Color</div>
+      <div class="sc-color-row" id="sc-color-row"></div>
+    </div>
+    <div class="sc-section">
+      <div class="sc-label">Icon</div>
+      <div class="sc-emoji-row" id="sc-emoji-row"></div>
+    </div>
+    <div class="hotkey-actions">
+      <button id="sc-cancel" class="settings-btn">Cancel</button>
+      <button id="sc-save" class="settings-btn accent-save">Apply</button>
     </div>
   </div>
 </div>
