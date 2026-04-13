@@ -245,7 +245,6 @@ let dragData = null;
 let saveTimer = null;
 let snackTimer = null;
 let undoBuf = null;
-let ctxTarget = null;
 let searchQ = '';
 
 /* ============================================================
@@ -510,10 +509,11 @@ function renderSpaces() {
     el.addEventListener('click', () => switchSpace(sp.id));
     el.addEventListener('contextmenu', e => {
       e.preventDefault();
-      showCtx(e.clientX, e.clientY, {
-        rename: () => editInline(nm, sp, 'name', renderSpaces),
-        delete: () => deleteSpace(sp.id),
-      });
+      showCtx(e.clientX, e.clientY, [
+        { label: 'Rename', action: () => editInline(nm, sp, 'name', renderSpaces) },
+        { separator: true },
+        { label: 'Delete', action: () => deleteSpace(sp.id), danger: true },
+      ]);
     });
     list.appendChild(el);
   });
@@ -612,9 +612,20 @@ function buildColEl(col, sp, vm) {
   const nameWrap = document.createElement('div');
   nameWrap.className = 'col-name-wrap';
   const nm = document.createElement('span');
-  nm.className = 'col-name';
+  nm.className = 'col-name' + (col.url ? ' col-name-linked' : '');
   nm.textContent = col.name;
-  nm.addEventListener('dblclick', () => editInline(nm, col, 'name', renderCollections));
+  if (col.url) {
+    nm.title = col.url;
+    nm.addEventListener('click', () => {
+      try {
+        const parsed = new URL(col.url);
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+          window.open(parsed.href, '_blank');
+        }
+      } catch {}
+    });
+  }
+  nm.addEventListener('dblclick', e => { e.preventDefault(); e.stopPropagation(); openColEditModal(col); });
   const restoreBtn = document.createElement('button');
   restoreBtn.className = 'col-restore-btn';
   restoreBtn.innerHTML = ic('refresh', 11) + ' Restore';
@@ -637,10 +648,23 @@ function buildColEl(col, sp, vm) {
   moreBtn.innerHTML = ic('more-horizontal', 13);
   moreBtn.addEventListener('click', e => {
     e.stopPropagation();
-    showCtx(e.clientX, e.clientY, {
-      rename: () => editInline(nm, col, 'name', renderCollections),
-      delete: () => deleteCol(sp.id, col.id),
-    });
+    const idx = sp.collections.indexOf(col);
+    const otherSpaces = S.spaces.filter(s => s.id !== sp.id);
+    const items = [
+      { label: 'Edit…', action: () => openColEditModal(col) },
+      { separator: true },
+      { label: '↑ Move Up',   action: () => moveColUp(sp.id, col.id),   disabled: idx === 0 },
+      { label: '↓ Move Down', action: () => moveColDown(sp.id, col.id), disabled: idx === sp.collections.length - 1 },
+    ];
+    if (otherSpaces.length) {
+      items.push({ separator: true });
+      otherSpaces.forEach(s => {
+        items.push({ label: `Move to "${s.name}"`, action: () => moveColToSpace(col.id, sp.id, s.id) });
+      });
+    }
+    items.push({ separator: true });
+    items.push({ label: 'Delete', action: () => deleteCol(sp.id, col.id), danger: true });
+    showCtx(e.clientX, e.clientY, items);
   });
   acts.appendChild(moreBtn);
 
@@ -797,13 +821,7 @@ function addCollection() {
   sp.collections.unshift(col);
   scheduleSave();
   renderCollections();
-  setTimeout(() => {
-    const el = q('.collection');
-    if (el) {
-      const nm = el.querySelector('.col-name');
-      if (nm) editInline(nm, col, 'name', renderCollections);
-    }
-  }, 30);
+  setTimeout(() => openColEditModal(col), 30);
 }
 
 function deleteCol(spId, colId) {
@@ -813,6 +831,67 @@ function deleteCol(spId, colId) {
   sp.collections.splice(idx,1);
   scheduleSave(); renderCollections();
   showSnack('Collection deleted.', true);
+}
+
+function moveColUp(spId, colId) {
+  const sp = S.spaces.find(s=>s.id===spId); if (!sp) return;
+  const idx = sp.collections.findIndex(c=>c.id===colId); if (idx <= 0) return;
+  [sp.collections[idx-1], sp.collections[idx]] = [sp.collections[idx], sp.collections[idx-1]];
+  scheduleSave(); renderCollections();
+}
+
+function moveColDown(spId, colId) {
+  const sp = S.spaces.find(s=>s.id===spId); if (!sp) return;
+  const idx = sp.collections.findIndex(c=>c.id===colId);
+  if (idx === -1 || idx >= sp.collections.length - 1) return;
+  [sp.collections[idx], sp.collections[idx+1]] = [sp.collections[idx+1], sp.collections[idx]];
+  scheduleSave(); renderCollections();
+}
+
+function moveColToSpace(colId, srcSpId, tgtSpId) {
+  const srcSp = S.spaces.find(s=>s.id===srcSpId); if (!srcSp) return;
+  const tgtSp = S.spaces.find(s=>s.id===tgtSpId); if (!tgtSp) return;
+  const idx = srcSp.collections.findIndex(c=>c.id===colId); if (idx===-1) return;
+  const [col] = srcSp.collections.splice(idx, 1);
+  if (!tgtSp.collections) tgtSp.collections = [];
+  tgtSp.collections.unshift(col);
+  scheduleSave(); renderCollections();
+  showSnack(`Moved "${col.name}" to "${tgtSp.name}".`);
+}
+
+function openColEditModal(col) {
+  q('#col-edit-name').value = col.name || '';
+  q('#col-edit-url').value = col.url || '';
+  q('#col-edit-overlay').style.display = 'flex';
+  q('#col-edit-name').focus();
+  q('#col-edit-name').select();
+
+  const doSave = () => {
+    const name = q('#col-edit-name').value.trim();
+    if (!name) return;
+    const urlRaw = q('#col-edit-url').value.trim();
+    col.name = name;
+    if (urlRaw) {
+      const normalized = urlRaw.startsWith('http') ? urlRaw : 'https://' + urlRaw;
+      try {
+        const parsed = new URL(normalized);
+        col.url = (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
+      } catch { col.url = ''; }
+    } else {
+      col.url = '';
+    }
+    scheduleSave();
+    renderCollections();
+    q('#col-edit-overlay').style.display = 'none';
+  };
+
+  const doCancel = () => { q('#col-edit-overlay').style.display = 'none'; };
+
+  q('#col-edit-save').onclick   = doSave;
+  q('#col-edit-cancel').onclick = doCancel;
+  q('#col-edit-name').onkeydown = e => { if (e.key==='Enter') doSave(); if (e.key==='Escape') doCancel(); };
+  q('#col-edit-url').onkeydown  = e => { if (e.key==='Enter') doSave(); if (e.key==='Escape') doCancel(); };
+  q('#col-edit-overlay').onclick = e => { if (e.target === q('#col-edit-overlay')) doCancel(); };
 }
 
 function restoreCollection(spId, colId) {
@@ -1902,18 +1981,34 @@ function resetSettings() {
 /* ============================================================
    CONTEXT MENU
    ============================================================ */
-function showCtx(x, y, { rename, delete: del }) {
-  ctxTarget = { rename, delete:del };
+function showCtx(x, y, items) {
   const menu = q('#context-menu');
+  menu.innerHTML = '';
+  items.forEach(item => {
+    if (item.separator) {
+      const sep = document.createElement('div');
+      sep.className = 'context-sep';
+      menu.appendChild(sep);
+      return;
+    }
+    const btn = document.createElement('button');
+    btn.className = 'context-item' +
+      (item.danger    ? ' danger'       : '') +
+      (item.disabled  ? ' ctx-disabled' : '');
+    btn.textContent = item.label;
+    if (!item.disabled) {
+      btn.addEventListener('click', e => { e.stopPropagation(); item.action(); hideCtx(); });
+    }
+    menu.appendChild(btn);
+  });
   menu.style.display = 'block';
-  const vw=window.innerWidth, vh=window.innerHeight;
-  menu.style.left = Math.min(x, vw-160) + 'px';
-  menu.style.top  = Math.min(y, vh-90)  + 'px';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  menu.style.left = Math.min(x, vw - 210) + 'px';
+  menu.style.top  = Math.min(y, vh - (items.length * 32 + 16)) + 'px';
 }
 
 function hideCtx() {
   q('#context-menu').style.display = 'none';
-  ctxTarget = null;
 }
 
 /* ============================================================
@@ -2098,14 +2193,10 @@ function bindEvents() {
     qa('.accent-swatch').forEach(sw=>sw.classList.remove('selected'));
   });
 
-  // Context menu
-  q('#ctx-rename').addEventListener('click', () => { if(ctxTarget?.rename){ctxTarget.rename();} hideCtx(); });
-  q('#ctx-delete').addEventListener('click', () => { if(ctxTarget?.delete){ctxTarget.delete();} hideCtx(); });
-
   // Close dropdowns on outside click
   document.addEventListener('click', e => {
     if (!e.target.closest('#view-dropdown')) q('#view-menu').classList.remove('open');
-    if (!e.target.closest('.context-menu') && !e.target.closest('.col-actions')) hideCtx();
+    if (!e.target.closest('.context-menu') && !e.target.closest('.col-actions') && !e.target.closest('.space-item')) hideCtx();
   });
 
   document.addEventListener('keydown', e => {

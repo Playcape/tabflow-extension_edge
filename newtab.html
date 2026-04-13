@@ -355,9 +355,25 @@
 <button id="right-panel-show-btn" class="right-show-btn" title="Show open tabs panel"></button>
 <button id="sidebar-show-btn" class="sidebar-show-btn" title="Show sidebar"></button>
 
-<div id="context-menu" class="context-menu" style="display:none">
-  <button class="context-item" id="ctx-rename">Rename</button>
-  <button class="context-item danger" id="ctx-delete">Delete</button>
+<div id="context-menu" class="context-menu" style="display:none"></div>
+
+<!-- Collection Edit Modal -->
+<div id="col-edit-overlay" class="col-edit-overlay" style="display:none">
+  <div class="col-edit-modal">
+    <div class="col-edit-title">Edit Collection</div>
+    <div class="col-edit-field">
+      <label class="col-edit-label">Name</label>
+      <input type="text" id="col-edit-name" placeholder="Collection name…" />
+    </div>
+    <div class="col-edit-field">
+      <label class="col-edit-label">URL <span class="col-edit-optional">(optional — makes name a link)</span></label>
+      <input type="text" id="col-edit-url" placeholder="https://…" />
+    </div>
+    <div class="col-edit-actions">
+      <button id="col-edit-cancel" class="settings-btn">Cancel</button>
+      <button id="col-edit-save" class="settings-btn accent-save">Save</button>
+    </div>
+  </div>
 </div>
 
 <!-- Hotkey capture overlay -->
