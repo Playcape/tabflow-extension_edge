@@ -412,6 +412,23 @@ mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;
 
 .col-empty{font-size:12px;color:var(--text-faint);padding:10px 4px;font-style:italic}
 
+/* ===== ADD TAB CARD ===== */
+.add-tab-card{
+  background:transparent;border:2px dashed var(--border);border-radius:var(--radius);
+  padding:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-faint);
+  opacity:0;
+  transition:opacity var(--tr),border-color var(--tr),background var(--tr),color var(--tr);
+  box-sizing:border-box;user-select:none;flex-shrink:0;min-height:50px;
+}
+.collection:hover .add-tab-card{opacity:1}
+.add-tab-card:hover{border-color:var(--accent);background:var(--card-hover);color:var(--accent)}
+.add-tab-card svg{width:18px;height:18px}
+.view-card .add-tab-card,.view-compact .add-tab-card{min-width:var(--card-min-w,140px)}
+.view-grid .add-tab-card{width:100px}
+.view-list .add-tab-card{width:100%;min-height:36px;padding:7px 12px}
+
 /* ===== RIGHT PANEL ===== */
 #right-panel{
   background:var(--sidebar-bg);border-left:1px solid var(--border);

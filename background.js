@@ -153,3 +153,35 @@ chrome.omnibox.onInputEntered.addListener(async (text) => {
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TabFlow installed / updated.');
 });
+
+/* ---------- Reuse existing TabFlow tab on new-tab open ---------- */
+chrome.tabs.onCreated.addListener(async (newTab) => {
+  try {
+    // Only intercept browser "new tab" opens (no explicit URL)
+    const pendingUrl = newTab.pendingUrl || newTab.url || '';
+    const isNewTab = !pendingUrl ||
+      pendingUrl === 'chrome://newtab/' ||
+      pendingUrl === 'edge://newtab/' ||
+      pendingUrl === 'about:newtab';
+    if (!isNewTab) return;
+
+    // Find an existing TabFlow tab in the same window
+    const allTabs = await chrome.tabs.query({ windowId: newTab.windowId });
+    const extensionUrl = chrome.runtime.getURL('newtab.html');
+    const existing = allTabs.find(t =>
+      t.id !== newTab.id &&
+      (t.url === extensionUrl || t.pendingUrl === extensionUrl)
+    );
+
+    if (existing) {
+      // Switch to the existing TabFlow tab and close the new one
+      await chrome.tabs.update(existing.id, { active: true });
+      await chrome.tabs.remove(newTab.id);
+      // Ask the existing TabFlow page to focus its search bar
+      chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' }).catch(err => console.debug('TabFlow focusSearch message failed:', err));
+    }
+    // If no existing TabFlow tab, let the new tab load normally
+  } catch (err) {
+    console.error('TabFlow onCreated handler error:', err);
+  }
+});
