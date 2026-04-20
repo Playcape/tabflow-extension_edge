@@ -157,17 +157,20 @@ chrome.runtime.onInstalled.addListener(() => {
 /* ---------- Reuse existing TabFlow tab on new-tab open ---------- */
 chrome.tabs.onCreated.addListener(async (newTab) => {
   try {
-    // Only intercept browser "new tab" opens (no explicit URL)
+    const extensionUrl = chrome.runtime.getURL('newtab.html');
+    // Only intercept browser "new tab" opens (no explicit URL).
+    // In Edge/Chrome the pendingUrl may be set directly to the extension URL
+    // when the extension overrides the new-tab page, so we must include it.
     const pendingUrl = newTab.pendingUrl || newTab.url || '';
     const isNewTab = !pendingUrl ||
       pendingUrl === 'chrome://newtab/' ||
       pendingUrl === 'edge://newtab/' ||
-      pendingUrl === 'about:newtab';
+      pendingUrl === 'about:newtab' ||
+      pendingUrl === extensionUrl;
     if (!isNewTab) return;
 
     // Find an existing TabFlow tab in the same window
     const allTabs = await chrome.tabs.query({ windowId: newTab.windowId });
-    const extensionUrl = chrome.runtime.getURL('newtab.html');
     const existing = allTabs.find(t =>
       t.id !== newTab.id &&
       (t.url === extensionUrl || t.pendingUrl === extensionUrl)
