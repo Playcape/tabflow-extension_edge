@@ -450,6 +450,7 @@ let openTabs = [];
 let dragData = null;
 let colDropTarget = null; // { colId, before: boolean } — for collection reordering
 let cardEditState = null; // { tab, col, sp } — for card edit modal
+let cardAddState  = null; // { col, sp } — for add-tab modal
 let saveTimer = null;
 let snackTimer = null;
 let undoBuf = null;
@@ -919,6 +920,13 @@ function buildColEl(col, sp, vm) {
     } else {
       col.tabs.forEach(tab => cw.appendChild(buildCard(tab, col, sp)));
     }
+    // Plus card — visible on collection hover, opens add-tab modal
+    const addCard = document.createElement('div');
+    addCard.className = 'add-tab-card';
+    addCard.title = 'Add tab to collection';
+    addCard.innerHTML = ic('plus', 18);
+    addCard.addEventListener('click', () => openAddTabModal(col, sp));
+    cw.appendChild(addCard);
   }
   dz.appendChild(cw);
   el.appendChild(hdr);
@@ -1122,13 +1130,38 @@ function removeTab(spId, colId, tabId) {
    ============================================================ */
 function openCardEditModal(tab, col, sp) {
   cardEditState = { tab, col, sp };
+  cardAddState  = null;
+  const titleEl = q('#card-edit-overlay-title');
+  if (titleEl) titleEl.textContent = 'Edit Tab';
   q('#card-edit-title').value = tab.title || '';
   q('#card-edit-url').value = tab.url || '';
   q('#card-edit-overlay').style.display = 'flex';
   setTimeout(() => { q('#card-edit-title').focus(); q('#card-edit-title').select(); }, 30);
 }
 
+function openAddTabModal(col, sp) {
+  cardAddState  = { col, sp };
+  cardEditState = null;
+  const titleEl = q('#card-edit-overlay-title');
+  if (titleEl) titleEl.textContent = 'Add Tab';
+  q('#card-edit-title').value = '';
+  q('#card-edit-url').value = '';
+  q('#card-edit-overlay').style.display = 'flex';
+  setTimeout(() => { q('#card-edit-title').focus(); }, 30);
+}
+
 function saveCardEdit() {
+  if (cardAddState) {
+    const title  = q('#card-edit-title').value.trim();
+    const rawUrl = q('#card-edit-url').value.trim();
+    if (!title && !rawUrl) { showSnack('Enter a title and/or URL.'); return; }
+    const url = rawUrl ? (/^https?:\/\//i.test(rawUrl) ? rawUrl : 'https://' + rawUrl) : '';
+    const fallbackTitle = url ? (domain(url) || url) : 'New Tab';
+    addTabToCol(cardAddState.sp.id, cardAddState.col.id, { title: title || fallbackTitle, url });
+    showSnack('Tab added!');
+    closeCardEditModal();
+    return;
+  }
   if (!cardEditState) return;
   const { tab } = cardEditState;
   const title = q('#card-edit-title').value.trim();
@@ -1143,6 +1176,7 @@ function saveCardEdit() {
 function closeCardEditModal() {
   q('#card-edit-overlay').style.display = 'none';
   cardEditState = null;
+  cardAddState  = null;
 }
 
 /* ============================================================
@@ -1971,7 +2005,7 @@ function applyCardGap(g) {
 
 function applyCardMinWidth(w) {
   document.documentElement.style.setProperty('--card-min-w', w + 'px');
-  document.querySelectorAll('.tab-card').forEach(el => {
+  document.querySelectorAll('.tab-card, .add-tab-card').forEach(el => {
     if (!el.closest('.view-list')) el.style.minWidth = w + 'px';
   });
 }
@@ -2734,6 +2768,16 @@ function bindEvents() {
 
   // Global drag target on collections-area
   q('#collections-area').addEventListener('dragover', e => { if(dragData) e.preventDefault(); });
+
+  // Listen for focusSearch message from background (sent when an existing TabFlow tab is reused)
+  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    chrome.runtime.onMessage.addListener(msg => {
+      if (msg?.type === 'focusSearch') {
+        const si = q('#search-input');
+        if (si) { si.focus(); si.select(); }
+      }
+    });
+  }
 }
 
 /* ============================================================
