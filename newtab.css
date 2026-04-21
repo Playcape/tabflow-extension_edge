@@ -297,7 +297,7 @@ mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;
   background:rgba(var(--accent-rgb),.12);color:var(--accent);
   font-size:10px;font-weight:600;letter-spacing:.2px;text-transform:uppercase;
   transition:background var(--tr),color var(--tr),border-color var(--tr),transform var(--tr),opacity var(--tr);
-  flex-shrink:0;
+  flex-shrink:0;margin-left:auto;
   opacity:0;pointer-events:none;
 }
 .collection:hover .col-restore-btn{opacity:1;pointer-events:auto}
@@ -1654,13 +1654,33 @@ body.sidebar-seamless #sidebar {
   position: absolute;
   top: 5px;
   left: 5px;
-  width: 14px;
-  height: 14px;
-  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
   opacity: 0;
   transition: opacity var(--tr);
   z-index: 5;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 4px;
+  background: var(--card-bg);
+  flex-shrink: 0;
+}
+.card-select-cb:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.card-select-cb:checked::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 7px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+  margin: 1px 0 0 4px;
 }
 .tab-card:hover .card-select-cb,
 .tab-card.selected-multi .card-select-cb {
@@ -1670,25 +1690,6 @@ body.sidebar-seamless #sidebar {
 /* ================================================================
    COLLECTION DESCRIPTION (item 50)
    ================================================================ */
-.col-desc {
-  font-size: 11px;
-  color: var(--text-faint);
-  padding: 2px 0 6px 4px;
-  font-style: italic;
-  outline: none;
-}
-.col-desc:empty::before {
-  content: attr(data-placeholder);
-  color: var(--text-faint);
-  opacity: .5;
-}
-.col-desc[contenteditable="true"] {
-  background: var(--card-bg);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 4px 6px;
-}
-
 /* ================================================================
    SORT MENU (item 51)
    ================================================================ */

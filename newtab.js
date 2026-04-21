@@ -916,8 +916,8 @@ function buildColEl(col, sp, vm) {
   cnt.className = 'col-count';
   cnt.textContent = (col.tabs||[]).length;
   nameWrap.appendChild(nm);
-  nameWrap.appendChild(restoreBtn);
   nameWrap.appendChild(cnt);
+  nameWrap.appendChild(restoreBtn);
 
   const acts = document.createElement('div');
   acts.className = 'col-actions';
@@ -1002,26 +1002,7 @@ function buildColEl(col, sp, vm) {
   dz.dataset.colId = col.id;
   dz.dataset.spId = sp.id;
 
-  // item 50: collection description (editable, shown below header)
-  const desc = document.createElement('div');
-  desc.className = 'col-desc';
-  desc.dataset.placeholder = 'Add description…';
-  desc.textContent = col.desc || '';
-  desc.contentEditable = 'false';
-  desc.addEventListener('dblclick', () => {
-    desc.contentEditable = 'true';
-    desc.focus();
-    if (!col.desc) { const r = document.createRange(); r.selectNodeContents(desc); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
-  });
-  const saveDesc = () => {
-    desc.contentEditable = 'false';
-    col.desc = desc.textContent.trim();
-    scheduleSave();
-  };
-  desc.addEventListener('blur', saveDesc);
-  desc.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveDesc(); } if (e.key === 'Escape') { desc.textContent = col.desc || ''; saveDesc(); } });
   el.appendChild(hdr);
-  el.appendChild(desc);
 
   const cw = document.createElement('div');
   cw.className = 'cards-wrap';
