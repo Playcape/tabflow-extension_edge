@@ -80,6 +80,11 @@
     </div>
 
     <div id="view-collections" class="view-panel active">
+      <div id="clock-widget" class="clock-widget hidden">
+        <div id="clock-time"></div>
+        <div id="clock-date"></div>
+        <div id="clock-greeting"></div>
+      </div>
       <div id="collections-area"></div>
     </div>
 
@@ -269,6 +274,13 @@
             <button class="pill" data-val="compact">Compact</button>
           </div>
         </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Clock Widget</div>
+          <div class="pill-row" id="clock-pills">
+            <button class="pill" data-val="off">Off</button>
+            <button class="pill" data-val="on">On</button>
+          </div>
+        </div>
       </div>
 
       <!-- EFFECTS -->
@@ -336,6 +348,38 @@
 
       <!-- BACKUP -->
       <div class="stab-panel" id="stab-backup">
+        <div class="settings-section">
+          <div class="settings-section-title">Storage Status</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Current storage</div>
+              <div class="settings-row-desc">Where your data lives</div>
+            </div>
+            <span id="sync-status-badge" class="sync-status-badge local">Local</span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Workspace Snapshots</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Save snapshot</div>
+              <div class="settings-row-desc">Capture the current state of all spaces and collections</div>
+            </div>
+            <button id="btn-save-snapshot" class="settings-btn">Save Snapshot</button>
+          </div>
+          <div id="snapshots-list" style="margin-top:8px"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Import from Bookmarks</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Browser bookmarks</div>
+              <div class="settings-row-desc">Import a bookmark folder as a new collection</div>
+            </div>
+            <button id="btn-browse-bookmarks" class="settings-btn">Browse Bookmarks</button>
+          </div>
+          <div id="bookmarks-folder-list" style="margin-top:8px"></div>
+        </div>
         <div class="settings-section">
           <div class="settings-section-title">Edge / Chrome Homepage</div>
           <div class="settings-row">
@@ -405,12 +449,20 @@
     <div class="right-panel-header">
       <span class="right-panel-title">Open Tabs</span>
       <div class="right-panel-actions">
+        <button id="btn-add-current-tab" title="Add active tab to a collection"></button>
         <button id="btn-refresh-tabs" class="icon-btn" title="Refresh open tabs"></button>
         <button id="btn-save-session" class="icon-btn" title="Save all tabs as collection"></button>
         <button id="btn-right-toggle" class="icon-btn" title="Hide panel"></button>
       </div>
     </div>
     <div id="open-tabs-list"></div>
+    <div id="recently-closed-section">
+      <div class="recently-closed-hdr">
+        <span>Recently Closed</span>
+        <button id="btn-rc-refresh" class="icon-btn small" title="Refresh recently closed"></button>
+      </div>
+      <div class="recently-closed-list" id="recently-closed-list"></div>
+    </div>
   </aside>
 
 </div>
@@ -469,6 +521,10 @@
       <input type="text" id="card-edit-title" placeholder="Tab title…" />
       <label class="card-edit-label">URL</label>
       <input type="text" id="card-edit-url" placeholder="https://…" />
+      <label class="card-edit-label" id="card-edit-note-label">Note</label>
+      <textarea id="card-edit-note-input" class="card-edit-note" placeholder="Optional note…"></textarea>
+      <label class="card-edit-label" id="card-edit-tags-label">Tags <span style="font-weight:400;opacity:.6">(comma separated)</span></label>
+      <input type="text" id="card-edit-tags-input" class="card-edit-tags-input" placeholder="work, read-later, …" />
     </div>
     <div class="hotkey-actions">
       <button id="card-edit-cancel" class="settings-btn">Cancel</button>
@@ -503,6 +559,18 @@
     <div class="hotkey-actions">
       <button id="sc-cancel" class="settings-btn">Cancel</button>
       <button id="sc-save" class="settings-btn accent-save">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add current tab → collection picker modal -->
+<div id="add-to-col-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal">
+    <div class="hotkey-modal-title">Add Tab to Collection</div>
+    <div id="add-to-col-info" style="font-size:12px;color:var(--text-muted);padding:4px 0 8px;word-break:break-all"></div>
+    <div id="add-to-col-list" style="max-height:280px;overflow-y:auto;margin:0 0 8px"></div>
+    <div class="hotkey-actions">
+      <button id="add-to-col-cancel" class="settings-btn">Cancel</button>
     </div>
   </div>
 </div>
