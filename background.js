@@ -119,7 +119,7 @@ chrome.omnibox.onInputEntered.addListener(async (text) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('TabFlow installed / updated.');
   // item 63: recurring alarm keeps the service worker from being evicted
-  chrome.alarms.create('tabflow-keepalive', { periodInMinutes: 0.4 });
+  chrome.alarms.create('tabflow-keepalive', { periodInMinutes: 1 });
   // item 52: mark first run so newtab.js can auto-detect prefers-color-scheme
   if (details.reason === 'install') {
     await chrome.storage.local.set({ tabflow_first_run: true });

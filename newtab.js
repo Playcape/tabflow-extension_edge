@@ -730,8 +730,11 @@ function renderSpaces() {
     dh.innerHTML = ic('grip-vertical', 10);
     dh.title = 'Drag to reorder';
     let spDhActive = false;
-    dh.addEventListener('mousedown', e => { e.stopPropagation(); spDhActive = true; });
-    document.addEventListener('mouseup', () => { spDhActive = false; }, { once: false });
+    dh.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      spDhActive = true;
+      document.addEventListener('mouseup', () => { spDhActive = false; }, { once: true });
+    });
 
     el.draggable = true;
     el.addEventListener('dragstart', e => {
@@ -951,6 +954,7 @@ function buildColEl(col, sp, vm) {
       delete: () => deleteCol(sp.id, col.id),
       moveToSpace: S.spaces.length > 1 ? () => openSpacePicker(col.id, sp.id) : null,
       color: (c) => { if (c) col.color = c; else delete col.color; scheduleSave(); renderCollections(); },
+      tabGroup: () => openAsTabGroup(col),
     });
   });
   acts.appendChild(moreBtn);
@@ -1134,11 +1138,13 @@ function rebuildContextMenu() {
     </div>
     <button class="context-item" id="ctx-customize" style="display:none">Customize…</button>
     <button class="context-item" id="ctx-move-space" style="display:none">Move to space…</button>
+    <button class="context-item" id="ctx-tab-group" style="display:none">Open as Tab Group</button>
     <button class="context-item danger" id="ctx-delete">Delete</button>`;
   // Re-bind context-menu events
   q('#ctx-rename').addEventListener('click', () => { if(ctxTarget?.rename){ctxTarget.rename();} hideCtx(); });
   q('#ctx-move-space').addEventListener('click', () => { if(ctxTarget?.moveToSpace){ctxTarget.moveToSpace();} hideCtx(); });
   q('#ctx-delete').addEventListener('click', () => { if(ctxTarget?.delete){ctxTarget.delete();} hideCtx(); });
+  q('#ctx-tab-group').addEventListener('click', () => { if(ctxTarget?.tabGroup){ctxTarget.tabGroup();} hideCtx(); });
   q('#ctx-color').addEventListener('click', () => { const ccp=q('#ctx-color-picker'); if(ccp) ccp.style.display=ccp.style.display==='flex'?'none':'flex'; });
   q('#ctx-color-picker').addEventListener('click', e => { const sw=e.target.closest('.ctx-cp-swatch'); if(!sw) return; if(ctxTarget?.color) ctxTarget.color(sw.dataset.color||undefined); hideCtx(); });
   q('#ctx-customize').addEventListener('click', () => { if(ctxTarget?.customize){ctxTarget.customize();} hideCtx(); });
@@ -2285,8 +2291,9 @@ function renderNextItems() {
       const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
       if (isNaN(fromIdx) || fromIdx === i) return;
       const [moved] = S.nextItems.splice(fromIdx, 1);
-      const toIdx = S.nextItems.findIndex((_,idx) => idx === (fromIdx < i ? i - 1 : i));
-      S.nextItems.splice(fromIdx < i ? i : i, 0, moved);
+      // After splicing, `i` may have shifted down by 1 if fromIdx < i
+      const insertAt = fromIdx < i ? i - 1 : i;
+      S.nextItems.splice(insertAt, 0, moved);
       scheduleSave(); renderNextItems();
     });
 
@@ -2550,7 +2557,7 @@ function startClock() {
     }
   };
   tick();
-  clockInterval = setInterval(tick, 10000);
+  clockInterval = setInterval(tick, 1000);
 }
 
 function stopClock() {
@@ -3089,14 +3096,16 @@ function resetSettings() {
 /* ============================================================
    CONTEXT MENU
    ============================================================ */
-function showCtx(x, y, { rename, delete: del, moveToSpace, color, customize }) {
-  ctxTarget = { rename, delete:del, moveToSpace, color, customize };
+function showCtx(x, y, { rename, delete: del, moveToSpace, color, customize, tabGroup }) {
+  ctxTarget = { rename, delete:del, moveToSpace, color, customize, tabGroup };
   const moveBtn = q('#ctx-move-space');
   if (moveBtn) moveBtn.style.display = moveToSpace ? 'flex' : 'none';
   const colorBtn = q('#ctx-color');
   if (colorBtn) colorBtn.style.display = color ? 'flex' : 'none';
   const customizeBtn = q('#ctx-customize');
   if (customizeBtn) customizeBtn.style.display = customize ? 'flex' : 'none';
+  const tabGroupBtn = q('#ctx-tab-group');
+  if (tabGroupBtn) tabGroupBtn.style.display = tabGroup ? 'flex' : 'none';
   // hide sub-picker when re-opening
   const ccp = q('#ctx-color-picker');
   if (ccp) ccp.style.display = 'none';
@@ -3411,6 +3420,7 @@ function bindEvents() {
     hideCtx();
   });
   q('#ctx-customize').addEventListener('click', () => { if(ctxTarget?.customize){ctxTarget.customize();} hideCtx(); });
+  q('#ctx-tab-group').addEventListener('click', () => { if(ctxTarget?.tabGroup){ctxTarget.tabGroup();} hideCtx(); });
 
   // Card edit modal
   q('#card-edit-save').addEventListener('click', saveCardEdit);
