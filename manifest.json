@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "TabFlow — Tab Manager",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A beautiful new tab manager with spaces, collections, drag & drop, and hotkeys.",
-  "permissions": ["tabs", "storage", "windows", "webNavigation"],
+  "permissions": ["tabs", "storage", "windows", "webNavigation", "alarms", "bookmarks", "sessions", "sidePanel"],
   "omnibox": { "keyword": "to" },
   "chrome_url_overrides": {
     "newtab": "newtab.html"
@@ -13,11 +13,18 @@
   },
   "action": {
     "default_title": "TabFlow",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "newtab.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "commands": {
     "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: Hotkey slot 1" },

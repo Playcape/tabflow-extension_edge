@@ -456,6 +456,10 @@ let snackTimer = null;
 let undoBuf = null;
 let ctxTarget = null;
 let searchQ = '';
+let multiSelectMode = false;
+let selectedCardIds = new Set(); // Set of tabIds currently selected
+let clockInterval  = null;        // setInterval handle for clock widget
+let pendingAddTab  = null;        // { title, url } — tab awaiting collection pick
 
 /* ============================================================
    ID / DEFAULTS
@@ -521,6 +525,7 @@ function scheduleSave() {
       sidebarOpen: S.sidebarOpen,
       rightPanelOpen: S.rightPanelOpen,
       dndEnabled: S.dndEnabled,
+      showClock: S.showClock,
     });
   }, 300);
 }
@@ -533,6 +538,19 @@ async function loadData() {
   }
   // Merge defaults first, then override with stored values
   Object.assign(S, SETTING_DEFAULTS, d);
+
+  // item 52: On very first install, auto-detect prefers-color-scheme
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      const fr = await new Promise(res => chrome.storage.local.get('tabflow_first_run', res));
+      if (fr.tabflow_first_run) {
+        if (!window.matchMedia('(prefers-color-scheme: dark)').matches) S.theme = 'light';
+        chrome.storage.local.remove('tabflow_first_run');
+        scheduleSave();
+      }
+    }
+  } catch {}
+
   // ensure IDs
   S.spaces.forEach(sp => {
     if (!sp.id) sp.id = uid();
@@ -649,6 +667,8 @@ function initStaticIcons() {
   setIcon(q('#btn-refresh-tabs'),  'refresh', 14);
   setIcon(q('#btn-save-session'),  'download', 14);
   setIcon(q('#btn-right-toggle'),  'panel-right', 14);
+  setIcon(q('#btn-add-current-tab'), 'plus-circle', 14);
+  setIcon(q('#btn-rc-refresh'), 'refresh', 11);
   // Right show btn
   setIcon(q('#right-panel-show-btn'), 'panel-right', 13);
   // Export/import btns get text from HTML directly, just add icon
@@ -699,10 +719,59 @@ function updateLayoutClasses() {
 function renderSpaces() {
   const list = q('#spaces-list');
   list.innerHTML = '';
-  S.spaces.forEach(sp => {
+  S.spaces.forEach((sp, idx) => {
     const el = document.createElement('div');
     el.className = 'space-item' + (sp.id===S.activeSpaceId ? ' active' : '');
     el.dataset.id = sp.id;
+
+    // item 35: drag handle for space reordering
+    const dh = document.createElement('div');
+    dh.className = 'space-drag-handle';
+    dh.innerHTML = ic('grip-vertical', 10);
+    dh.title = 'Drag to reorder';
+    let spDhActive = false;
+    dh.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      spDhActive = true;
+      document.addEventListener('mouseup', () => { spDhActive = false; }, { once: true });
+    });
+
+    el.draggable = true;
+    el.addEventListener('dragstart', e => {
+      if (!spDhActive) { e.preventDefault(); return; }
+      spDhActive = false;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', sp.id);
+      el.classList.add('dragging-src');
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging-src');
+      list.querySelectorAll('.space-item').forEach(n => {
+        n.classList.remove('space-drop-before', 'space-drop-after');
+      });
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      const over = e.currentTarget;
+      list.querySelectorAll('.space-item').forEach(n => n.classList.remove('space-drop-before','space-drop-after'));
+      const rect = over.getBoundingClientRect();
+      const half = rect.top + rect.height / 2;
+      over.classList.add(e.clientY < half ? 'space-drop-before' : 'space-drop-after');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData('text/plain');
+      if (!draggedId || draggedId === sp.id) return;
+      const fromIdx = S.spaces.findIndex(s => s.id === draggedId);
+      if (fromIdx === -1) return;
+      const [moved] = S.spaces.splice(fromIdx, 1);
+      const toIdx = S.spaces.findIndex(s => s.id === sp.id);
+      const rect = el.getBoundingClientRect();
+      const insertAfter = e.clientY >= rect.top + rect.height / 2;
+      S.spaces.splice(insertAfter ? toIdx + 1 : toIdx, 0, moved);
+      scheduleSave();
+      renderSpaces();
+    });
 
     const dot = document.createElement('div');
     dot.className = 'space-dot';
@@ -721,6 +790,7 @@ function renderSpaces() {
     del.title = 'Delete space';
     del.addEventListener('click', e => { e.stopPropagation(); deleteSpace(sp.id); });
 
+    el.appendChild(dh);
     el.appendChild(dot);
     el.appendChild(nm);
     el.appendChild(del);
@@ -851,6 +921,29 @@ function buildColEl(col, sp, vm) {
 
   const acts = document.createElement('div');
   acts.className = 'col-actions';
+
+  // item 51: sort button
+  const sortBtn = document.createElement('button');
+  sortBtn.className = 'sort-btn icon-btn';
+  sortBtn.innerHTML = ic('arrow-up-down', 11);
+  sortBtn.title = 'Sort tabs';
+  sortBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    showSortMenu(e.clientX, e.clientY, col, sp);
+  });
+  acts.appendChild(sortBtn);
+
+  // item 38: open all in new window button
+  const winBtn = document.createElement('button');
+  winBtn.className = 'col-new-win-btn';
+  winBtn.innerHTML = ic('monitor', 11) + ' Window';
+  winBtn.title = 'Open all tabs in new window';
+  winBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openColInNewWindow(col);
+  });
+  acts.appendChild(winBtn);
+
   const moreBtn = document.createElement('button');
   moreBtn.className = 'icon-btn';
   moreBtn.innerHTML = ic('more-horizontal', 13);
@@ -861,6 +954,7 @@ function buildColEl(col, sp, vm) {
       delete: () => deleteCol(sp.id, col.id),
       moveToSpace: S.spaces.length > 1 ? () => openSpacePicker(col.id, sp.id) : null,
       color: (c) => { if (c) col.color = c; else delete col.color; scheduleSave(); renderCollections(); },
+      tabGroup: () => openAsTabGroup(col),
     });
   });
   acts.appendChild(moreBtn);
@@ -908,17 +1002,67 @@ function buildColEl(col, sp, vm) {
   dz.dataset.colId = col.id;
   dz.dataset.spId = sp.id;
 
+  // item 50: collection description (editable, shown below header)
+  const desc = document.createElement('div');
+  desc.className = 'col-desc';
+  desc.dataset.placeholder = 'Add description…';
+  desc.textContent = col.desc || '';
+  desc.contentEditable = 'false';
+  desc.addEventListener('dblclick', () => {
+    desc.contentEditable = 'true';
+    desc.focus();
+    if (!col.desc) { const r = document.createRange(); r.selectNodeContents(desc); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  });
+  const saveDesc = () => {
+    desc.contentEditable = 'false';
+    col.desc = desc.textContent.trim();
+    scheduleSave();
+  };
+  desc.addEventListener('blur', saveDesc);
+  desc.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveDesc(); } if (e.key === 'Escape') { desc.textContent = col.desc || ''; saveDesc(); } });
+  el.appendChild(hdr);
+  el.appendChild(desc);
+
   const cw = document.createElement('div');
   cw.className = 'cards-wrap';
 
   if (!col.collapsed) {
+    // item 45: multi-select bulk toolbar (shown when any card is selected in this collection)
+    const selectedInCol = (col.tabs||[]).filter(t => selectedCardIds.has(t.id));
+    if (selectedInCol.length) {
+      const bulkBar = document.createElement('div');
+      bulkBar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0 6px;flex-wrap:wrap';
+      const selLabel = document.createElement('span');
+      selLabel.style.cssText = 'font-size:11px;color:var(--text-muted)';
+      selLabel.textContent = `${selectedInCol.length} selected`;
+      const delSelBtn = document.createElement('button');
+      delSelBtn.className = 'settings-btn danger';
+      delSelBtn.style.cssText = 'font-size:10px;padding:2px 7px';
+      delSelBtn.textContent = 'Delete';
+      delSelBtn.addEventListener('click', () => {
+        col.tabs = (col.tabs||[]).filter(t => !selectedCardIds.has(t.id));
+        selectedInCol.forEach(t => selectedCardIds.delete(t.id));
+        scheduleSave(); renderCollections();
+      });
+      const clearSelBtn = document.createElement('button');
+      clearSelBtn.className = 'settings-btn';
+      clearSelBtn.style.cssText = 'font-size:10px;padding:2px 7px';
+      clearSelBtn.textContent = 'Deselect';
+      clearSelBtn.addEventListener('click', () => {
+        selectedInCol.forEach(t => selectedCardIds.delete(t.id));
+        renderCollections();
+      });
+      bulkBar.append(selLabel, delSelBtn, clearSelBtn);
+      cw.appendChild(bulkBar);
+    }
+
     if (!(col.tabs||[]).length) {
       const empty = document.createElement('div');
       empty.className = 'col-empty';
       empty.textContent = 'Drop tabs here…';
       cw.appendChild(empty);
     } else {
-      col.tabs.forEach(tab => cw.appendChild(buildCard(tab, col, sp)));
+      getSortedTabs(col).forEach(tab => cw.appendChild(buildCard(tab, col, sp)));
     }
     // Plus card — visible on collection hover, opens add-tab modal
     const addCard = document.createElement('div');
@@ -929,17 +1073,132 @@ function buildColEl(col, sp, vm) {
     cw.appendChild(addCard);
   }
   dz.appendChild(cw);
-  el.appendChild(hdr);
   el.appendChild(dz);
   return el;
 }
 
+/* item 51: helper — return tabs sorted per col.sort, pinned always first */
+function getSortedTabs(col) {
+  const tabs = [...(col.tabs || [])];
+  const pinned = tabs.filter(t => t.pinned);
+  const rest   = tabs.filter(t => !t.pinned);
+  const sort = col.sort || 'manual';
+  const cmp =
+    sort === 'title-asc'  ? (a,b) => (a.title||'').localeCompare(b.title||'') :
+    sort === 'title-desc' ? (a,b) => (b.title||'').localeCompare(a.title||'') :
+    sort === 'domain'     ? (a,b) => domain(a.url||'').localeCompare(domain(b.url||'')) :
+    null;
+  if (cmp) { pinned.sort(cmp); rest.sort(cmp); }
+  return [...pinned, ...rest];
+}
+
+/* item 51: sort context menu */
+let sortMenuTarget = null;
+function showSortMenu(x, y, col, sp) {
+  // reuse context menu for sort options
+  sortMenuTarget = { col, sp };
+  const menu = q('#context-menu');
+  // Temporarily replace items
+  const opts = [
+    { label: '↑ Title A→Z', sort: 'title-asc' },
+    { label: '↓ Title Z→A', sort: 'title-desc' },
+    { label: '⊞ By Domain',  sort: 'domain' },
+    { label: '⠿ Manual',     sort: 'manual' },
+  ];
+  menu.innerHTML = '';
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'context-item' + ((col.sort||'manual') === o.sort ? ' active' : '');
+    btn.textContent = o.label;
+    btn.addEventListener('click', () => {
+      col.sort = o.sort;
+      scheduleSave(); renderCollections(); rebuildContextMenu(); hideCtx();
+    });
+    menu.appendChild(btn);
+  });
+  const vw = window.innerWidth, vh = window.innerHeight;
+  menu.style.cssText = `display:block;left:${Math.min(x,vw-180)}px;top:${Math.min(y,vh-160)}px`;
+}
+
+function rebuildContextMenu() {
+  const menu = q('#context-menu');
+  menu.innerHTML = `
+    <button class="context-item" id="ctx-rename">Rename</button>
+    <button class="context-item" id="ctx-color" style="display:none">Color…</button>
+    <div id="ctx-color-picker" class="ctx-color-picker" style="display:none">
+      <button class="ctx-cp-swatch ctx-cp-none" data-color="" title="None">✕</button>
+      <button class="ctx-cp-swatch" data-color="red"    style="background:#f87171" title="Red"></button>
+      <button class="ctx-cp-swatch" data-color="orange" style="background:#fb923c" title="Orange"></button>
+      <button class="ctx-cp-swatch" data-color="yellow" style="background:#facc15" title="Yellow"></button>
+      <button class="ctx-cp-swatch" data-color="green"  style="background:#4ade80" title="Green"></button>
+      <button class="ctx-cp-swatch" data-color="cyan"   style="background:#22d3ee" title="Cyan"></button>
+      <button class="ctx-cp-swatch" data-color="blue"   style="background:#60a5fa" title="Blue"></button>
+      <button class="ctx-cp-swatch" data-color="purple" style="background:#a78bfa" title="Purple"></button>
+      <button class="ctx-cp-swatch" data-color="pink"   style="background:#f472b6" title="Pink"></button>
+    </div>
+    <button class="context-item" id="ctx-customize" style="display:none">Customize…</button>
+    <button class="context-item" id="ctx-move-space" style="display:none">Move to space…</button>
+    <button class="context-item" id="ctx-tab-group" style="display:none">Open as Tab Group</button>
+    <button class="context-item danger" id="ctx-delete">Delete</button>`;
+  // Re-bind context-menu events
+  q('#ctx-rename').addEventListener('click', () => { if(ctxTarget?.rename){ctxTarget.rename();} hideCtx(); });
+  q('#ctx-move-space').addEventListener('click', () => { if(ctxTarget?.moveToSpace){ctxTarget.moveToSpace();} hideCtx(); });
+  q('#ctx-delete').addEventListener('click', () => { if(ctxTarget?.delete){ctxTarget.delete();} hideCtx(); });
+  q('#ctx-tab-group').addEventListener('click', () => { if(ctxTarget?.tabGroup){ctxTarget.tabGroup();} hideCtx(); });
+  q('#ctx-color').addEventListener('click', () => { const ccp=q('#ctx-color-picker'); if(ccp) ccp.style.display=ccp.style.display==='flex'?'none':'flex'; });
+  q('#ctx-color-picker').addEventListener('click', e => { const sw=e.target.closest('.ctx-cp-swatch'); if(!sw) return; if(ctxTarget?.color) ctxTarget.color(sw.dataset.color||undefined); hideCtx(); });
+  q('#ctx-customize').addEventListener('click', () => { if(ctxTarget?.customize){ctxTarget.customize();} hideCtx(); });
+}
+
+/* item 38: open all tabs in a new window */
+function openColInNewWindow(col) {
+  const urls = (col.tabs||[]).map(t=>t.url).filter(Boolean);
+  if (!urls.length) { showSnack('No tabs to open.'); return; }
+  if (typeof chrome !== 'undefined' && chrome.windows) {
+    chrome.windows.create({ url: urls });
+  } else {
+    urls.forEach(u => window.open(u, '_blank'));
+  }
+}
+
+/* item 49: open collection as Chrome tab group */
+async function openAsTabGroup(col) {
+  const urls = (col.tabs||[]).map(t=>t.url).filter(Boolean);
+  if (!urls.length) { showSnack('No tabs to open.'); return; }
+  if (typeof chrome === 'undefined' || !chrome.tabs) {
+    urls.forEach(u => window.open(u, '_blank')); return;
+  }
+  try {
+    const tabIds = await Promise.all(urls.map(url => new Promise(res => chrome.tabs.create({ url, active:false }, t => res(t.id)))));
+    if (chrome.tabs.group) {
+      const groupId = await new Promise(res => chrome.tabs.group({ tabIds }, res));
+      if (chrome.tabGroups?.update) chrome.tabGroups.update(groupId, { title: col.name, collapsed: false });
+    }
+    showSnack(`Opened "${col.name}" as tab group.`);
+  } catch { urls.forEach(u => window.open(u, '_blank')); }
+}
+
 function buildCard(tab, col, sp) {
   const card = document.createElement('div');
-  card.className = 'tab-card';
+  card.className = 'tab-card' + (tab.pinned ? ' pinned' : '') + (selectedCardIds.has(tab.id) ? ' selected-multi' : '');
   card.dataset.tabId = tab.id;
   card.dataset.colId = col.id;
   card.dataset.spId = sp.id;
+
+  // item 45: multi-select checkbox
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.className = 'card-select-cb';
+  cb.checked = selectedCardIds.has(tab.id);
+  cb.title = 'Select';
+  cb.addEventListener('change', e => {
+    e.stopPropagation();
+    if (cb.checked) selectedCardIds.add(tab.id); else selectedCardIds.delete(tab.id);
+    card.classList.toggle('selected-multi', cb.checked);
+    renderCollections();
+  });
+  cb.addEventListener('click', e => e.stopPropagation());
+  card.appendChild(cb);
 
   if (S.dndEnabled) {
     card.draggable = true;
@@ -948,7 +1207,7 @@ function buildCard(tab, col, sp) {
   }
 
   card.addEventListener('click', e => {
-    if (e.target.closest('button') || e.target.closest('[contenteditable]')) return;
+    if (e.target.closest('button') || e.target.closest('[contenteditable]') || e.target.closest('input')) return;
     try { window.open(tab.url, '_blank'); } catch {}
   });
 
@@ -967,6 +1226,24 @@ function buildCard(tab, col, sp) {
   favRow.className = 'card-fav-row';
   favRow.appendChild(buildFav(tab.url, tab.favicon, 'card-fav'));
 
+  // item 47: pin indicator
+  if (tab.pinned) {
+    const pinInd = document.createElement('span');
+    pinInd.className = 'card-pin-indicator';
+    pinInd.title = 'Pinned';
+    pinInd.innerHTML = ic('pin', 10);
+    favRow.appendChild(pinInd);
+  }
+
+  // item 42: note indicator
+  if (tab.note) {
+    const noteInd = document.createElement('span');
+    noteInd.className = 'card-note-indicator';
+    noteInd.title = tab.note;
+    noteInd.innerHTML = ic('file-text', 10);
+    favRow.appendChild(noteInd);
+  }
+
   // title
   const title = document.createElement('div');
   title.className = 'card-title';
@@ -977,6 +1254,26 @@ function buildCard(tab, col, sp) {
   const url = document.createElement('div');
   url.className = 'card-url';
   url.textContent = domain(tab.url) || tab.url;
+
+  // item 46: tag pills below url
+  if ((tab.tags||[]).length) {
+    const tagsRow = document.createElement('div');
+    tagsRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;margin-top:3px';
+    tab.tags.forEach(tag => {
+      const pill = document.createElement('span');
+      pill.className = 'tag-pill';
+      pill.textContent = tag;
+      tagsRow.appendChild(pill);
+    });
+    body.appendChild(favRow);
+    body.appendChild(title);
+    body.appendChild(url);
+    body.appendChild(tagsRow);
+  } else {
+    body.appendChild(favRow);
+    body.appendChild(title);
+    body.appendChild(url);
+  }
 
   // bottom actions
   const acts = document.createElement('div');
@@ -995,6 +1292,14 @@ function buildCard(tab, col, sp) {
   acts.appendChild(mkAct('copy',          'Copy URL',    () => { try { navigator.clipboard.writeText(tab.url); showSnack('URL copied!'); } catch {} }));
   acts.appendChild(mkAct('external-link', 'Open',        () => window.open(tab.url, '_blank')));
 
+  // item 47: pin/unpin action
+  const pinBtn = mkAct(tab.pinned ? 'pin-off' : 'pin', tab.pinned ? 'Unpin' : 'Pin to top', () => {
+    tab.pinned = !tab.pinned;
+    scheduleSave(); renderCollections();
+  });
+  if (tab.pinned) pinBtn.classList.add('hk-active');
+  acts.appendChild(pinBtn);
+
   // Hotkey assign button
   const hkBtn = document.createElement('button');
   hkBtn.className = 'card-act-btn' + (tab.hotkey ? ' hk-active' : '');
@@ -1002,10 +1307,6 @@ function buildCard(tab, col, sp) {
   hkBtn.title = tab.hotkey ? `Hotkey: ${comboLabel(tab.hotkey)} (click to change)` : 'Assign hotkey';
   hkBtn.addEventListener('click', e => { e.stopPropagation(); openHkModal(tab.id, col.id, sp.id); });
   acts.appendChild(hkBtn);
-
-  body.appendChild(favRow);
-  body.appendChild(title);
-  body.appendChild(url);
 
   // Hotkey badge shown in fav row (only when assigned)
   if (tab.hotkey) {
@@ -1135,6 +1436,15 @@ function openCardEditModal(tab, col, sp) {
   if (titleEl) titleEl.textContent = 'Edit Tab';
   q('#card-edit-title').value = tab.title || '';
   q('#card-edit-url').value = tab.url || '';
+  const noteInput = q('#card-edit-note-input');
+  if (noteInput) noteInput.value = tab.note || '';
+  const tagsInput = q('#card-edit-tags-input');
+  if (tagsInput) tagsInput.value = (tab.tags||[]).join(', ');
+  // Show note/tags labels only in edit mode
+  q('#card-edit-note-label') && (q('#card-edit-note-label').style.display = '');
+  q('#card-edit-note-input') && (q('#card-edit-note-input').style.display = '');
+  q('#card-edit-tags-label') && (q('#card-edit-tags-label').style.display = '');
+  q('#card-edit-tags-input') && (q('#card-edit-tags-input').style.display = '');
   q('#card-edit-overlay').style.display = 'flex';
   setTimeout(() => { q('#card-edit-title').focus(); q('#card-edit-title').select(); }, 30);
 }
@@ -1146,6 +1456,15 @@ function openAddTabModal(col, sp) {
   if (titleEl) titleEl.textContent = 'Add Tab';
   q('#card-edit-title').value = '';
   q('#card-edit-url').value = '';
+  const noteInput = q('#card-edit-note-input');
+  if (noteInput) noteInput.value = '';
+  const tagsInput = q('#card-edit-tags-input');
+  if (tagsInput) tagsInput.value = '';
+  // Hide note/tags in add mode for simplicity
+  q('#card-edit-note-label') && (q('#card-edit-note-label').style.display = 'none');
+  q('#card-edit-note-input') && (q('#card-edit-note-input').style.display = 'none');
+  q('#card-edit-tags-label') && (q('#card-edit-tags-label').style.display = 'none');
+  q('#card-edit-tags-input') && (q('#card-edit-tags-input').style.display = 'none');
   q('#card-edit-overlay').style.display = 'flex';
   setTimeout(() => { q('#card-edit-title').focus(); }, 30);
 }
@@ -1168,6 +1487,15 @@ function saveCardEdit() {
   const rawUrl = q('#card-edit-url').value.trim();
   if (title) tab.title = title;
   if (rawUrl) tab.url = /^https?:\/\//i.test(rawUrl) ? rawUrl : 'https://' + rawUrl;
+  // item 42: save note
+  const noteInput = q('#card-edit-note-input');
+  if (noteInput) { tab.note = noteInput.value.trim() || undefined; }
+  // item 46: save tags
+  const tagsInput = q('#card-edit-tags-input');
+  if (tagsInput) {
+    const raw = tagsInput.value.trim();
+    tab.tags = raw ? raw.split(',').map(t=>t.trim()).filter(Boolean) : undefined;
+  }
   scheduleSave();
   renderCollections();
   closeCardEditModal();
@@ -1793,6 +2121,55 @@ function setupTabListeners() {
 }
 
 /* ============================================================
+   RECENTLY CLOSED TABS (item 54)
+   ============================================================ */
+async function renderRecentlyClosed() {
+  const list = q('#recently-closed-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (typeof chrome === 'undefined' || !chrome.sessions) {
+    list.style.display = 'none'; return;
+  }
+  let sessions;
+  try { sessions = await new Promise(res => chrome.sessions.getRecentlyClosed({ maxResults: 10 }, res)); }
+  catch { list.style.display = 'none'; return; }
+  const tabs = (sessions || []).flatMap(s => s.tab ? [s.tab] : []);
+  if (!tabs.length) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'font-size:12px;color:var(--text-faint);padding:6px 10px';
+    msg.textContent = 'No recently closed tabs.';
+    list.appendChild(msg); return;
+  }
+  tabs.forEach(tab => {
+    const row = document.createElement('div');
+    row.className = 'tab-row';
+    const src = tab.favIconUrl || favUrl(tab.url || '');
+    const fav = src ? Object.assign(document.createElement('img'), { src, alt:'' }) : buildFavFallback(tab.url || '', 'tab-fav');
+    if (fav.tagName === 'IMG') fav.onerror = () => { const f=buildFavFallback(tab.url||'','tab-fav'); fav.parentNode?.replaceChild(f,fav); };
+    const title = document.createElement('span');
+    title.className = 'tab-row-title'; title.textContent = tab.title || tab.url || '(unknown)'; title.title = tab.url || '';
+    const restBtn = document.createElement('button');
+    restBtn.className = 'save-win-btn'; restBtn.title = 'Restore tab';
+    restBtn.innerHTML = ic('external-link', 11);
+    restBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      try {
+        if (tab.sessionId) chrome.sessions.restore(tab.sessionId);
+        else if (tab.url) chrome.tabs.create({ url: tab.url });
+      } catch { if (tab.url) window.open(tab.url, '_blank'); }
+    });
+    row.addEventListener('click', () => {
+      try {
+        if (tab.sessionId) chrome.sessions.restore(tab.sessionId);
+        else if (tab.url) chrome.tabs.create({ url: tab.url });
+      } catch { if (tab.url) window.open(tab.url, '_blank'); }
+    });
+    row.append(fav, title, restBtn);
+    list.appendChild(row);
+  });
+}
+
+/* ============================================================
    SESSION SAVE
    ============================================================ */
 function saveSession() {
@@ -1838,9 +2215,32 @@ function renderLinks() {
     const nm=document.createElement('span'); nm.className='link-name'; nm.textContent=lnk.name;
     nm.addEventListener('click',()=>{ try{window.open(lnk.url,'_blank')}catch{} });
     const url=document.createElement('span'); url.className='link-url'; url.textContent=lnk.url;
+    // item 33: edit button → inline edit form
+    const editBtn=document.createElement('button'); editBtn.className='link-del'; editBtn.innerHTML=ic('pencil',11); editBtn.title='Edit';
+    editBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      // toggle inline form
+      const existing = row.querySelector('.link-edit-form');
+      if (existing) { row.removeChild(existing); return; }
+      const form=document.createElement('div'); form.className='link-edit-form';
+      const nIn=document.createElement('input'); nIn.value=lnk.name; nIn.placeholder='Name';
+      const uIn=document.createElement('input'); uIn.value=lnk.url; uIn.placeholder='https://…';
+      const save=document.createElement('button'); save.className='accent-btn'; save.style.fontSize='11px'; save.style.padding='3px 8px'; save.textContent='Save';
+      save.addEventListener('click', () => {
+        const n=nIn.value.trim(), u=uIn.value.trim();
+        if(!n||!u){showSnack('Enter both name and URL.');return;}
+        lnk.name=n; lnk.url=u.startsWith('http')?u:'https://'+u;
+        scheduleSave(); renderLinks();
+      });
+      const cancel=document.createElement('button'); cancel.className='settings-btn'; cancel.style.fontSize='11px'; cancel.style.padding='3px 8px'; cancel.textContent='Cancel';
+      cancel.addEventListener('click',()=>row.removeChild(form));
+      form.append(nIn,uIn,save,cancel);
+      row.appendChild(form);
+      nIn.focus(); nIn.select();
+    });
     const del=document.createElement('button'); del.className='link-del'; del.innerHTML=ic('x',11);
     del.addEventListener('click',()=>{ S.links.splice(i,1); scheduleSave(); renderLinks(); });
-    row.append(nm,url,del); el.appendChild(row);
+    row.append(nm,url,editBtn,del); el.appendChild(row);
   });
 }
 
@@ -1861,13 +2261,49 @@ function renderNextItems() {
   const el=q('#next-list'); el.innerHTML='';
   (S.nextItems||[]).forEach((item,i)=>{
     const row=document.createElement('div'); row.className='next-item'+(item.done?' done':'');
+    row.dataset.idx = i;
+
+    // item 34: drag handle for reordering
+    const dh = document.createElement('span'); dh.className = 'next-drag-handle';
+    dh.innerHTML = ic('grip-vertical', 11);
+    let nextDhActive = false;
+    dh.addEventListener('mousedown', e => { e.stopPropagation(); nextDhActive = true; });
+
+    row.draggable = true;
+    row.addEventListener('dragstart', e => {
+      if (!nextDhActive) { e.preventDefault(); return; }
+      nextDhActive = false;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(i));
+      row.classList.add('dragging-src');
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging-src');
+      el.querySelectorAll('.next-item').forEach(n => n.style.borderTop = '');
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.querySelectorAll('.next-item').forEach(n => n.style.borderTop = '');
+      row.style.borderTop = '2px solid var(--accent)';
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      if (isNaN(fromIdx) || fromIdx === i) return;
+      const [moved] = S.nextItems.splice(fromIdx, 1);
+      // After splicing, `i` may have shifted down by 1 if fromIdx < i
+      const insertAt = fromIdx < i ? i - 1 : i;
+      S.nextItems.splice(insertAt, 0, moved);
+      scheduleSave(); renderNextItems();
+    });
+
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
     cb.addEventListener('change',()=>{ S.nextItems[i].done=cb.checked; scheduleSave(); renderNextItems(); });
     const title=document.createElement('span'); title.className='next-title'; title.textContent=item.title; title.title=item.url||'';
     if(item.url) title.addEventListener('click',()=>{ try{window.open(item.url,'_blank')}catch{} });
     const del=document.createElement('button'); del.className='next-del'; del.innerHTML=ic('x',11);
     del.addEventListener('click',()=>{ S.nextItems.splice(i,1); scheduleSave(); renderNextItems(); });
-    row.append(cb,title,del); el.appendChild(row);
+    row.append(dh,cb,title,del); el.appendChild(row);
   });
 }
 
@@ -1907,6 +2343,7 @@ const SETTING_DEFAULTS = {
   cardDensity: 'comfortable',
   sidebarStyle: 'default',
   customCss: '',
+  showClock: 'off',
 };
 
 const FONTS = [
@@ -1963,6 +2400,7 @@ function applyAllSettings() {
   applyCardDensity(S.cardDensity);
   applySidebarStyle(S.sidebarStyle);
   applyCustomCss(S.customCss);
+  applyClockVisibility(S.showClock);
 }
 
 function applyFont(font) {
@@ -2095,6 +2533,38 @@ function applyCustomCss(css) {
   el.textContent = css || '';
 }
 
+/* item 55: clock widget */
+function applyClockVisibility(val) {
+  const cw = q('#clock-widget');
+  if (!cw) return;
+  cw.classList.toggle('hidden', val !== 'on');
+  if (val === 'on') startClock();
+  else stopClock();
+}
+
+function startClock() {
+  if (clockInterval) return;
+  const tick = () => {
+    const now = new Date();
+    const timeEl = q('#clock-time');
+    const dateEl = q('#clock-date');
+    const greetEl = q('#clock-greeting');
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    if (dateEl) dateEl.textContent = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
+    if (greetEl) {
+      const h = now.getHours();
+      greetEl.textContent = h < 12 ? 'Good morning ☀️' : h < 17 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
+    }
+  };
+  tick();
+  clockInterval = setInterval(tick, 1000);
+}
+
+function stopClock() {
+  clearInterval(clockInterval);
+  clockInterval = null;
+}
+
 /* ============================================================
    SETTINGS — RENDER ALL TABS
    ============================================================ */
@@ -2120,6 +2590,7 @@ function renderSettings() {
   renderPills('#toolbar-pills',       'toolbarStyle',   S.toolbarStyle);
   renderPills('#density-pills',       'cardDensity',    S.cardDensity);
   renderPills('#sidebar-style-pills', 'sidebarStyle',   S.sidebarStyle);
+  renderPills('#clock-pills',         'showClock',       S.showClock);
   // Custom bg color input
   const cbgInput = q('#custom-bg-input');
   if (cbgInput) cbgInput.value = S.customBgColor || '#000000';
@@ -2128,6 +2599,8 @@ function renderSettings() {
   if (cssInput) cssInput.value = S.customCss || '';
   const hd = q('#homepage-url-display');
   if (hd) hd.textContent = location.href;
+  renderSyncStatus();
+  renderSnapshots();
 }
 
 function renderPills(sel, stateKey, currentVal) {
@@ -2147,6 +2620,7 @@ function renderPills(sel, stateKey, currentVal) {
         toolbarStyle: applyToolbarStyle,
         cardDensity: applyCardDensity,
         sidebarStyle: applySidebarStyle,
+        showClock: applyClockVisibility,
         defaultView: v => {
           S.viewModes = Object.fromEntries(S.spaces.map(s=>[s.id,v]));
           scheduleSave();
@@ -2398,6 +2872,149 @@ function renderFontGrid() {
 }
 
 /* ============================================================
+   SETTINGS — SYNC STATUS (item 43)
+   ============================================================ */
+function renderSyncStatus() {
+  const badge = q('#sync-status-badge');
+  if (!badge) return;
+  // If chrome.storage.sync is available and not quota-exceeded, mark as synced
+  if (typeof chrome !== 'undefined' && chrome.storage?.sync) {
+    badge.textContent = 'Chrome Sync ✓';
+    badge.className = 'sync-status-badge synced';
+  } else {
+    badge.textContent = 'Local only';
+    badge.className = 'sync-status-badge local';
+  }
+}
+
+/* ============================================================
+   SETTINGS — WORKSPACE SNAPSHOTS (item 56)
+   ============================================================ */
+async function loadSnapshots() {
+  if (typeof chrome === 'undefined' || !chrome.storage) return [];
+  return new Promise(res => {
+    chrome.storage.local.get('tabflow_snapshots', r => res(r.tabflow_snapshots || []));
+  });
+}
+
+async function saveSnapshot() {
+  const name = prompt('Snapshot name:', `Snapshot ${new Date().toLocaleDateString()}`);
+  if (!name) return;
+  const snaps = await loadSnapshots();
+  snaps.unshift({ id: uid(), name, date: new Date().toISOString(),
+    spaces: JSON.parse(JSON.stringify(S.spaces)) });
+  await new Promise(res => chrome.storage.local.set({ tabflow_snapshots: snaps }, res));
+  renderSnapshots();
+  showSnack(`Snapshot "${name}" saved!`);
+}
+
+async function renderSnapshots() {
+  const list = q('#snapshots-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const snaps = await loadSnapshots();
+  if (!snaps.length) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:12px;color:var(--text-faint);padding:4px 0';
+    empty.textContent = 'No snapshots yet.';
+    list.appendChild(empty);
+    return;
+  }
+  snaps.forEach((snap, idx) => {
+    const item = document.createElement('div');
+    item.className = 'snapshot-item';
+    const nm = document.createElement('div'); nm.className = 'snapshot-name'; nm.textContent = snap.name;
+    const meta = document.createElement('div'); meta.className = 'snapshot-meta';
+    meta.textContent = new Date(snap.date).toLocaleDateString() + ' · ' + snap.spaces.length + ' space(s)';
+    const acts = document.createElement('div'); acts.className = 'snapshot-actions';
+    const restoreBtn = document.createElement('button'); restoreBtn.className = 'snapshot-restore-btn';
+    restoreBtn.textContent = 'Restore';
+    restoreBtn.addEventListener('click', async e => {
+      e.stopPropagation();
+      if (!confirm(`Restore snapshot "${snap.name}"? Current collections will be replaced.`)) return;
+      S.spaces = JSON.parse(JSON.stringify(snap.spaces));
+      S.activeSpaceId = S.spaces[0]?.id || null;
+      scheduleSave(); renderAll();
+      showSnack(`Restored "${snap.name}".`);
+    });
+    const delBtn = document.createElement('button'); delBtn.className = 'snapshot-del-btn';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const snaps2 = await loadSnapshots();
+      snaps2.splice(idx, 1);
+      await new Promise(res => chrome.storage.local.set({ tabflow_snapshots: snaps2 }, res));
+      renderSnapshots();
+    });
+    acts.append(restoreBtn, delBtn);
+    item.append(nm, meta, acts);
+    list.appendChild(item);
+  });
+}
+
+/* ============================================================
+   SETTINGS — BOOKMARKS IMPORT (item 44)
+   ============================================================ */
+async function browseBookmarks() {
+  const list = q('#bookmarks-folder-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (typeof chrome === 'undefined' || !chrome.bookmarks) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-faint);padding:4px 0">Bookmarks API not available.</div>';
+    return;
+  }
+  let tree;
+  try { tree = await new Promise(res => chrome.bookmarks.getTree(res)); } catch {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-faint);padding:4px 0">Could not load bookmarks.</div>';
+    return;
+  }
+  const folders = [];
+  const collect = (nodes) => {
+    if (!nodes) return;
+    nodes.forEach(n => {
+      if (!n.url && n.children) { folders.push(n); collect(n.children); }
+    });
+  };
+  collect(tree[0]?.children || tree);
+  if (!folders.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-faint);padding:4px 0">No bookmark folders found.</div>';
+    return;
+  }
+  folders.forEach(folder => {
+    const bookmarks = (folder.children || []).filter(n => n.url);
+    if (!bookmarks.length) return;
+    const item = document.createElement('div');
+    item.className = 'bookmark-folder-item';
+    const nm = document.createElement('span'); nm.className = 'bookmark-folder-name';
+    nm.textContent = folder.title || 'Untitled';
+    const cnt = document.createElement('span'); cnt.className = 'bookmark-folder-count';
+    cnt.textContent = bookmarks.length + ' bookmarks';
+    const btn = document.createElement('button'); btn.className = 'settings-btn';
+    btn.style.cssText = 'font-size:10px;padding:3px 8px;margin-left:auto;flex-shrink:0';
+    btn.textContent = 'Import';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      importBookmarkFolder(folder, bookmarks);
+    });
+    item.append(nm, cnt, btn);
+    list.appendChild(item);
+  });
+}
+
+function importBookmarkFolder(folder, bookmarks) {
+  const sp = activeSpace(); if (!sp) return;
+  const col = {
+    id: uid(), name: folder.title || 'Imported', collapsed: false,
+    tabs: bookmarks.map(b => ({ id: uid(), title: b.title || b.url, url: b.url, favicon: '' }))
+  };
+  if (!sp.collections) sp.collections = [];
+  sp.collections.unshift(col);
+  scheduleSave(); renderCollections();
+  showSnack(`Imported ${bookmarks.length} bookmarks as "${col.name}".`);
+  q('#bookmarks-folder-list').innerHTML = '';
+}
+
+/* ============================================================
    SETTINGS — EXPORT / IMPORT / CLEAR
    ============================================================ */
 function exportData() {
@@ -2479,14 +3096,16 @@ function resetSettings() {
 /* ============================================================
    CONTEXT MENU
    ============================================================ */
-function showCtx(x, y, { rename, delete: del, moveToSpace, color, customize }) {
-  ctxTarget = { rename, delete:del, moveToSpace, color, customize };
+function showCtx(x, y, { rename, delete: del, moveToSpace, color, customize, tabGroup }) {
+  ctxTarget = { rename, delete:del, moveToSpace, color, customize, tabGroup };
   const moveBtn = q('#ctx-move-space');
   if (moveBtn) moveBtn.style.display = moveToSpace ? 'flex' : 'none';
   const colorBtn = q('#ctx-color');
   if (colorBtn) colorBtn.style.display = color ? 'flex' : 'none';
   const customizeBtn = q('#ctx-customize');
   if (customizeBtn) customizeBtn.style.display = customize ? 'flex' : 'none';
+  const tabGroupBtn = q('#ctx-tab-group');
+  if (tabGroupBtn) tabGroupBtn.style.display = tabGroup ? 'flex' : 'none';
   // hide sub-picker when re-opening
   const ccp = q('#ctx-color-picker');
   if (ccp) ccp.style.display = 'none';
@@ -2572,6 +3191,52 @@ function updateNavActive(view) {
 }
 
 /* ============================================================
+   ADD CURRENT TAB TO COLLECTION (item 32)
+   ============================================================ */
+async function openAddToColPicker() {
+  let activeTab = null;
+  try {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      const tabs = await new Promise(res => chrome.tabs.query({ active:true, currentWindow:true }, res));
+      activeTab = tabs?.[0];
+    }
+  } catch {}
+  if (!activeTab || isTabFlowTab(activeTab)) { showSnack('No suitable active tab found.'); return; }
+  pendingAddTab = { title: activeTab.title || activeTab.url, url: activeTab.url, favicon: activeTab.favIconUrl || '' };
+  // Populate picker list
+  const list = q('#add-to-col-list');
+  const info = q('#add-to-col-info');
+  if (list) {
+    list.innerHTML = '';
+    if (info) info.textContent = pendingAddTab.title + ' (' + (domain(pendingAddTab.url)||pendingAddTab.url) + ')';
+    S.spaces.forEach(sp => {
+      (sp.collections||[]).forEach(col => {
+        const item = document.createElement('div');
+        item.className = 'space-picker-item';
+        const spLabel = document.createElement('span');
+        spLabel.style.cssText = 'font-size:10px;color:var(--text-faint);margin-right:4px';
+        spLabel.textContent = sp.name + ' /';
+        const nm = document.createElement('span');
+        nm.textContent = col.name;
+        const cnt = document.createElement('span');
+        cnt.style.cssText = 'margin-left:auto;font-size:11px;color:var(--text-faint)';
+        cnt.textContent = (col.tabs||[]).length + ' tabs';
+        item.append(spLabel, nm, cnt);
+        item.addEventListener('click', () => {
+          if (!pendingAddTab) return;
+          addTabToCol(sp.id, col.id, { title:pendingAddTab.title, url:pendingAddTab.url, favicon:pendingAddTab.favicon });
+          showSnack(`Added "${pendingAddTab.title}" to ${col.name}.`);
+          pendingAddTab = null;
+          q('#add-to-col-overlay').style.display = 'none';
+        });
+        list.appendChild(item);
+      });
+    });
+  }
+  q('#add-to-col-overlay').style.display = 'flex';
+}
+
+/* ============================================================
    EVENT LISTENERS
    ============================================================ */
 function bindEvents() {
@@ -2651,6 +3316,25 @@ function bindEvents() {
   // Session / refresh
   q('#btn-save-session').addEventListener('click', saveSession);
   q('#btn-refresh-tabs').addEventListener('click', loadOpenTabs);
+
+  // item 32: Add current tab
+  q('#btn-add-current-tab')?.addEventListener('click', openAddToColPicker);
+  q('#add-to-col-cancel')?.addEventListener('click', () => {
+    pendingAddTab = null;
+    q('#add-to-col-overlay').style.display = 'none';
+  });
+  q('#add-to-col-overlay')?.addEventListener('click', e => {
+    if (e.target === q('#add-to-col-overlay')) { pendingAddTab = null; q('#add-to-col-overlay').style.display = 'none'; }
+  });
+
+  // item 54: Recently closed tabs refresh
+  q('#btn-rc-refresh')?.addEventListener('click', renderRecentlyClosed);
+
+  // item 56: Workspace snapshots
+  q('#btn-save-snapshot')?.addEventListener('click', saveSnapshot);
+
+  // item 44: Bookmarks import
+  q('#btn-browse-bookmarks')?.addEventListener('click', browseBookmarks);
 
   // Links
   q('#btn-add-link').addEventListener('click', addLink);
@@ -2736,6 +3420,7 @@ function bindEvents() {
     hideCtx();
   });
   q('#ctx-customize').addEventListener('click', () => { if(ctxTarget?.customize){ctxTarget.customize();} hideCtx(); });
+  q('#ctx-tab-group').addEventListener('click', () => { if(ctxTarget?.tabGroup){ctxTarget.tabGroup();} hideCtx(); });
 
   // Card edit modal
   q('#card-edit-save').addEventListener('click', saveCardEdit);
@@ -2761,6 +3446,7 @@ function bindEvents() {
       if (q('#hotkey-overlay').style.display !== 'none') return; // global handler takes it
       if (q('#card-edit-overlay').style.display !== 'none') { closeCardEditModal(); return; }
       if (q('#space-picker-overlay').style.display !== 'none') { closeSpacePicker(); return; }
+      if (q('#add-to-col-overlay').style.display !== 'none') { pendingAddTab=null; q('#add-to-col-overlay').style.display='none'; return; }
       hideCtx();
       q('#view-menu').classList.remove('open');
     }
@@ -2928,6 +3614,7 @@ async function init() {
   initStaticIcons();
   renderAll();
   await loadOpenTabs();
+  renderRecentlyClosed();
   setupTabListeners();
   bindEvents();
   bindHotkeyEvents();
