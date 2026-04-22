@@ -456,8 +456,6 @@ let snackTimer = null;
 let undoBuf = null;
 let ctxTarget = null;
 let searchQ = '';
-let multiSelectMode = false;
-let selectedCardIds = new Set(); // Set of tabIds currently selected
 let clockInterval  = null;        // setInterval handle for clock widget
 let pendingAddTab  = null;        // { title, url } — tab awaiting collection pick
 
@@ -1008,35 +1006,6 @@ function buildColEl(col, sp, vm) {
   cw.className = 'cards-wrap';
 
   if (!col.collapsed) {
-    // item 45: multi-select bulk toolbar (shown when any card is selected in this collection)
-    const selectedInCol = (col.tabs||[]).filter(t => selectedCardIds.has(t.id));
-    if (selectedInCol.length) {
-      const bulkBar = document.createElement('div');
-      bulkBar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0 6px;flex-wrap:wrap';
-      const selLabel = document.createElement('span');
-      selLabel.style.cssText = 'font-size:11px;color:var(--text-muted)';
-      selLabel.textContent = `${selectedInCol.length} selected`;
-      const delSelBtn = document.createElement('button');
-      delSelBtn.className = 'settings-btn danger';
-      delSelBtn.style.cssText = 'font-size:10px;padding:2px 7px';
-      delSelBtn.textContent = 'Delete';
-      delSelBtn.addEventListener('click', () => {
-        col.tabs = (col.tabs||[]).filter(t => !selectedCardIds.has(t.id));
-        selectedInCol.forEach(t => selectedCardIds.delete(t.id));
-        scheduleSave(); renderCollections();
-      });
-      const clearSelBtn = document.createElement('button');
-      clearSelBtn.className = 'settings-btn';
-      clearSelBtn.style.cssText = 'font-size:10px;padding:2px 7px';
-      clearSelBtn.textContent = 'Deselect';
-      clearSelBtn.addEventListener('click', () => {
-        selectedInCol.forEach(t => selectedCardIds.delete(t.id));
-        renderCollections();
-      });
-      bulkBar.append(selLabel, delSelBtn, clearSelBtn);
-      cw.appendChild(bulkBar);
-    }
-
     if (!(col.tabs||[]).length) {
       const empty = document.createElement('div');
       empty.className = 'col-empty';
@@ -1161,25 +1130,10 @@ async function openAsTabGroup(col) {
 
 function buildCard(tab, col, sp) {
   const card = document.createElement('div');
-  card.className = 'tab-card' + (tab.pinned ? ' pinned' : '') + (selectedCardIds.has(tab.id) ? ' selected-multi' : '');
+  card.className = 'tab-card' + (tab.pinned ? ' pinned' : '');
   card.dataset.tabId = tab.id;
   card.dataset.colId = col.id;
   card.dataset.spId = sp.id;
-
-  // item 45: multi-select checkbox
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.className = 'card-select-cb';
-  cb.checked = selectedCardIds.has(tab.id);
-  cb.title = 'Select';
-  cb.addEventListener('change', e => {
-    e.stopPropagation();
-    if (cb.checked) selectedCardIds.add(tab.id); else selectedCardIds.delete(tab.id);
-    card.classList.toggle('selected-multi', cb.checked);
-    renderCollections();
-  });
-  cb.addEventListener('click', e => e.stopPropagation());
-  card.appendChild(cb);
 
   if (S.dndEnabled) {
     card.draggable = true;
