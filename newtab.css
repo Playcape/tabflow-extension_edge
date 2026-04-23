@@ -278,6 +278,8 @@ mark{background:rgba(var(--accent-rgb),.28);color:var(--text);border-radius:2px;
 .col-chevron:hover{background:var(--card-hover);color:var(--text)}
 .col-chevron svg{width:13px;height:13px;transition:transform 200ms ease;pointer-events:none}
 .collection.collapsed .col-chevron svg{transform:rotate(-90deg)}
+.collection.collapsed .collection-header{margin-bottom:0}
+.collection.collapsed .drop-zone{min-height:0}
 .col-name-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
 /* item 20: text-wrap:balance on collection header name */
 .col-name{
@@ -1615,76 +1617,6 @@ body.sidebar-seamless #sidebar {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
-}
-
-/* ================================================================
-   MULTI-SELECT (item 45)
-   ================================================================ */
-.multi-action-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 8px 32px var(--shadow);
-  z-index: 200;
-  transition: transform 200ms ease;
-  font-size: 12px;
-  white-space: nowrap;
-}
-.multi-action-bar.visible {
-  transform: translateX(-50%) translateY(0);
-}
-.multi-count {
-  color: var(--text-muted);
-  padding-right: 6px;
-  border-right: 1px solid var(--border);
-}
-.tab-card.selected-multi {
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), .08);
-}
-.card-select-cb {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 15px;
-  height: 15px;
-  opacity: 0;
-  transition: opacity var(--tr);
-  z-index: 5;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1.5px solid var(--text-faint);
-  border-radius: 4px;
-  background: var(--card-bg);
-  flex-shrink: 0;
-}
-.card-select-cb:checked {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.card-select-cb:checked::after {
-  content: '';
-  display: block;
-  width: 4px;
-  height: 7px;
-  border: 2px solid #fff;
-  border-top: none;
-  border-left: none;
-  transform: rotate(45deg);
-  margin: 1px 0 0 4px;
-}
-.tab-card:hover .card-select-cb,
-.tab-card.selected-multi .card-select-cb {
-  opacity: 1;
 }
 
 /* ================================================================
