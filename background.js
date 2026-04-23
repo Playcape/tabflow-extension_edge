@@ -4,6 +4,8 @@
    This runs as a service worker, active across ALL browser tabs.
    ================================================================ */
 
+const TABFLOW_URL = chrome.runtime.getURL('newtab.html');
+
 /* ---------- Domain matching ---------- */
 function topLevelDomain(rawUrl) {
   if (!rawUrl) return '';
@@ -134,20 +136,18 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 /* ---------- Reuse existing TabFlow tab on new-tab open ---------- */
 chrome.tabs.onCreated.addListener(async (newTab) => {
   try {
-    const extensionUrl = chrome.runtime.getURL('newtab.html');
     const pendingUrl = newTab.pendingUrl || newTab.url || '';
     const isNewTab = !pendingUrl ||
       pendingUrl === 'chrome://newtab/' ||
       pendingUrl === 'edge://newtab/' ||
       pendingUrl === 'about:newtab' ||
-      pendingUrl === extensionUrl;
+      pendingUrl === TABFLOW_URL;
     if (!isNewTab) return;
 
-    // Search all windows for an existing TabFlow tab
+    // Search all windows for an existing, fully-loaded TabFlow tab
     const allTabs = await chrome.tabs.query({});
     const existing = allTabs.find(t =>
-      t.id !== newTab.id &&
-      (t.url === extensionUrl || t.pendingUrl === extensionUrl)
+      t.id !== newTab.id && t.url === TABFLOW_URL
     );
 
     if (existing) {
@@ -155,9 +155,42 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
       await chrome.tabs.update(existing.id, { active: true });
       await chrome.tabs.remove(newTab.id);
       chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
-        .catch(err => console.debug('TabFlow focusSearch message failed:', err));
+        .catch(() => {});
     }
   } catch (err) {
     console.error('TabFlow onCreated handler error:', err);
+  }
+});
+
+/* ---------- Deduplicate TabFlow tabs as they finish loading ----------
+   Handles the race condition where multiple new tabs are opened before
+   any of them has loaded newtab.html (so onCreated can't find an existing
+   one). When any tab's URL changes to TABFLOW_URL we keep the oldest tab
+   (lowest id) and close all others.
+   ------------------------------------------------------------------- */
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  if (changeInfo.url !== TABFLOW_URL) return;
+  try {
+    const allTabs = await chrome.tabs.query({});
+    const tabflowTabs = allTabs.filter(t =>
+      t.url === TABFLOW_URL || t.pendingUrl === TABFLOW_URL
+    );
+    if (tabflowTabs.length <= 1) return;
+
+    // Keep the oldest tab (lowest id), close all duplicates
+    tabflowTabs.sort((a, b) => a.id - b.id);
+    const keep = tabflowTabs[0];
+    const toClose = tabflowTabs.slice(1).map(t => t.id);
+
+    await chrome.windows.update(keep.windowId, { focused: true });
+    await chrome.tabs.update(keep.id, { active: true });
+    for (const id of toClose) {
+      try { await chrome.tabs.remove(id); } catch {}
+    }
+    if (keep.id !== tabId) {
+      chrome.tabs.sendMessage(keep.id, { type: 'focusSearch' }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('TabFlow onUpdated dedup error:', err);
   }
 });
