@@ -913,9 +913,19 @@ function buildColEl(col, sp, vm) {
   const cnt = document.createElement('span');
   cnt.className = 'col-count';
   cnt.textContent = (col.tabs||[]).length;
+  // item 38: open all in new window button (shown on hover, left side)
+  const winBtn = document.createElement('button');
+  winBtn.className = 'col-new-win-btn';
+  winBtn.innerHTML = ic('monitor', 11) + ' Window';
+  winBtn.title = 'Open all tabs in new window';
+  winBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openColInNewWindow(col);
+  });
   nameWrap.appendChild(nm);
   nameWrap.appendChild(cnt);
   nameWrap.appendChild(restoreBtn);
+  nameWrap.appendChild(winBtn);
 
   const acts = document.createElement('div');
   acts.className = 'col-actions';
@@ -930,17 +940,6 @@ function buildColEl(col, sp, vm) {
     showSortMenu(e.clientX, e.clientY, col, sp);
   });
   acts.appendChild(sortBtn);
-
-  // item 38: open all in new window button
-  const winBtn = document.createElement('button');
-  winBtn.className = 'col-new-win-btn';
-  winBtn.innerHTML = ic('monitor', 11) + ' Window';
-  winBtn.title = 'Open all tabs in new window';
-  winBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    openColInNewWindow(col);
-  });
-  acts.appendChild(winBtn);
 
   const moreBtn = document.createElement('button');
   moreBtn.className = 'icon-btn';
