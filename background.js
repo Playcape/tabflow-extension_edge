@@ -143,13 +143,15 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
       pendingUrl === extensionUrl;
     if (!isNewTab) return;
 
-    const allTabs = await chrome.tabs.query({ windowId: newTab.windowId });
+    // Search all windows for an existing TabFlow tab
+    const allTabs = await chrome.tabs.query({});
     const existing = allTabs.find(t =>
       t.id !== newTab.id &&
       (t.url === extensionUrl || t.pendingUrl === extensionUrl)
     );
 
     if (existing) {
+      await chrome.windows.update(existing.windowId, { focused: true });
       await chrome.tabs.update(existing.id, { active: true });
       await chrome.tabs.remove(newTab.id);
       chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
