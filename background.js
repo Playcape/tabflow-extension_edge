@@ -173,7 +173,11 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
         await chrome.windows.update(existing.windowId, { focused: true });
         await chrome.tabs.update(existing.id, { active: true });
         focused = true;
-      } catch { /* existing tab gone; let newTab become the TabFlow tab */ }
+      } catch (err) {
+        // Existing tab or window was closed between the query and now;
+        // let the new tab become the TabFlow tab instead.
+        console.warn('TabFlow onCreated: existing tab gone, keeping new tab:', err);
+      }
 
       if (focused) {
         try { await chrome.tabs.remove(newTab.id); } catch {}
