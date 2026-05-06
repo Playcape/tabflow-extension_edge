@@ -144,10 +144,11 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
       pendingUrl === TABFLOW_URL;
     if (!isNewTab) return;
 
-    // Search all windows for an existing, fully-loaded TabFlow tab
+    // Search all windows for an existing or pending TabFlow tab
     const allTabs = await chrome.tabs.query({});
     const existing = allTabs.find(t =>
-      t.id !== newTab.id && t.url === TABFLOW_URL
+      t.id !== newTab.id &&
+      (t.url === TABFLOW_URL || t.pendingUrl === TABFLOW_URL)
     );
 
     if (existing) {
@@ -165,11 +166,15 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
 /* ---------- Deduplicate TabFlow tabs as they finish loading ----------
    Handles the race condition where multiple new tabs are opened before
    any of them has loaded newtab.html (so onCreated can't find an existing
-   one). When any tab's URL changes to TABFLOW_URL we keep the oldest tab
-   (lowest id) and close all others.
+   one). Triggers both when the URL changes to TABFLOW_URL and when any
+   TabFlow tab finishes loading (status=complete), covering the case where
+   the new-tab override sets the URL directly without a URL-change event.
    ------------------------------------------------------------------- */
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
-  if (changeInfo.url !== TABFLOW_URL) return;
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  const isTabflowComplete =
+    changeInfo.url === TABFLOW_URL ||
+    (changeInfo.status === 'complete' && tab.url === TABFLOW_URL);
+  if (!isTabflowComplete) return;
   try {
     const allTabs = await chrome.tabs.query({});
     const tabflowTabs = allTabs.filter(t =>
