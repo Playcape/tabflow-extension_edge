@@ -134,6 +134,19 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 /* ---------- Reuse existing TabFlow tab on new-tab open ---------- */
+
+// Returns true if a tab is TabFlow (loaded/loading) or is a new-tab page
+// that the browser will route to TabFlow before it finishes loading.
+// This covers the race where a second new tab opens before the first one's
+// pendingUrl has transitioned from 'chrome://newtab/' to TABFLOW_URL.
+function isTabflowBound(t) {
+  const u = t.url || '';
+  const p = t.pendingUrl || '';
+  if (u === TABFLOW_URL || p === TABFLOW_URL) return true;
+  const isNewTabUrl = s => !s || s === 'chrome://newtab/' || s === 'edge://newtab/' || s === 'about:newtab';
+  return isNewTabUrl(u) && isNewTabUrl(p);
+}
+
 chrome.tabs.onCreated.addListener(async (newTab) => {
   try {
     const pendingUrl = newTab.pendingUrl || newTab.url || '';
@@ -144,11 +157,11 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
       pendingUrl === TABFLOW_URL;
     if (!isNewTab) return;
 
-    // Search all windows for an existing or pending TabFlow tab
+    // Search all windows for an existing or pending TabFlow tab,
+    // including tabs still sitting at the browser's new-tab URL.
     const allTabs = await chrome.tabs.query({});
     const existing = allTabs.find(t =>
-      t.id !== newTab.id &&
-      (t.url === TABFLOW_URL || t.pendingUrl === TABFLOW_URL)
+      t.id !== newTab.id && isTabflowBound(t)
     );
 
     if (existing) {
