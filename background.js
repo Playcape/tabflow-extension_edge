@@ -165,11 +165,21 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
     );
 
     if (existing) {
-      await chrome.windows.update(existing.windowId, { focused: true });
-      await chrome.tabs.update(existing.id, { active: true });
-      await chrome.tabs.remove(newTab.id);
-      chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
-        .catch(() => {});
+      // Focus the existing tab. Guard individually so a stale window/tab id
+      // (e.g. the existing tab was closed between query and here) doesn't
+      // prevent the removal of the new duplicate tab that follows.
+      let focused = false;
+      try {
+        await chrome.windows.update(existing.windowId, { focused: true });
+        await chrome.tabs.update(existing.id, { active: true });
+        focused = true;
+      } catch { /* existing tab gone; let newTab become the TabFlow tab */ }
+
+      if (focused) {
+        try { await chrome.tabs.remove(newTab.id); } catch {}
+        chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
+          .catch(() => {});
+      }
     }
   } catch (err) {
     console.error('TabFlow onCreated handler error:', err);
@@ -184,8 +194,13 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
    the new-tab override sets the URL directly without a URL-change event.
    ------------------------------------------------------------------- */
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Trigger dedup as early as possible:
+  //  • changeInfo.url === TABFLOW_URL  — URL just assigned (Chrome)
+  //  • status loading + pendingUrl     — tab has started loading TabFlow (Edge)
+  //  • status complete + tab.url       — page fully loaded (fallback)
   const isTabflowComplete =
     changeInfo.url === TABFLOW_URL ||
+    (changeInfo.status === 'loading' && tab.pendingUrl === TABFLOW_URL) ||
     (changeInfo.status === 'complete' && tab.url === TABFLOW_URL);
   if (!isTabflowComplete) return;
   try {
