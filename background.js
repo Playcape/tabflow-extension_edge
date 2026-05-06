@@ -157,6 +157,12 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
     const isNewTab = isBrowserNewTabUrl(pendingUrl) || pendingUrl === TABFLOW_URL;
     if (!isNewTab) return;
 
+    // If the tab was opened by another tab (window.open / link click), it's an
+    // intentional navigation — not a bare new-tab button press.  The pendingUrl
+    // may start empty before the target URL is committed, so we must not treat
+    // it as a duplicate TabFlow tab.
+    if (newTab.openerTabId != null) return;
+
     // Search all windows for an existing or pending TabFlow tab,
     // including tabs still sitting at the browser's new-tab URL.
     const allTabs = await chrome.tabs.query({});
