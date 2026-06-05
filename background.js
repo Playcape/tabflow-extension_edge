@@ -140,6 +140,10 @@ function isBrowserNewTabUrl(url) {
   return !url || url === 'chrome://newtab/' || url === 'edge://newtab/' || url === 'about:newtab';
 }
 
+function isExplicitBrowserNewTabUrl(url) {
+  return url === 'chrome://newtab/' || url === 'edge://newtab/' || url === 'about:newtab';
+}
+
 // Returns true if a tab is TabFlow (loaded/loading) or is a new-tab page
 // that the browser will route to TabFlow before it finishes loading.
 // This covers the race where a second new tab opens before the first one's
@@ -154,14 +158,10 @@ function isTabflowBound(t) {
 chrome.tabs.onCreated.addListener(async (newTab) => {
   try {
     const pendingUrl = newTab.pendingUrl || newTab.url || '';
-    const isNewTab = isBrowserNewTabUrl(pendingUrl) || pendingUrl === TABFLOW_URL;
+    const isExplicitNewTab = isExplicitBrowserNewTabUrl(pendingUrl) || pendingUrl === TABFLOW_URL;
+    const isLikelyFreshNewTab = !pendingUrl && newTab.openerTabId == null;
+    const isNewTab = isExplicitNewTab || isLikelyFreshNewTab;
     if (!isNewTab) return;
-
-    // If the tab was opened by another tab (window.open / link click), it's an
-    // intentional navigation — not a bare new-tab button press.  The pendingUrl
-    // may start empty before the target URL is committed, so we must not treat
-    // it as a duplicate TabFlow tab.
-    if (newTab.openerTabId != null) return;
 
     // Search all windows for an existing or pending TabFlow tab,
     // including tabs still sitting at the browser's new-tab URL.
