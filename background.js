@@ -183,12 +183,19 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
         // Existing tab or window was closed between the query and now;
         // let the new tab become the TabFlow tab instead.
         console.warn('TabFlow onCreated: existing tab gone, keeping new tab:', err);
+        try { await chrome.tabs.update(newTab.id, { url: TABFLOW_URL }); } catch {}
       }
 
       if (focused) {
         try { await chrome.tabs.remove(newTab.id); } catch {}
         chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
           .catch(() => {});
+      }
+    } else {
+      // No existing TabFlow tab found. Since chrome_url_overrides is removed,
+      // we must manually redirect the new tab to TabFlow.
+      if (isBrowserNewTabUrl(pendingUrl)) {
+        try { await chrome.tabs.update(newTab.id, { url: TABFLOW_URL }); } catch {}
       }
     }
   } catch (err) {
@@ -204,6 +211,25 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
    the new-tab override sets the URL directly without a URL-change event.
    ------------------------------------------------------------------- */
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // If the user manually navigated to the new tab page, redirect to TabFlow.
+  if (changeInfo.url && isBrowserNewTabUrl(changeInfo.url)) {
+    try {
+      const allTabs = await chrome.tabs.query({});
+      const existing = allTabs.find(t => t.id !== tabId && isTabflowBound(t));
+      if (existing) {
+        await chrome.windows.update(existing.windowId, { focused: true });
+        await chrome.tabs.update(existing.id, { active: true });
+        await chrome.tabs.remove(tabId);
+        chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' }).catch(() => {});
+      } else {
+        await chrome.tabs.update(tabId, { url: TABFLOW_URL });
+      }
+    } catch (err) {
+      console.error('TabFlow onUpdated redirect error:', err);
+    }
+    return;
+  }
+
   // Trigger dedup as early as possible:
   //  • changeInfo.url === TABFLOW_URL  — URL just assigned (Chrome)
   //  • status loading + pendingUrl     — tab has started loading TabFlow (Edge)
