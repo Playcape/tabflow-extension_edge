@@ -5,9 +5,6 @@
   "description": "A beautiful new tab manager with spaces, collections, drag & drop, and hotkeys.",
   "permissions": ["tabs", "storage", "windows", "webNavigation", "alarms", "bookmarks", "sessions", "sidePanel"],
   "omnibox": { "keyword": "to" },
-  "chrome_url_overrides": {
-    "newtab": "newtab.html"
-  },
   "background": {
     "service_worker": "background.js"
   },
