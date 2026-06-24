@@ -3,7 +3,7 @@
   "name": "TabFlow — Tab Manager",
   "version": "1.2.0",
   "description": "A beautiful new tab manager with spaces, collections, drag & drop, and hotkeys.",
-  "permissions": ["tabs", "storage", "windows", "webNavigation", "alarms", "bookmarks", "sessions", "sidePanel"],
+  "permissions": ["tabs", "storage", "windows", "webNavigation", "alarms", "bookmarks", "sessions"],
   "omnibox": { "keyword": "to" },
   "background": {
     "service_worker": "background.js"
@@ -15,9 +15,6 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
-  },
-  "side_panel": {
-    "default_path": "newtab.html"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
