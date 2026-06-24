@@ -171,24 +171,12 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
     );
 
     if (existing) {
-      // Focus the existing tab. Guard individually so a stale window/tab id
-      // (e.g. the existing tab was closed between query and here) doesn't
-      // prevent the removal of the new duplicate tab that follows.
-      let focused = false;
+      // Keep the newly opened tab so the browser's address bar flow stays intact
+      // (empty + ready to type), and close the older TabFlow duplicate.
       try {
-        await chrome.windows.update(existing.windowId, { focused: true });
-        await chrome.tabs.update(existing.id, { active: true });
-        focused = true;
+        await chrome.tabs.remove(existing.id);
       } catch (err) {
-        // Existing tab or window was closed between the query and now;
-        // let the new tab become the TabFlow tab instead.
-        console.warn('TabFlow onCreated: existing tab gone, keeping new tab:', err);
-      }
-
-      if (focused) {
-        try { await chrome.tabs.remove(newTab.id); } catch {}
-        chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
-          .catch(() => {});
+        console.warn('TabFlow onCreated: could not remove older tabflow tab:', err);
       }
     }
   } catch (err) {
@@ -204,6 +192,20 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
    the new-tab override sets the URL directly without a URL-change event.
    ------------------------------------------------------------------- */
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  const liveUrl = tab.pendingUrl || tab.url || '';
+  const isExplicitNewTab =
+    (changeInfo.url != null && isExplicitBrowserNewTabUrl(changeInfo.url)) ||
+    ((changeInfo.status === 'loading' || changeInfo.status === 'complete') &&
+      isExplicitBrowserNewTabUrl(liveUrl));
+  if (isExplicitNewTab) {
+    try {
+      await chrome.tabs.update(tabId, { url: TABFLOW_URL });
+    } catch (err) {
+      console.warn('TabFlow onUpdated: failed to normalize browser new-tab URL:', err);
+    }
+    return;
+  }
+
   // Trigger dedup as early as possible:
   //  • changeInfo.url === TABFLOW_URL  — URL just assigned (Chrome)
   //  • status loading + pendingUrl     — tab has started loading TabFlow (Edge)
@@ -220,18 +222,19 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     );
     if (tabflowTabs.length <= 1) return;
 
-    // Keep the oldest tab (lowest id), close all duplicates
-    tabflowTabs.sort((a, b) => a.id - b.id);
-    const keep = tabflowTabs[0];
-    const toClose = tabflowTabs.slice(1).map(t => t.id);
+    // Keep the newest/active tab so keyboard flow stays on the tab the user opened.
+    const keep =
+      tabflowTabs.find(t => t.id === tabId) ||
+      tabflowTabs.find(t => t.active) ||
+      tabflowTabs.sort((a, b) => b.id - a.id)[0];
+    const dedupCloseIds = tabflowTabs
+      .filter(t => t.id !== keep.id)
+      .map(t => t.id);
 
     await chrome.windows.update(keep.windowId, { focused: true });
     await chrome.tabs.update(keep.id, { active: true });
-    for (const id of toClose) {
+    for (const id of dedupCloseIds) {
       try { await chrome.tabs.remove(id); } catch {}
-    }
-    if (keep.id !== tabId) {
-      chrome.tabs.sendMessage(keep.id, { type: 'focusSearch' }).catch(() => {});
     }
   } catch (err) {
     console.error('TabFlow onUpdated dedup error:', err);
