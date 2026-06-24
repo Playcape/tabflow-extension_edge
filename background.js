@@ -135,9 +135,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 /* ---------- Reuse existing TabFlow tab on new-tab open ---------- */
 
-// Returns true if a URL is a browser new-tab page (or empty/unset).
+// Returns true if a URL is a browser new-tab page.
 function isBrowserNewTabUrl(url) {
-  return !url || url === 'chrome://newtab/' || url === 'edge://newtab/' || url === 'about:newtab';
+  return url === 'chrome://newtab/' || url === 'edge://newtab/' || url === 'about:newtab';
 }
 
 // Returns true if a tab is TabFlow (loaded/loading) or is a new-tab page
@@ -154,49 +154,21 @@ function isTabflowBound(t) {
 chrome.tabs.onCreated.addListener(async (newTab) => {
   try {
     const pendingUrl = newTab.pendingUrl || newTab.url || '';
-    const isNewTab = isBrowserNewTabUrl(pendingUrl) || pendingUrl === TABFLOW_URL;
+    const isExplicitNewTab = isBrowserNewTabUrl(pendingUrl);
+    const isImplicitNewTab = !pendingUrl && newTab.openerTabId == null;
+    const isNewTab = isExplicitNewTab || isImplicitNewTab || pendingUrl === TABFLOW_URL;
     if (!isNewTab) return;
 
     // If the tab was opened by another tab (window.open / link click), it's an
     // intentional navigation — not a bare new-tab button press.  The pendingUrl
     // may start empty before the target URL is committed, so we must not treat
     // it as a duplicate TabFlow tab.
-    if (newTab.openerTabId != null) return;
+    if (!pendingUrl && newTab.openerTabId != null) return;
 
-    // Search all windows for an existing or pending TabFlow tab,
-    // including tabs still sitting at the browser's new-tab URL.
-    const allTabs = await chrome.tabs.query({});
-    const existing = allTabs.find(t =>
-      t.id !== newTab.id && isTabflowBound(t)
-    );
-
-    if (existing) {
-      // Focus the existing tab. Guard individually so a stale window/tab id
-      // (e.g. the existing tab was closed between query and here) doesn't
-      // prevent the removal of the new duplicate tab that follows.
-      let focused = false;
-      try {
-        await chrome.windows.update(existing.windowId, { focused: true });
-        await chrome.tabs.update(existing.id, { active: true });
-        focused = true;
-      } catch (err) {
-        // Existing tab or window was closed between the query and now;
-        // let the new tab become the TabFlow tab instead.
-        console.warn('TabFlow onCreated: existing tab gone, keeping new tab:', err);
-        try { await chrome.tabs.update(newTab.id, { url: TABFLOW_URL }); } catch {}
-      }
-
-      if (focused) {
-        try { await chrome.tabs.remove(newTab.id); } catch {}
-        chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' })
-          .catch(() => {});
-      }
-    } else {
-      // No existing TabFlow tab found. Since chrome_url_overrides is removed,
-      // we must manually redirect the new tab to TabFlow.
-      if (isBrowserNewTabUrl(pendingUrl)) {
-        try { await chrome.tabs.update(newTab.id, { url: TABFLOW_URL }); } catch {}
-      }
+    // Since chrome_url_overrides is removed, we must manually redirect
+    // browser new-tab pages to TabFlow.
+    if (isBrowserNewTabUrl(pendingUrl) || !pendingUrl) {
+      try { await chrome.tabs.update(newTab.id, { url: TABFLOW_URL }); } catch {}
     }
   } catch (err) {
     console.error('TabFlow onCreated handler error:', err);
@@ -214,16 +186,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // If the user manually navigated to the new tab page, redirect to TabFlow.
   if (changeInfo.url && isBrowserNewTabUrl(changeInfo.url)) {
     try {
-      const allTabs = await chrome.tabs.query({});
-      const existing = allTabs.find(t => t.id !== tabId && isTabflowBound(t));
-      if (existing) {
-        await chrome.windows.update(existing.windowId, { focused: true });
-        await chrome.tabs.update(existing.id, { active: true });
-        await chrome.tabs.remove(tabId);
-        chrome.tabs.sendMessage(existing.id, { type: 'focusSearch' }).catch(() => {});
-      } else {
-        await chrome.tabs.update(tabId, { url: TABFLOW_URL });
-      }
+      await chrome.tabs.update(tabId, { url: TABFLOW_URL });
     } catch (err) {
       console.error('TabFlow onUpdated redirect error:', err);
     }
@@ -246,18 +209,16 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     );
     if (tabflowTabs.length <= 1) return;
 
-    // Keep the oldest tab (lowest id), close all duplicates
-    tabflowTabs.sort((a, b) => a.id - b.id);
-    const keep = tabflowTabs[0];
-    const toClose = tabflowTabs.slice(1).map(t => t.id);
+    // Keep the newest/active TabFlow tab (usually the one just opened).
+    const keep =
+      tabflowTabs.find(t => t.id === tabId) ||
+      tabflowTabs.reduce((latest, current) => (current.id > latest.id ? current : latest));
+    const toClose = tabflowTabs.filter(t => t.id !== keep.id).map(t => t.id);
 
     await chrome.windows.update(keep.windowId, { focused: true });
     await chrome.tabs.update(keep.id, { active: true });
     for (const id of toClose) {
       try { await chrome.tabs.remove(id); } catch {}
-    }
-    if (keep.id !== tabId) {
-      chrome.tabs.sendMessage(keep.id, { type: 'focusSearch' }).catch(() => {});
     }
   } catch (err) {
     console.error('TabFlow onUpdated dedup error:', err);
