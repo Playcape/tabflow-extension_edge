@@ -3389,15 +3389,6 @@ function bindEvents() {
   // Global drag target on collections-area
   q('#collections-area').addEventListener('dragover', e => { if(dragData) e.preventDefault(); });
 
-  // Listen for focusSearch message from background (sent when an existing TabFlow tab is reused)
-  if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
-    chrome.runtime.onMessage.addListener(msg => {
-      if (msg?.type === 'focusSearch') {
-        const si = q('#search-input');
-        if (si) { si.focus(); si.select(); }
-      }
-    });
-  }
 }
 
 /* ============================================================
