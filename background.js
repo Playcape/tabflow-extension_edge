@@ -165,18 +165,6 @@ chrome.tabs.onCreated.addListener(async (newTab) => {
     // it as a duplicate TabFlow tab.
     if (!pendingUrl && newTab.openerTabId != null) return;
 
-    // Search all windows for an existing or pending TabFlow tab,
-    // including tabs still sitting at the browser's new-tab URL.
-    const allTabs = await chrome.tabs.query({});
-    const existing = allTabs.find(t =>
-      t.id !== newTab.id && isTabflowBound(t)
-    );
-
-    if (existing) {
-      // Keep the newly opened tab and let onUpdated close older duplicates
-      // once the new tab has finished routing to TabFlow.
-    }
-
     // Since chrome_url_overrides is removed, we must manually redirect
     // browser new-tab pages to TabFlow.
     if (isBrowserNewTabUrl(pendingUrl) || !pendingUrl) {
