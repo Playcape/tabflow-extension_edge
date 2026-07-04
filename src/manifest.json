@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "TabFlow — Tab Manager",
+  "version": "2.0.0",
+  "description": "A beautiful new tab manager with spaces, collections, drag & drop, session saving, and hotkeys. Works in Chrome, Edge, Firefox, and Zen.",
+  "permissions": ["tabs", "storage", "sessions", "bookmarks", "favicon"],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab/newtab.html"
+  },
+  "action": {
+    "default_title": "Open TabFlow",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "omnibox": { "keyword": "to" },
+  "commands": {
+    "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: open hotkey slot 1" },
+    "tabflow-slot-2": { "suggested_key": { "default": "Alt+2" }, "description": "TabFlow: open hotkey slot 2" },
+    "tabflow-slot-3": { "suggested_key": { "default": "Alt+3" }, "description": "TabFlow: open hotkey slot 3" },
+    "tabflow-slot-4": { "suggested_key": { "default": "Alt+4" }, "description": "TabFlow: open hotkey slot 4" }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tabflow@playcape.github.io",
+      "strict_min_version": "115.0"
+    }
+  }
+}
