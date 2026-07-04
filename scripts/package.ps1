@@ -10,18 +10,52 @@
   src/ itself is directly loadable everywhere for development; this script
   exists so each browser/store gets a clean manifest without foreign keys.
 
+  Implementation notes (both bit us in the wild):
+    • Zips are written with System.IO.Compression using forward-slash entry
+      names. Compress-Archive uses backslashes, which Firefox cannot read —
+      every nested file 404s inside the extension.
+    • The manifest is read/written as UTF-8 explicitly. Windows PowerShell
+      otherwise decodes it as ANSI and mangles non-ASCII (the "—" in the
+      extension name became "â€™"-style garbage).
+
 .USAGE
   powershell -ExecutionPolicy Bypass -File scripts/package.ps1
 #>
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'src'
 $dist = Join-Path $root 'dist'
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
 
-$version = (Get-Content (Join-Path $src 'manifest.json') -Raw | ConvertFrom-Json).version
+function Read-Manifest {
+    [System.IO.File]::ReadAllText((Join-Path $src 'manifest.json'), $utf8NoBom) | ConvertFrom-Json
+}
+
+function New-ExtensionZip([string]$folder, [string]$zipPath) {
+    $stream  = [System.IO.File]::Create($zipPath)
+    $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+    try {
+        Get-ChildItem $folder -Recurse -File | ForEach-Object {
+            # Forward slashes are mandatory: Firefox rejects backslash entries.
+            $entryName = $_.FullName.Substring($folder.Length + 1).Replace('\', '/')
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $archive, $_.FullName, $entryName,
+                [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+        }
+    }
+    finally {
+        $archive.Dispose()
+        $stream.Dispose()
+    }
+}
+
+$version = (Read-Manifest).version
 
 $targets = @(
     @{ name = 'chromium'; zip = "tabflow-$version-chrome-edge.zip" },
@@ -33,7 +67,7 @@ foreach ($target in $targets) {
     New-Item -ItemType Directory -Force $out | Out-Null
     Copy-Item -Recurse -Force (Join-Path $src '*') $out
 
-    $m = Get-Content (Join-Path $src 'manifest.json') -Raw | ConvertFrom-Json
+    $m = Read-Manifest
 
     if ($target.name -eq 'chromium') {
         # Chromium: service worker background; gecko settings are foreign.
@@ -47,11 +81,11 @@ foreach ($target in $targets) {
         $m.permissions = @($m.permissions | Where-Object { $_ -ne 'favicon' })
     }
 
-    $m | ConvertTo-Json -Depth 10 | Out-File (Join-Path $out 'manifest.json') -Encoding utf8
+    $json = $m | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText((Join-Path $out 'manifest.json'), $json, $utf8NoBom)
 
-    $zip = Join-Path $dist $target.zip
-    Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip -Force
-    Write-Host "Built $zip"
+    New-ExtensionZip -folder $out -zipPath (Join-Path $dist $target.zip)
+    Write-Host "Built dist/$($target.name) and dist/$($target.zip)"
 }
 
 Write-Host ""
