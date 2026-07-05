@@ -6,6 +6,15 @@ session saving, drag & drop, global hotkeys, omnibox aliases, and deep theming.
 Cross-browser by design: **Chrome, Edge, Firefox, and Zen Browser** all load the same
 `src/` folder.
 
+## Documentation
+
+| Document | For |
+| --- | --- |
+| [docs/user-guide.md](docs/user-guide.md) | Every feature, settings reference, keyboard shortcuts |
+| [docs/installation.md](docs/installation.md) | Per-browser install (incl. Zen specifics), permanent installs, moving data between browsers |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Known issues, FAQ, bug reporting |
+| [docs/architecture.md](docs/architecture.md) | Developers: module map, data schema, cross-browser strategy, how to extend |
+
 ## Layout
 
 ```
