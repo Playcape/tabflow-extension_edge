@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css" />
+  <link rel="icon" type="image/png" href="../icons/icon48.png" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" aria-label="Navigation">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon" aria-hidden="true">⬡</span>
+        <span class="logo-text">TabFlow</span>
+      </div>
+      <div class="sidebar-header-actions">
+        <button id="btn-sidebar-toggle" class="icon-btn" title="Hide sidebar" aria-label="Hide sidebar"></button>
+      </div>
+    </div>
+
+    <div class="sidebar-search">
+      <span class="search-icon-wrap" aria-hidden="true"></span>
+      <input type="search" id="search-input" placeholder="Search saved tabs…  ( / )"
+             autocomplete="off" spellcheck="false" aria-label="Search saved tabs" />
+      <button id="search-clear" class="icon-btn search-clear" style="display:none;" aria-label="Clear search"></button>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Views">
+      <button class="nav-item active" data-view="collections">
+        <span class="nav-icon" data-icon="layout-grid" aria-hidden="true"></span><span>Collections</span>
+      </button>
+      <button class="nav-item" data-view="links">
+        <span class="nav-icon" data-icon="link" aria-hidden="true"></span><span>Links</span>
+      </button>
+      <button class="nav-item" data-view="tasks">
+        <span class="nav-icon" data-icon="check-square" aria-hidden="true"></span><span>Tasks</span>
+      </button>
+    </nav>
+
+    <div class="spaces-section">
+      <div class="spaces-label">
+        <span id="spaces-heading">Spaces</span>
+        <button id="btn-add-space" class="icon-btn small" title="Add space" aria-label="Add space"></button>
+      </div>
+      <div id="spaces-list" role="list" aria-labelledby="spaces-heading"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" data-view="settings">
+        <span class="nav-icon" data-icon="settings" aria-hidden="true"></span><span>Settings</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main-content">
+    <div id="toolbar">
+      <div class="toolbar-left">
+        <h1 id="space-breadcrumb"></h1>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-expand-all" class="toolbar-btn" title="Expand all collections"></button>
+        <button id="btn-collapse-all" class="toolbar-btn" title="Collapse all collections"></button>
+        <div class="toolbar-divider" aria-hidden="true"></div>
+        <div class="dropdown" id="view-dropdown">
+          <button class="toolbar-btn" id="view-trigger" aria-haspopup="menu"></button>
+          <div class="dropdown-menu" id="view-menu" role="menu"></div>
+        </div>
+        <div class="toolbar-divider" aria-hidden="true"></div>
+        <button id="btn-add-collection" class="toolbar-btn accent"></button>
+      </div>
+    </div>
+
+    <div id="view-collections" class="view-panel active">
+      <div id="clock-widget" class="clock-widget hidden">
+        <div id="clock-time"></div>
+        <div id="clock-date"></div>
+        <div id="clock-greeting"></div>
+      </div>
+      <div id="collections-area"></div>
+    </div>
+
+    <div id="view-links" class="view-panel">
+      <div class="panel-inner">
+        <h2 class="panel-title">Links</h2>
+        <p class="panel-subtitle">Address-bar shortcuts — type <kbd>to</kbd>, a space, then the alias name.</p>
+        <div class="links-add-form">
+          <input type="text" id="link-name-input" placeholder="Alias name" aria-label="Alias name" />
+          <input type="text" id="link-url-input" placeholder="https://…" aria-label="Alias URL" />
+          <button id="btn-add-link" class="accent-btn">Add</button>
+        </div>
+        <div id="links-list"></div>
+      </div>
+    </div>
+
+    <div id="view-tasks" class="view-panel">
+      <div class="panel-inner">
+        <h2 class="panel-title">Tasks</h2>
+        <p class="panel-subtitle">A lightweight queue of things to read or do next.</p>
+        <div class="next-add-form">
+          <input type="text" id="task-title-input" placeholder="Title…" aria-label="Task title" />
+          <input type="text" id="task-url-input" placeholder="URL (optional)" aria-label="Task URL" />
+          <button id="btn-add-task" class="accent-btn">Add</button>
+        </div>
+        <div id="tasks-list"></div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="view-panel">
+      <div id="settings-tabbar" role="tablist">
+        <button class="stab active" data-stab="appearance" role="tab">Appearance</button>
+        <button class="stab" data-stab="typography" role="tab">Typography</button>
+        <button class="stab" data-stab="layout" role="tab">Layout</button>
+        <button class="stab" data-stab="data" role="tab">Data</button>
+        <button class="stab" data-stab="advanced" role="tab">Advanced</button>
+      </div>
+
+      <!-- APPEARANCE -->
+      <div class="stab-panel active" id="stab-appearance">
+        <div class="settings-section">
+          <div class="settings-section-title">Themes</div>
+          <div id="theme-grid" class="theme-grid"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Custom Themes
+            <button id="btn-new-theme" class="sml-btn">+ New</button>
+          </div>
+          <div id="custom-theme-grid" class="theme-grid"></div>
+
+          <div id="theme-editor" style="display:none">
+            <div class="te-header">
+              <input type="text" id="te-name" placeholder="Theme name…" class="te-name-input" aria-label="Theme name" />
+              <div class="te-hdr-btns">
+                <button id="te-save" class="accent-btn">Save</button>
+                <button id="te-cancel" class="settings-btn">Cancel</button>
+              </div>
+            </div>
+            <div class="te-grid" id="te-color-grid"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Accent Color</div>
+          <div id="accent-grid" class="accent-grid"></div>
+          <div class="custom-accent-row">
+            <label class="settings-row-label" for="custom-accent-input">Custom</label>
+            <input type="color" id="custom-accent-input" class="color-picker-input" value="#7c6af5" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Background</div>
+          <div class="pill-row" id="bgstyle-pills">
+            <button class="pill" data-val="solid">Solid</button>
+            <button class="pill" data-val="gradient-diag">Diagonal</button>
+            <button class="pill" data-val="gradient-radial">Radial</button>
+            <button class="pill" data-val="gradient-sunset">Sunset</button>
+            <button class="pill" data-val="custom">Custom</button>
+          </div>
+          <div class="custom-accent-row" style="margin-top:10px">
+            <label class="settings-row-label" for="custom-bg-input">Custom color</label>
+            <input type="color" id="custom-bg-input" class="color-picker-input" value="#000000" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Pattern</div>
+          <div class="pill-row" id="bgpat-pills">
+            <button class="pill" data-val="none">None</button>
+            <button class="pill" data-val="dots">Dots</button>
+            <button class="pill" data-val="grid">Grid</button>
+            <button class="pill" data-val="noise">Noise</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPOGRAPHY -->
+      <div class="stab-panel" id="stab-typography">
+        <div class="settings-section">
+          <div class="settings-section-title">Font</div>
+          <p class="settings-hint" style="margin-bottom:10px">
+            Fonts are system font stacks — nothing is downloaded, so the page stays fast, private, and offline-friendly.
+          </p>
+          <div id="font-grid" class="font-grid"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Font Size</div>
+          <div class="pill-row" id="fontsize-pills">
+            <button class="pill" data-val="small">Small</button>
+            <button class="pill" data-val="normal">Normal</button>
+            <button class="pill" data-val="large">Large</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYOUT -->
+      <div class="stab-panel" id="stab-layout">
+        <div class="settings-section">
+          <div class="settings-section-title">Corner Radius</div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-radius" min="0" max="20" step="1" class="sl" aria-label="Corner radius" />
+            <span class="slider-label">20px</span>
+            <span class="slider-val" id="sl-radius-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Card Density</div>
+          <div class="pill-row" id="density-pills">
+            <button class="pill" data-val="comfortable">Comfortable</button>
+            <button class="pill" data-val="cozy">Cozy</button>
+            <button class="pill" data-val="compact">Compact</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Default View <span class="settings-hint-inline">(applies to all spaces)</span></div>
+          <div class="pill-row" id="defview-pills">
+            <button class="pill" data-val="card">Card</button>
+            <button class="pill" data-val="compact">Compact</button>
+            <button class="pill" data-val="list">List</button>
+            <button class="pill" data-val="grid">Grid</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Sidebar Width</div>
+          <div class="slider-row">
+            <span class="slider-label">160px</span>
+            <input type="range" id="sl-sidebar" min="160" max="320" step="10" class="sl" aria-label="Sidebar width" />
+            <span class="slider-label">320px</span>
+            <span class="slider-val" id="sl-sidebar-val"></span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Clock</div>
+          <div class="pill-row" id="clock-pills">
+            <button class="pill" data-val="off">Off</button>
+            <button class="pill" data-val="on">On</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA -->
+      <div class="stab-panel" id="stab-data">
+        <div class="settings-section" id="zen-settings-section" style="display:none">
+          <div class="settings-section-title">Zen / Firefox Setup</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">New tabs show a floating search bar?</div>
+              <div class="settings-row-desc">
+                Zen replaces the new-tab page with its URL-bar popup by default, so TabFlow never appears.
+                Open <code>about:config</code> and set <code>zen.urlbar.replace-newtab</code> to <code>false</code>.
+              </div>
+            </div>
+            <button id="btn-copy-zen-pref" class="settings-btn">Copy pref name</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Good to know</div>
+              <div class="settings-row-desc">
+                "Background script: Stopped" in about:debugging is normal — it wakes on demand.
+                Temporary add-ons unload when the browser restarts; a permanent install needs the
+                package signed on addons.mozilla.org.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Storage</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Where your data lives</div>
+              <div class="settings-row-desc">Everything is stored locally in this browser profile — export regularly if you care about it.</div>
+            </div>
+            <span id="sync-status-badge" class="sync-status-badge local">Local</span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Snapshots</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Save snapshot</div>
+              <div class="settings-row-desc">Capture all spaces and collections; restore any time.</div>
+            </div>
+            <button id="btn-save-snapshot" class="settings-btn">Save Snapshot</button>
+          </div>
+          <div id="snapshots-list" style="margin-top:8px"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Import from Bookmarks</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Browser bookmarks</div>
+              <div class="settings-row-desc">Import a bookmark folder as a new collection.</div>
+            </div>
+            <button id="btn-browse-bookmarks" class="settings-btn">Browse Bookmarks</button>
+          </div>
+          <div id="bookmarks-folder-list" style="margin-top:8px"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Homepage</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Use TabFlow as your homepage</div>
+              <div class="settings-row-desc">Copy this URL into your browser’s homepage setting.</div>
+            </div>
+            <button id="btn-copy-homepage" class="settings-btn">Copy URL</button>
+          </div>
+          <div id="homepage-url-display" class="url-display"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Backup &amp; Restore</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Export</div>
+              <div class="settings-row-desc">Download spaces, collections, links, tasks and settings as JSON.</div>
+            </div>
+            <button id="btn-export" class="settings-btn">Export JSON</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Import</div>
+              <div class="settings-row-desc">Restore a TabFlow backup — v1 (tabflow_v2) backups are converted automatically.</div>
+            </div>
+            <button id="btn-import" class="settings-btn">Import JSON</button>
+            <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" />
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Danger Zone</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Reset settings</div>
+              <div class="settings-row-desc">Back to default appearance. Keeps collections and custom themes.</div>
+            </div>
+            <button id="btn-reset-settings" class="settings-btn danger">Reset Settings</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Clear all data</div>
+              <div class="settings-row-desc">Permanently deletes everything TabFlow has stored.</div>
+            </div>
+            <button id="btn-clear-all" class="settings-btn danger">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED -->
+      <div class="stab-panel" id="stab-advanced">
+        <div class="settings-section">
+          <div class="settings-section-title">Privacy</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Remote favicon fallback</div>
+              <div class="settings-row-desc">
+                When a saved tab has no stored icon, fetch one from Google’s favicon service
+                (sends the site’s domain to Google). Off = letter tiles instead.
+                Chromium browsers resolve icons locally and rarely need this.
+              </div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="remote-favicons-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Custom CSS</div>
+          <div class="settings-row-desc" style="margin-bottom:10px">Inject CSS to override any style. Applied on save and persisted.</div>
+          <textarea id="custom-css-input" class="custom-css-textarea" spellcheck="false"
+                    placeholder="/* your custom CSS */&#10;.tab-card { border-radius: 0; }" aria-label="Custom CSS"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+            <button id="btn-clear-css" class="settings-btn danger">Clear</button>
+            <button id="btn-apply-css" class="settings-btn accent-save">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside id="right-panel" aria-label="Open tabs">
+    <div class="right-panel-header">
+      <span class="right-panel-title">Open Tabs</span>
+      <div class="right-panel-actions">
+        <button id="btn-add-current-tab" class="icon-btn" title="Save the current tab to a collection" aria-label="Save current tab to a collection"></button>
+        <button id="btn-refresh-tabs" class="icon-btn" title="Refresh" aria-label="Refresh open tabs"></button>
+        <button id="btn-save-session" class="icon-btn" title="Save all open tabs as a collection" aria-label="Save session"></button>
+        <button id="btn-right-toggle" class="icon-btn" title="Hide panel" aria-label="Hide open tabs panel"></button>
+      </div>
+    </div>
+    <div id="open-tabs-list"></div>
+    <div id="recently-closed-section">
+      <div class="recently-closed-hdr">
+        <span>Recently Closed</span>
+        <button id="btn-rc-refresh" class="icon-btn small" title="Refresh" aria-label="Refresh recently closed"></button>
+      </div>
+      <div class="recently-closed-list" id="recently-closed-list"></div>
+    </div>
+  </aside>
+
+</div>
+
+<button id="right-panel-show-btn" class="right-show-btn" title="Show open tabs" aria-label="Show open tabs panel"></button>
+<button id="sidebar-show-btn" class="sidebar-show-btn" title="Show sidebar" aria-label="Show sidebar"></button>
+
+<div id="context-menu" class="context-menu" style="display:none" role="menu"></div>
+
+<!-- Hotkey slot modal -->
+<div id="hotkey-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal" role="dialog" aria-modal="true" aria-label="Assign hotkey">
+    <div class="hotkey-modal-title">Assign Hotkey Slot</div>
+    <div class="hotkey-tab-name" id="hk-tab-name"></div>
+    <div id="hk-slot-grid" class="hk-slot-grid"></div>
+    <div class="hotkey-hint" id="hk-remap-hint"></div>
+    <div class="hotkey-actions">
+      <button id="hk-clear" class="settings-btn" style="display:none">Remove</button>
+      <button id="hk-cancel" class="settings-btn">Cancel</button>
+      <button id="hk-save" class="settings-btn accent-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab edit / add modal -->
+<div id="card-edit-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal" role="dialog" aria-modal="true" aria-label="Edit tab">
+    <div class="hotkey-modal-title" id="card-edit-overlay-title">Edit Tab</div>
+    <div class="card-edit-fields">
+      <label class="card-edit-label" for="card-edit-title">Title</label>
+      <input type="text" id="card-edit-title" placeholder="Tab title…" />
+      <label class="card-edit-label" for="card-edit-url">URL</label>
+      <input type="text" id="card-edit-url" placeholder="https://…" />
+      <label class="card-edit-label" for="card-edit-note-input">Note</label>
+      <textarea id="card-edit-note-input" class="card-edit-note" placeholder="Optional note…"></textarea>
+      <label class="card-edit-label" for="card-edit-tags-input">Tags <span class="settings-hint-inline">(comma separated)</span></label>
+      <input type="text" id="card-edit-tags-input" placeholder="work, read-later, …" />
+    </div>
+    <div class="hotkey-actions">
+      <button id="card-edit-cancel" class="settings-btn">Cancel</button>
+      <button id="card-edit-save" class="settings-btn accent-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Move collection to space -->
+<div id="space-picker-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal" role="dialog" aria-modal="true" aria-label="Move collection">
+    <div class="hotkey-modal-title">Move Collection to Space</div>
+    <div id="space-picker-list" class="space-picker-list"></div>
+    <div class="hotkey-actions">
+      <button id="space-picker-cancel" class="settings-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Space customize -->
+<div id="space-customize-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal" role="dialog" aria-modal="true" aria-label="Customize space">
+    <div class="hotkey-modal-title">Customize Space</div>
+    <div class="sc-section">
+      <div class="sc-label">Dot Color</div>
+      <div class="sc-color-row" id="sc-color-row"></div>
+    </div>
+    <div class="sc-section">
+      <div class="sc-label">Icon</div>
+      <div class="sc-emoji-row" id="sc-emoji-row"></div>
+    </div>
+    <div class="hotkey-actions">
+      <button id="sc-cancel" class="settings-btn">Cancel</button>
+      <button id="sc-save" class="settings-btn accent-save">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save current tab to collection -->
+<div id="add-to-col-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal" role="dialog" aria-modal="true" aria-label="Save tab to collection">
+    <div class="hotkey-modal-title">Save Tab to Collection</div>
+    <div id="add-to-col-info" class="add-to-col-info"></div>
+    <div id="add-to-col-list" class="add-to-col-list"></div>
+    <div class="hotkey-actions">
+      <button id="add-to-col-cancel" class="settings-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="snackbar" class="snackbar" style="display:none" role="status" aria-live="polite"></div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
