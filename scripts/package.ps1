@@ -70,14 +70,18 @@ foreach ($target in $targets) {
     $m = Read-Manifest
 
     if ($target.name -eq 'chromium') {
-        # Chromium: service worker background; gecko settings are foreign.
+        # Chromium: service worker background (src is already Chromium-native);
+        # gecko settings are foreign. 'scripts' is dropped defensively in case
+        # someone re-adds the MV2-style key to src/manifest.json.
         $m.background.PSObject.Properties.Remove('scripts')
         $m.PSObject.Properties.Remove('browser_specific_settings')
     }
     else {
-        # Zen/Firefox: event page background; 'favicon' is Chromium-only and
-        # triggers the yellow "Error processing permissions" manifest warning.
+        # Zen/Firefox: event-page background. Firefox has no service worker in
+        # MV3, so swap it for the 'scripts' array. 'favicon' is Chromium-only
+        # and triggers the yellow "Error processing permissions" warning.
         $m.background.PSObject.Properties.Remove('service_worker')
+        $m.background | Add-Member -NotePropertyName 'scripts' -NotePropertyValue @('background.js') -Force
         $m.permissions = @($m.permissions | Where-Object { $_ -ne 'favicon' })
     }
 

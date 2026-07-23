@@ -52,20 +52,25 @@ All of it lives in [`common/ext.js`](../src/common/ext.js):
 - **Dev shim** — when no extension API exists (page opened over plain HTTP),
   a mock backed by `localStorage` + demo tabs activates. This is how the UI
   is developed and tested without loading an extension.
-- **Manifest** — declares both background flavors; each browser uses its own
-  key and ignores the other (Chrome 121+ / Firefox 106+):
+- **Manifest** — `src/manifest.json` is Chromium-native so it loads unpacked
+  in Edge/Chrome without warnings (Chromium rejects the MV2-style
+  `background.scripts` key):
 
   ```json
-  "background": { "service_worker": "background.js",
-                  "scripts": ["background.js"], "type": "module" }
+  "background": { "service_worker": "background.js", "type": "module" }
   ```
 
-  `browser_specific_settings.gecko` (needed by Firefox) is ignored by
-  Chromium; the `favicon` permission (Chromium-only) is skipped by Firefox
-  with a warning. The packaging script strips foreign keys per target.
-- **New tab takeover** is purely declarative via `chrome_url_overrides` — the
-  v1 approach (background-script redirects + dedup) was removed deliberately;
-  do not reintroduce it.
+  Firefox has no MV3 service worker, so [`package.ps1`](../scripts/package.ps1)
+  swaps in `"scripts": ["background.js"]` for the `dist/zen` build. The same
+  step drops `browser_specific_settings.gecko` for Chromium and the
+  Chromium-only `favicon` permission for Firefox — foreign keys stripped per
+  target.
+- **New tab takeover** is declarative via `chrome_url_overrides`, plus a small
+  `tabs.onCreated` guard in [`background.js`](../src/background.js) that keeps a
+  **single TabFlow tab per window**: a duplicate new tab is closed and the user
+  is sent back to the existing one (which then focuses its search box). The
+  guard is deliberately per-window — it never crosses windows and never closes
+  the sole tab of a freshly-opened window.
 
 ## State & persistence
 
