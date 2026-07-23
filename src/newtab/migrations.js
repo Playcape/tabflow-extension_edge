@@ -48,6 +48,11 @@ export const DEFAULT_SETTINGS = {
   liquidGlass: true,           // Apple-style material + gooey drag physics
   lgOpacity: 62,               // Liquid Glass surface opacity, % (20–90)
   lgBlur: 12,                  // Liquid Glass backdrop blur, px (0–40)
+  lgSpecular: 60,              // edge-highlight strength, % (0–100)
+  lgDepth: 60,                 // shadow/rim depth, % (0–100)
+  lgPhysics: true,             // drag droplet + goo merge
+  lgSheen: true,               // pointer-tracked highlight on cards
+  lgGlow: true,                // ambient accent glow behind collections
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
@@ -181,8 +186,14 @@ function normalizeSettings(raw) {
   settings.borderRadius = Math.min(20, Math.max(0, Number(settings.borderRadius) || 8));
   settings.sidebarWidth = Math.min(320, Math.max(160, Number(settings.sidebarWidth) || 220));
   settings.lgOpacity = Math.min(90, Math.max(20, Number(settings.lgOpacity) || 62));
-  const lgBlur = Number(settings.lgBlur); // 0 is a valid value (no blur)
-  settings.lgBlur = Math.min(40, Math.max(0, Number.isFinite(lgBlur) ? lgBlur : 12));
+  // 0 is valid for these three (no blur / no highlight / no depth).
+  const clamp0 = (raw, fallback, max) => {
+    const n = Number(raw);
+    return Math.min(max, Math.max(0, Number.isFinite(n) ? n : fallback));
+  };
+  settings.lgBlur = clamp0(settings.lgBlur, 12, 40);
+  settings.lgSpecular = clamp0(settings.lgSpecular, 60, 100);
+  settings.lgDepth = clamp0(settings.lgDepth, 60, 100);
   return settings;
 }
 

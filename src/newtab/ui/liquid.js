@@ -75,7 +75,10 @@ let lastOver = 0;     // watchdog: last dragover timestamp
 let target = null;    // hovered .tab-card
 let dockRect = null;
 
-const active = () => settings().liquidGlass && !settings().reduceMotion;
+const active = () => {
+  const s = settings();
+  return s.liquidGlass && s.lgPhysics && !s.reduceMotion;
+};
 
 function ensureLayer() {
   if (layer) return;
@@ -262,7 +265,9 @@ function onDragEnd() {
 let sheenRaf = 0;
 
 function onPointerMove(event) {
-  if (sheenRaf || !settings().liquidGlass) return;
+  if (sheenRaf) return;
+  const s = settings();
+  if (!s.liquidGlass || !s.lgSheen) return;
   const card = event.target?.closest?.('.tab-card');
   if (!card) return;
   const { clientX, clientY } = event;

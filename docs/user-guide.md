@@ -210,9 +210,10 @@ nothing here talks to the network (except the favicon fallback, below).
   surfaces with specular edges, a pointer-tracked sheen on cards, and drag
   physics — while dragging, a glass copy of the card follows the pointer and
   visibly melts into the card you hover before snapping in with a splash.
-  On by default; pauses under Reduce motion. Tune it with the **Glass
-  opacity** (how solid surfaces are) and **Glass blur** (frosting strength;
-  0 = clear) sliders.
+  On by default; pauses under Reduce motion. While enabled, a dedicated
+  **Liquid Glass settings tab** appears with the full tuning set: surface
+  opacity, blur (0 = clear), edge-highlight strength, depth, and separate
+  switches for drag physics, pointer sheen, and the ambient glow.
 - **Frosted glass** — translucent, blurred panels and modals.
 - **Animated background** — a slow "aurora" glow behind your collections
   (pauses when Reduce motion is on).
