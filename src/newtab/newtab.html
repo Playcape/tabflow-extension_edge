@@ -355,6 +355,105 @@
       <!-- ADVANCED -->
       <div class="stab-panel" id="stab-advanced">
         <div class="settings-section">
+          <div class="settings-section-title">Interface</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Command palette <span class="settings-hint-inline">(Ctrl/⌘ + K)</span></div>
+              <div class="settings-row-desc">A quick launcher to jump to any tab, collection, space, link, task or action.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="cmdpalette-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Jump to an already-open tab</div>
+              <div class="settings-row-desc">Opening a saved tab switches to it if it's already open, instead of loading a duplicate.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="focusexisting-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Zen mode <span class="settings-hint-inline">(Ctrl/⌘ + .)</span></div>
+              <div class="settings-row-desc">Hide the sidebar, panels and toolbar for a calm, centered view. Esc exits.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="zenmode-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Visual Effects</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Frosted glass</div>
+              <div class="settings-row-desc">Translucent, blurred panels and modals for a layered, glassy look.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glass-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Animated background</div>
+              <div class="settings-row-desc">A slow, drifting aurora glow behind your collections. Pauses when Reduce motion is on.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="animatedbg-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Reduce motion</div>
+              <div class="settings-row-desc">Turn off transitions and animations across the interface.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="reducemotion-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Personalization</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Greeting name</div>
+              <div class="settings-row-desc">Shown in the clock greeting — “Good morning, &lt;name&gt;”. Leave blank for none.</div>
+            </div>
+            <input type="text" id="greeting-name-input" class="settings-text-input" placeholder="Your name" maxlength="40" aria-label="Greeting name" />
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">24-hour clock</div>
+              <div class="settings-row-desc">Show the clock in 24-hour format instead of AM/PM.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="clock24h-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Show seconds</div>
+              <div class="settings-row-desc">Include seconds in the clock. Needs the clock enabled (Layout → Clock).</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="clockseconds-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <div class="settings-section-title">Privacy</div>
           <div class="settings-row">
             <div class="settings-row-info">
@@ -411,8 +510,26 @@
 
 <button id="right-panel-show-btn" class="right-show-btn" title="Show open tabs" aria-label="Show open tabs panel"></button>
 <button id="sidebar-show-btn" class="sidebar-show-btn" title="Show sidebar" aria-label="Show sidebar"></button>
+<button id="zen-exit-btn" class="zen-exit-btn" title="Exit Zen mode (Esc)" aria-label="Exit Zen mode">Exit Zen · Esc</button>
 
 <div id="context-menu" class="context-menu" style="display:none" role="menu"></div>
+
+<!-- Command palette (Ctrl/⌘ + K) -->
+<div id="cmdk-overlay" class="cmdk-overlay" style="display:none">
+  <div class="cmdk-modal" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="cmdk-input-row">
+      <span class="cmdk-input-icon" aria-hidden="true"></span>
+      <input type="text" id="cmdk-input" class="cmdk-input" placeholder="Jump to a tab, collection, space, link, task or action…"
+             autocomplete="off" spellcheck="false" aria-label="Command palette" />
+    </div>
+    <div id="cmdk-results" class="cmdk-results" role="listbox" aria-label="Results"></div>
+    <div class="cmdk-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span><kbd>esc</kbd> close</span>
+    </div>
+  </div>
+</div>
 
 <!-- Hotkey slot modal -->
 <div id="hotkey-overlay" class="hotkey-overlay" style="display:none">

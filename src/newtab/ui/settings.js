@@ -88,12 +88,31 @@ function renderSlider(slSel, valSel, key) {
   };
 }
 
+function bindToggle(sel, key, extraRender = []) {
+  const el = q(sel);
+  if (!el) return;
+  el.checked = !!settings()[key];
+  el.onchange = () => setSetting(key, el.checked, { extraRender });
+}
+
 function renderToggles() {
-  const remote = q('#remote-favicons-toggle');
-  remote.checked = settings().remoteFavicons;
-  remote.onchange = () => {
-    setSetting('remoteFavicons', remote.checked, { extraRender: ['collections', 'opentabs'] });
-  };
+  bindToggle('#remote-favicons-toggle', 'remoteFavicons', ['collections', 'opentabs']);
+
+  // Advanced feature toggles.
+  bindToggle('#cmdpalette-toggle', 'cmdPalette');
+  bindToggle('#focusexisting-toggle', 'focusExistingTab');
+  bindToggle('#zenmode-toggle', 'zenMode');
+  bindToggle('#glass-toggle', 'glass');
+  bindToggle('#animatedbg-toggle', 'animatedBg');
+  bindToggle('#reducemotion-toggle', 'reduceMotion');
+  bindToggle('#clock24h-toggle', 'clock24h');
+  bindToggle('#clockseconds-toggle', 'clockSeconds');
+
+  const nameInput = q('#greeting-name-input');
+  if (nameInput) {
+    nameInput.value = settings().greetingName ?? '';
+    nameInput.oninput = () => setSetting('greetingName', nameInput.value);
+  }
 }
 
 /* ============================================================

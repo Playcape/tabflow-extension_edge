@@ -192,11 +192,35 @@ On Firefox/Zen an extra **Zen / Firefox Setup** section appears here.
 
 ## Advanced
 
+Every option here is a toggle — flip only what you want. All of it is local;
+nothing here talks to the network (except the favicon fallback, below).
+
+**Interface**
+- **Command palette (Ctrl/⌘ + K)** — a quick launcher. Start typing to jump
+  to any saved tab, collection, space, link, task, or action; `↑`/`↓` to move,
+  `↵` to open, `Esc` to close.
+- **Jump to an already-open tab** — opening a saved tab switches to it if it's
+  already open somewhere, instead of loading a second copy.
+- **Zen mode (Ctrl/⌘ + .)** — hide the sidebar, panels and toolbar for a calm,
+  centered view. `Esc` (or the pill at the bottom) exits.
+
+**Visual effects**
+- **Frosted glass** — translucent, blurred panels and modals.
+- **Animated background** — a slow "aurora" glow behind your collections
+  (pauses when Reduce motion is on).
+- **Reduce motion** — turn off transitions and animations.
+
+**Personalization**
+- **Greeting name** — shows "Good morning, &lt;name&gt;" in the clock.
+- **24-hour clock** and **Show seconds** — clock format options.
+
+**Privacy**
 - **Remote favicon fallback** — when a saved tab has no stored icon, TabFlow
   can fetch one from Google's favicon service (this sends the site's domain
   to Google). Turn it off to get neutral letter tiles instead. Edge/Chrome
   resolve icons locally and rarely need it.
-- **Custom CSS** — inject your own CSS on top of everything; persisted.
+
+**Custom CSS** — inject your own CSS on top of everything; persisted.
 
 ---
 
@@ -204,8 +228,10 @@ On Firefox/Zen an extra **Zen / Firefox Setup** section appears here.
 
 | Key | Where | Action |
 | --- | --- | --- |
+| `Ctrl/⌘ + K` | anywhere on the page | Open the command palette |
+| `Ctrl/⌘ + .` | anywhere on the page | Toggle Zen mode |
 | `/` | anywhere on the page | Focus search |
-| `Esc` | anywhere | Close menu/dialog, else clear search |
+| `Esc` | anywhere | Close palette/menu/dialog, exit Zen, else clear search |
 | `Enter` | focused card | Open tab |
 | `Delete` | focused card | Remove tab (undo toast) |
 | `Enter` | rename fields / dialogs | Commit |

@@ -54,17 +54,19 @@ function renderClock() {
   const widget = q('#clock-widget');
   const on = settings().showClock;
   widget.classList.toggle('hidden', !on);
-  if (!on) {
-    clearInterval(clockTimer);
-    clockTimer = null;
-    return;
-  }
-  if (clockTimer) return;
+  // Rebuild the timer every render so a changed interval (seconds on/off) sticks.
+  clearInterval(clockTimer);
+  clockTimer = null;
+  if (!on) return;
+
   const tick = () => {
+    const s = settings();
     const now = new Date();
     q('#clock-time').textContent = now.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
+      ...(s.clockSeconds ? { second: '2-digit' } : {}),
+      hour12: !s.clock24h,
     });
     q('#clock-date').textContent = now.toLocaleDateString([], {
       weekday: 'long',
@@ -72,11 +74,21 @@ function renderClock() {
       day: 'numeric',
     });
     const hour = now.getHours();
-    q('#clock-greeting').textContent =
-      hour < 12 ? 'Good morning ☀️' : hour < 17 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
+    const base = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const emoji = hour < 12 ? '☀️' : hour < 17 ? '🌤️' : '🌙';
+    const name = (s.greetingName ?? '').trim();
+    q('#clock-greeting').textContent = name ? `${base}, ${name} ${emoji}` : `${base} ${emoji}`;
   };
   tick();
-  clockTimer = setInterval(tick, 30_000);
+  clockTimer = setInterval(tick, settings().clockSeconds ? 1000 : 30_000);
+}
+
+/** Toggle the minimal, chrome-free "Zen" view. */
+export function toggleZen(force) {
+  update((doc) => {
+    doc.settings.zenMode = force === undefined ? !doc.settings.zenMode : !!force;
+  });
+  render('appearance');
 }
 
 /* ---------- static icons ---------- */
@@ -123,6 +135,13 @@ export function focusSearch() {
 /* ---------- global keys ---------- */
 
 function onGlobalKeydown(event) {
+  // Ctrl/⌘ + .  →  toggle Zen mode.
+  if ((event.ctrlKey || event.metaKey) && event.key === '.') {
+    event.preventDefault();
+    toggleZen();
+    return;
+  }
+
   if (event.key === 'Escape') {
     if (menuVisible()) {
       hideMenu();
@@ -130,6 +149,10 @@ function onGlobalKeydown(event) {
     }
     if (anyOverlayOpen()) {
       closeTopOverlay();
+      return;
+    }
+    if (settings().zenMode) {
+      toggleZen(false);
       return;
     }
     q('#view-menu')?.classList.remove('open');
@@ -177,6 +200,7 @@ export function initLayout() {
     update((doc) => (doc.ui.rightPanelOpen = true));
     renderLayout();
   });
+  q('#zen-exit-btn')?.addEventListener('click', () => toggleZen(false));
 
   qa('.nav-item[data-view]').forEach((btn) =>
     btn.addEventListener('click', () => setNav(btn.dataset.view))

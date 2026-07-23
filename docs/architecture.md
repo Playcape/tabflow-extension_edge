@@ -30,6 +30,7 @@ src/
       opentabs.js          right panel: live tabs, recently closed, capture
       links.js / tasks.js  the two small views
       settings.js          the settings screens
+      palette.js           command palette (Ctrl/⌘+K) over tabs/collections/…
       modals.js            overlay stack + confirmDialog/promptDialog
       contextmenu.js       declarative context menu
       toast.js             snackbar with undo

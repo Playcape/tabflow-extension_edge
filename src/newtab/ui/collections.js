@@ -42,10 +42,40 @@ let searchQuery = '';
    Opening URLs
    ============================================================ */
 
-function openUrl(url, { newTab = false, active = false } = {}) {
+/** Loose target match for "focus the already-open tab" — ignores #hash and a
+    trailing slash so /path and /path/ (or /path#x) count as the same page. */
+function sameTarget(a, b) {
+  const norm = (u) => {
+    try {
+      const p = new URL(u);
+      return (p.origin + p.pathname).replace(/\/$/, '') + p.search;
+    } catch {
+      return u ?? '';
+    }
+  };
+  return !!a && norm(a) === norm(b);
+}
+
+export async function openUrl(url, { newTab = false, active = false } = {}) {
   if (!url) return;
-  if (newTab) ext.tabs.create({ url, active }).catch(() => {});
-  else location.href = url;
+  if (newTab) {
+    ext.tabs.create({ url, active }).catch(() => {});
+    return;
+  }
+  if (settings().focusExistingTab) {
+    try {
+      const open = await ext.tabs.query({});
+      const match = open.find((t) => t.url === url) ?? open.find((t) => sameTarget(t.url, url));
+      if (match?.id != null) {
+        await ext.tabs.update(match.id, { active: true });
+        if (match.windowId != null) await ext.windows.update(match.windowId, { focused: true });
+        return;
+      }
+    } catch {
+      /* fall through to normal open */
+    }
+  }
+  location.href = url;
 }
 
 async function openMany(urls, { windowed = false, group = null } = {}) {

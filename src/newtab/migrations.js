@@ -41,6 +41,16 @@ export const DEFAULT_SETTINGS = {
   remoteFavicons: true,        // allow Google favicon service as fallback
   customThemes: [],            // [{ id, name, vars, preview }]
   customCss: '',
+  // ---- Advanced feature toggles (all local, all opt-in unless noted) ----
+  cmdPalette: true,            // Ctrl/⌘+K quick launcher
+  focusExistingTab: false,     // open a saved tab → focus it if already open
+  glass: false,                // frosted-glass panels (backdrop blur)
+  animatedBg: false,           // slow "aurora" gradient behind collections
+  reduceMotion: false,         // kill transitions/animations
+  zenMode: false,              // hide chrome for a minimal, centered view
+  greetingName: '',            // shown in the clock greeting ("Good morning, X")
+  clock24h: false,             // 24-hour clock
+  clockSeconds: false,         // show seconds in the clock
 };
 
 export const DEFAULT_UI = {
