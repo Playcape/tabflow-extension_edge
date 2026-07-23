@@ -64,6 +64,12 @@ export function applyAppearance() {
     main.classList.toggle(`bg-${pattern}`, s.bgPattern === pattern);
   }
 
+  // Advanced visual toggles (see Settings → Advanced).
+  document.body.classList.toggle('fx-glass', !!s.glass);
+  document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
+  document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
+  document.body.classList.toggle('zen', !!s.zenMode);
+
   applyCustomCss(s.customCss);
 }
 
