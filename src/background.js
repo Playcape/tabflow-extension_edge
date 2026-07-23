@@ -22,7 +22,6 @@ import {
   NEWTAB_PAGE,
   focusOrOpen,
   focusTab,
-  isBrowserNewTabUrl,
 } from './common/ext.js';
 import { sameSite } from './common/util.js';
 
@@ -108,37 +107,58 @@ ext.action.onClicked.addListener(async () => {
    duplicate — then ask that page to focus its search box so they can type
    right away. Scope is deliberately per-window: we never jump the user to
    another window, and never close the sole tab of a just-opened window
-   (Ctrl+N), which would take the window down with it. */
-function isNewTabCandidate(tab) {
+   (Ctrl+N), which would take the window down with it.
+
+   URL matching is intentionally loose: an overridden new-tab page reports
+   its URL inconsistently across Chromium builds — sometimes the extension
+   URL, sometimes `edge://newtab/` / `chrome://newtab/`, and a *just*-created
+   tab can briefly report no URL at all. We accept all of those. (about:blank
+   / about:home are deliberately excluded so we never grab an unrelated blank
+   tab.) */
+const NEWTAB_SURFACE_URLS = new Set([
+  'chrome://newtab/',
+  'edge://newtab/',
+  'about:newtab',
+]);
+
+/** A loaded TabFlow new-tab page — the tab we keep and focus. */
+function isLoadedTabFlow(tab) {
   const url = tab.url ?? '';
   const pending = tab.pendingUrl ?? '';
   return (
     url.startsWith(EXT_ORIGIN) ||
     pending.startsWith(EXT_ORIGIN) ||
-    isBrowserNewTabUrl(url) ||
-    isBrowserNewTabUrl(pending)
+    NEWTAB_SURFACE_URLS.has(url) ||
+    NEWTAB_SURFACE_URLS.has(pending)
   );
 }
 
-ext.tabs.onCreated.addListener(async (tab) => {
-  if (tab.id == null || !isNewTabCandidate(tab)) return;
+/** The freshly-created tab we might drop — tolerates the empty-URL instant. */
+function isFreshNewTab(tab) {
+  const url = tab.url ?? '';
+  const pending = tab.pendingUrl ?? '';
+  if (url === '' && pending === '') return true;
+  return isLoadedTabFlow(tab);
+}
+
+ext.tabs.onCreated.addListener(async (created) => {
+  if (created.id == null) return;
   let tabs;
   try {
-    tabs = await ext.tabs.query({});
+    // Re-read the window's tabs: the created tab's URL has usually resolved
+    // by the time this query returns, even when the event fired with none.
+    tabs = await ext.tabs.query({ windowId: created.windowId });
   } catch {
     return;
   }
-  // An already-loaded TabFlow page in the *same* window (never cross windows).
-  const twin = tabs.find(
-    (t) =>
-      t.id !== tab.id &&
-      t.windowId === tab.windowId &&
-      (t.url ?? '').startsWith(NEWTAB_PAGE)
-  );
+  const self = tabs.find((t) => t.id === created.id) ?? created;
+  if (!isFreshNewTab(self)) return;
+  // An already-open TabFlow tab in the *same* window (never cross windows).
+  const twin = tabs.find((t) => t.id !== created.id && isLoadedTabFlow(t));
   if (!twin) return; // first/only TabFlow tab here — leave it (and the omnibox) alone
   try {
     await focusTab(twin);
-    await ext.tabs.remove(tab.id);
+    await ext.tabs.remove(created.id);
     ext.tabs.sendMessage(twin.id, { type: 'tabflow:activate' }).catch(() => {});
   } catch (err) {
     console.error('TabFlow: new-tab dedup failed', err);
