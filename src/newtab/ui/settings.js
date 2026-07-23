@@ -43,6 +43,9 @@ function renderSettings() {
   renderSlider('#sl-sidebar', '#sl-sidebar-val', 'sidebarWidth');
   renderSlider('#sl-lgopacity', '#sl-lgopacity-val', 'lgOpacity', '%');
   renderSlider('#sl-lgblur', '#sl-lgblur-val', 'lgBlur');
+  renderSlider('#sl-lgspec', '#sl-lgspec-val', 'lgSpecular', '%');
+  renderSlider('#sl-lgdepth', '#sl-lgdepth-val', 'lgDepth', '%');
+  renderLiquidTab();
   renderToggles();
   renderStorageStatus();
   renderSnapshots();
@@ -97,6 +100,21 @@ function bindToggle(sel, key, extraRender = []) {
   el.onchange = () => setSetting(key, el.checked, { extraRender });
 }
 
+/** Switch the visible settings sub-tab programmatically. */
+function activateStab(name) {
+  qa('.stab').forEach((b) => b.classList.toggle('active', b.dataset.stab === name));
+  qa('.stab-panel').forEach((p) => p.classList.toggle('active', p.id === `stab-${name}`));
+}
+
+/** The Liquid Glass tab only exists while the feature is on. */
+function renderLiquidTab() {
+  const tab = q('.stab[data-stab="liquid"]');
+  if (!tab) return;
+  const on = !!settings().liquidGlass;
+  tab.style.display = on ? '' : 'none';
+  if (!on && tab.classList.contains('active')) activateStab('appearance');
+}
+
 function renderToggles() {
   bindToggle('#remote-favicons-toggle', 'remoteFavicons', ['collections', 'opentabs']);
 
@@ -104,12 +122,27 @@ function renderToggles() {
   bindToggle('#cmdpalette-toggle', 'cmdPalette');
   bindToggle('#focusexisting-toggle', 'focusExistingTab');
   bindToggle('#zenmode-toggle', 'zenMode');
-  bindToggle('#liquidglass-toggle', 'liquidGlass');
   bindToggle('#glass-toggle', 'glass');
   bindToggle('#animatedbg-toggle', 'animatedBg');
   bindToggle('#reducemotion-toggle', 'reduceMotion');
   bindToggle('#clock24h-toggle', 'clock24h');
   bindToggle('#clockseconds-toggle', 'clockSeconds');
+
+  // Liquid Glass: the Advanced toggle and the master toggle inside the
+  // Liquid Glass tab drive the same setting; both re-render settings so
+  // the tab's visibility follows.
+  bindToggle('#liquidglass-toggle', 'liquidGlass', ['settings']);
+  const master = q('#liquidglass-master');
+  if (master) {
+    master.checked = !!settings().liquidGlass;
+    master.onchange = () => {
+      setSetting('liquidGlass', master.checked, { extraRender: ['settings'] });
+      if (!master.checked) activateStab('appearance');
+    };
+  }
+  bindToggle('#lgphysics-toggle', 'lgPhysics');
+  bindToggle('#lgsheen-toggle', 'lgSheen');
+  bindToggle('#lgglow-toggle', 'lgGlow');
 
   const nameInput = q('#greeting-name-input');
   if (nameInput) {
@@ -507,12 +540,7 @@ export function initSettings() {
 
   /* settings sub-tabs */
   qa('.stab[data-stab]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      qa('.stab').forEach((b) => b.classList.remove('active'));
-      qa('.stab-panel').forEach((p) => p.classList.remove('active'));
-      btn.classList.add('active');
-      q(`#stab-${btn.dataset.stab}`)?.classList.add('active');
-    })
+    btn.addEventListener('click', () => activateStab(btn.dataset.stab))
   );
 
   q('#btn-new-theme').addEventListener('click', openThemeEditor);

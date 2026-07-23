@@ -116,6 +116,7 @@
     <div id="view-settings" class="view-panel">
       <div id="settings-tabbar" role="tablist">
         <button class="stab active" data-stab="appearance" role="tab">Appearance</button>
+        <button class="stab" data-stab="liquid" role="tab" style="display:none">Liquid Glass</button>
         <button class="stab" data-stab="typography" role="tab">Typography</button>
         <button class="stab" data-stab="layout" role="tab">Layout</button>
         <button class="stab" data-stab="data" role="tab">Data</button>
@@ -178,6 +179,109 @@
             <button class="pill" data-val="dots">Dots</button>
             <button class="pill" data-val="grid">Grid</button>
             <button class="pill" data-val="noise">Noise</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIQUID GLASS (tab is only visible while the feature is on) -->
+      <div class="stab-panel" id="stab-liquid">
+        <div class="settings-section">
+          <div class="settings-section-title">Liquid Glass</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Enabled</div>
+              <div class="settings-row-desc">Apple-style glass material and drag physics. Turning this off hides this tab; re-enable it under Advanced.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="liquidglass-master" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Material</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Surface opacity</div>
+              <div class="settings-row-desc">How solid glass surfaces are — lower shows more of the background through them.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">20%</span>
+            <input type="range" id="sl-lgopacity" min="20" max="90" step="1" class="sl" aria-label="Glass opacity" />
+            <span class="slider-label">90%</span>
+            <span class="slider-val" id="sl-lgopacity-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Blur</div>
+              <div class="settings-row-desc">Frosting strength. Low keeps what's behind recognizable; 0 is clear glass.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-lgblur" min="0" max="40" step="1" class="sl" aria-label="Glass blur" />
+            <span class="slider-label">40px</span>
+            <span class="slider-val" id="sl-lgblur-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Edge highlight</div>
+              <div class="settings-row-desc">Strength of the specular light on borders and top edges — the “glass catches the light” look.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0%</span>
+            <input type="range" id="sl-lgspec" min="0" max="100" step="1" class="sl" aria-label="Edge highlight" />
+            <span class="slider-label">100%</span>
+            <span class="slider-val" id="sl-lgspec-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Depth</div>
+              <div class="settings-row-desc">Shadow and inner-rim intensity — how far cards lift off the page.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0%</span>
+            <input type="range" id="sl-lgdepth" min="0" max="100" step="1" class="sl" aria-label="Depth" />
+            <span class="slider-label">100%</span>
+            <span class="slider-val" id="sl-lgdepth-val"></span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Effects</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Drag physics</div>
+              <div class="settings-row-desc">The glass copy of a card that follows the pointer and melts into its drop target.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgphysics-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Pointer sheen</div>
+              <div class="settings-row-desc">A specular highlight that follows the mouse across cards.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgsheen-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Ambient glow</div>
+              <div class="settings-row-desc">A soft accent-tinted glow behind your collections that gives the glass something to refract.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgglow-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -393,36 +497,12 @@
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Liquid Glass</div>
-              <div class="settings-row-desc">Apple-style glass: blurred translucent surfaces with specular edges — plus drag physics where a card melts into its drop target.</div>
+              <div class="settings-row-desc">Apple-style glass material and drag physics. When enabled, a dedicated <b>Liquid Glass</b> tab appears above with all tuning options.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="liquidglass-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
-          </div>
-          <div class="settings-row">
-            <div class="settings-row-info">
-              <div class="settings-row-label">Glass opacity</div>
-              <div class="settings-row-desc">How solid glass surfaces are. Lower = more of the background shows through.</div>
-            </div>
-          </div>
-          <div class="slider-row">
-            <span class="slider-label">20%</span>
-            <input type="range" id="sl-lgopacity" min="20" max="90" step="1" class="sl" aria-label="Glass opacity" />
-            <span class="slider-label">90%</span>
-            <span class="slider-val" id="sl-lgopacity-val"></span>
-          </div>
-          <div class="settings-row">
-            <div class="settings-row-info">
-              <div class="settings-row-label">Glass blur</div>
-              <div class="settings-row-desc">Frosting strength. Lower = what's behind stays recognizable; 0 = clear glass.</div>
-            </div>
-          </div>
-          <div class="slider-row">
-            <span class="slider-label">0px</span>
-            <input type="range" id="sl-lgblur" min="0" max="40" step="1" class="sl" aria-label="Glass blur" />
-            <span class="slider-label">40px</span>
-            <span class="slider-val" id="sl-lgblur-val"></span>
           </div>
           <div class="settings-row">
             <div class="settings-row-info">
