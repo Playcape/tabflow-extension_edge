@@ -6,6 +6,7 @@
 
 import { q, qa } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
+import { ext } from '../../common/ext.js';
 import { getDoc, settings, update } from '../store.js';
 import { registerRenderer, render } from './bus.js';
 import { closeTopOverlay, anyOverlayOpen } from './modals.js';
@@ -103,6 +104,23 @@ function initStaticIcons() {
   setIcon('#right-panel-show-btn', 'panel-right', 13);
 }
 
+/* ---------- focus the search box ---------- *
+   Called when the background sends the user back to this tab instead of
+   opening a duplicate (see background.js). The search box doubles as a
+   launcher — type a URL or a Links alias and press Enter — so this is the
+   "ready to type" landing spot when the browser omnibox can't be focused
+   by an extension. */
+export function focusSearch() {
+  const input = q('#search-input');
+  if (!input) return;
+  if (!getDoc().ui.sidebarOpen) {
+    update((doc) => (doc.ui.sidebarOpen = true));
+    renderLayout();
+  }
+  input.focus();
+  input.select();
+}
+
 /* ---------- global keys ---------- */
 
 function onGlobalKeydown(event) {
@@ -166,4 +184,11 @@ export function initLayout() {
   );
 
   document.addEventListener('keydown', onGlobalKeydown);
+
+  // Background asks us to focus search when it redirects a duplicate new tab
+  // here (single-instance behavior). runtime.onMessage is absent in the dev
+  // shim, hence the optional chaining.
+  ext.runtime.onMessage?.addListener((message) => {
+    if (message?.type === 'tabflow:activate') focusSearch();
+  });
 }

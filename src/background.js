@@ -2,18 +2,28 @@
    TabFlow — background (MV3 service worker on Chromium,
    event page on Firefox/Zen; both load this same module).
 
-   The new-tab takeover is handled declaratively by
-   `chrome_url_overrides.newtab` in the manifest — no tab-created
-   redirect or dedup logic is needed (or wanted) here.
+   The new-tab takeover is declarative via `chrome_url_overrides.newtab`.
+   On top of that we keep a *single* TabFlow tab per window: opening
+   another new tab while one is already open sends the user back to the
+   existing tab (and focuses its search box) instead of piling up
+   duplicate copies of the same page.
 
    Responsibilities:
      • global hotkey slots (commands API)
      • omnibox "to <alias>" navigation
      • toolbar action → focus or open the TabFlow page
+     • single-instance new-tab dedup
      • first-run marker for theme auto-detection
    ================================================================ */
 
-import { ext, NEWTAB_PAGE, focusOrOpen } from './common/ext.js';
+import {
+  ext,
+  EXT_ORIGIN,
+  NEWTAB_PAGE,
+  focusOrOpen,
+  focusTab,
+  isBrowserNewTabUrl,
+} from './common/ext.js';
 import { sameSite } from './common/util.js';
 
 const STORAGE_KEY = 'tabflow_v3';
@@ -89,6 +99,50 @@ ext.omnibox.onInputEntered.addListener(async (text) => {
 /* ---------- Toolbar button: jump to TabFlow ---------- */
 ext.action.onClicked.addListener(async () => {
   await focusOrOpen(NEWTAB_PAGE, (openUrl) => openUrl === NEWTAB_PAGE);
+});
+
+/* ---------- Single-instance new tab ----------
+   Every new tab renders TabFlow (chrome_url_overrides.newtab), so without
+   this each Ctrl+T spawns a *second* identical TabFlow tab. When one is
+   already open in the same window we send the user there and drop the fresh
+   duplicate — then ask that page to focus its search box so they can type
+   right away. Scope is deliberately per-window: we never jump the user to
+   another window, and never close the sole tab of a just-opened window
+   (Ctrl+N), which would take the window down with it. */
+function isNewTabCandidate(tab) {
+  const url = tab.url ?? '';
+  const pending = tab.pendingUrl ?? '';
+  return (
+    url.startsWith(EXT_ORIGIN) ||
+    pending.startsWith(EXT_ORIGIN) ||
+    isBrowserNewTabUrl(url) ||
+    isBrowserNewTabUrl(pending)
+  );
+}
+
+ext.tabs.onCreated.addListener(async (tab) => {
+  if (tab.id == null || !isNewTabCandidate(tab)) return;
+  let tabs;
+  try {
+    tabs = await ext.tabs.query({});
+  } catch {
+    return;
+  }
+  // An already-loaded TabFlow page in the *same* window (never cross windows).
+  const twin = tabs.find(
+    (t) =>
+      t.id !== tab.id &&
+      t.windowId === tab.windowId &&
+      (t.url ?? '').startsWith(NEWTAB_PAGE)
+  );
+  if (!twin) return; // first/only TabFlow tab here — leave it (and the omnibox) alone
+  try {
+    await focusTab(twin);
+    await ext.tabs.remove(tab.id);
+    ext.tabs.sendMessage(twin.id, { type: 'tabflow:activate' }).catch(() => {});
+  } catch (err) {
+    console.error('TabFlow: new-tab dedup failed', err);
+  }
 });
 
 /* ---------- Install / update ---------- */

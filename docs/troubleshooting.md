@@ -70,6 +70,22 @@ hand, make sure it is valid JSON and still has a `spaces` array (v1) or the
 `app: "tabflow"` envelope (v2). Imports are sanitized: entries with unsafe
 URLs (e.g. `javascript:`) come through with the URL removed.
 
+## The new tab shows a blank / generic icon instead of the TabFlow logo
+
+The TabFlow logo is declared as the page favicon and shows whenever the page
+is opened as a normal tab (e.g. the toolbar button). Edge/Chrome, however, do
+**not** paint a tab icon while a page is serving as the browser's *New Tab
+Page* — that's a browser rule for the new-tab slot, not a TabFlow bug. The
+extension's own icon still appears on the toolbar and in the extensions list.
+
+## A second TabFlow tab keeps opening
+
+It shouldn't anymore: TabFlow keeps a single tab per window. Opening another
+new tab while one is already open sends you back to the existing tab and puts
+the cursor in the search box, which also works as a launcher — type a URL or a
+**Links** alias and press **Enter** to go straight there. Opening a new
+*window* still gives that window its own TabFlow tab.
+
 ## Two TabFlow tabs show different content
 
 They shouldn't — instances sync via storage events. If one was open during

@@ -38,6 +38,8 @@ function devShim() {
       getURL: (path) => new URL(path, location.href).href,
       getManifest: () => ({ permissions: [] }),
       onInstalled: noopEvent(),
+      onMessage: noopEvent(),
+      async sendMessage() {},
     },
     storage: {
       local: {
@@ -64,6 +66,8 @@ function devShim() {
       async query() { return demoTabs; },
       async create({ url }) { window.open(url, '_blank'); return { id: 0 }; },
       async update() { return {}; },
+      async remove() {},
+      async sendMessage() {},
       onCreated: noopEvent(),
       onRemoved: noopEvent(),
       onUpdated: noopEvent(),

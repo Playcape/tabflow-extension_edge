@@ -177,6 +177,34 @@ export function clearSearch() {
   if (clear) clear.style.display = 'none';
 }
 
+/**
+ * Search box doubles as a launcher (Enter): jump to a Links alias by name,
+ * or navigate to a typed address — so a fresh landing on TabFlow is "type
+ * and go", like the browser's own URL bar. Plain words stay a filter.
+ */
+function launchSearch(raw) {
+  const text = raw.trim();
+  if (!text) return false;
+
+  const alias = getDoc().links.find((l) => l.name.toLowerCase() === text.toLowerCase());
+  if (alias?.url) {
+    openUrl(alias.url);
+    return true;
+  }
+
+  const looksLikeUrl =
+    /^[a-z][a-z0-9+.-]*:\/\//i.test(text) ||
+    (!/\s/.test(text) && /^[^\s.]+\.[^\s.]{2,}/.test(text));
+  if (looksLikeUrl) {
+    const url = normalizeUrl(text);
+    if (url) {
+      openUrl(url);
+      return true;
+    }
+  }
+  return false;
+}
+
 function renderSearchResults(area, viewMode) {
   const doc = getDoc();
   const groups = [];
@@ -956,6 +984,9 @@ export function initCollections() {
   });
 
   q('#search-input').addEventListener('input', (event) => handleSearch(event.target.value));
+  q('#search-input').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') launchSearch(event.target.value);
+  });
   q('#search-clear').addEventListener('click', () => {
     clearSearch();
     render('collections');
