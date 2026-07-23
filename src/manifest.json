@@ -8,9 +8,6 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "chrome_url_overrides": {
-    "newtab": "newtab/newtab.html"
-  },
   "action": {
     "default_title": "Open TabFlow",
     "default_icon": {

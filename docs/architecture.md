@@ -61,16 +61,21 @@ All of it lives in [`common/ext.js`](../src/common/ext.js):
   ```
 
   Firefox has no MV3 service worker, so [`package.ps1`](../scripts/package.ps1)
-  swaps in `"scripts": ["background.js"]` for the `dist/zen` build. The same
-  step drops `browser_specific_settings.gecko` for Chromium and the
-  Chromium-only `favicon` permission for Firefox — foreign keys stripped per
-  target.
-- **New tab takeover** is declarative via `chrome_url_overrides`, plus a small
-  `tabs.onCreated` guard in [`background.js`](../src/background.js) that keeps a
-  **single TabFlow tab per window**: a duplicate new tab is closed and the user
-  is sent back to the existing one (which then focuses its search box). The
-  guard is deliberately per-window — it never crosses windows and never closes
-  the sole tab of a freshly-opened window.
+  swaps in `"scripts": ["background.js"]` for the `dist/zen` build, and adds
+  `chrome_url_overrides` there too (Firefox can't redirect its new-tab page, so
+  it takes the new tab over declaratively — see below). The same step drops
+  `browser_specific_settings.gecko` for Chromium and the Chromium-only
+  `favicon` permission for Firefox — foreign keys handled per target.
+- **New tab takeover** is done by **redirect**, not `chrome_url_overrides`:
+  [`background.js`](../src/background.js) navigates a browser new tab to
+  TabFlow's own page URL, so it loads as an ordinary extension page. This is
+  deliberate — an ordinary page shows its favicon in the tab strip, whereas the
+  browser never paints one for its New Tab Page. The same handler keeps a
+  **single TabFlow tab per window** (a duplicate new tab is dropped and the user
+  is sent back to the existing one, which focuses its search box); a
+  `tabs.onUpdated` pass covers the manual-navigation and race cases. It is
+  per-window on purpose — never crossing windows, never closing the sole tab of
+  a freshly-opened window.
 
 ## State & persistence
 

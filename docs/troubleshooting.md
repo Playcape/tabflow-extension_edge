@@ -72,11 +72,12 @@ URLs (e.g. `javascript:`) come through with the URL removed.
 
 ## The new tab shows a blank / generic icon instead of the TabFlow logo
 
-The TabFlow logo is declared as the page favicon and shows whenever the page
-is opened as a normal tab (e.g. the toolbar button). Edge/Chrome, however, do
-**not** paint a tab icon while a page is serving as the browser's *New Tab
-Page* — that's a browser rule for the new-tab slot, not a TabFlow bug. The
-extension's own icon still appears on the toolbar and in the extensions list.
+Shouldn't happen: TabFlow loads as an ordinary extension page (the background
+redirects a new tab to TabFlow's own URL), and an ordinary page shows its
+favicon. If the icon is missing, reload the extension so the new background
+script takes effect. Note: the browser's *own* New Tab Page can never show a
+custom favicon — that's why TabFlow redirects to a normal page instead of using
+`chrome_url_overrides`.
 
 ## A second TabFlow tab keeps opening
 
@@ -84,7 +85,8 @@ It shouldn't anymore: TabFlow keeps a single tab per window. Opening another
 new tab while one is already open sends you back to the existing tab and puts
 the cursor in the search box, which also works as a launcher — type a URL or a
 **Links** alias and press **Enter** to go straight there. Opening a new
-*window* still gives that window its own TabFlow tab.
+*window* still gives that window its own TabFlow tab. (If duplicates were open
+from before this update, close the extras once; new tabs won't pile up again.)
 
 ## Two TabFlow tabs show different content
 

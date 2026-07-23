@@ -113,10 +113,9 @@ function initStaticIcons() {
 export function focusSearch() {
   const input = q('#search-input');
   if (!input) return;
-  if (!getDoc().ui.sidebarOpen) {
-    update((doc) => (doc.ui.sidebarOpen = true));
-    renderLayout();
-  }
+  // Respect a deliberately-collapsed sidebar — don't force it open on every
+  // new tab. The search box lives there, so there's nothing to focus if hidden.
+  if (!getDoc().ui.sidebarOpen) return;
   input.focus();
   input.select();
 }
