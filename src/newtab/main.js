@@ -13,6 +13,7 @@ import { initLinks } from './ui/links.js';
 import { initTasks } from './ui/tasks.js';
 import { initSettings } from './ui/settings.js';
 import { initPalette } from './ui/palette.js';
+import { initLiquid } from './ui/liquid.js';
 
 async function boot() {
   await initStore();
@@ -26,6 +27,7 @@ async function boot() {
   initTasks();
   initSettings();
   initPalette();
+  initLiquid();
 
   renderAll();
   setNav('collections');

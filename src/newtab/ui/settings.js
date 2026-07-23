@@ -102,6 +102,7 @@ function renderToggles() {
   bindToggle('#cmdpalette-toggle', 'cmdPalette');
   bindToggle('#focusexisting-toggle', 'focusExistingTab');
   bindToggle('#zenmode-toggle', 'zenMode');
+  bindToggle('#liquidglass-toggle', 'liquidGlass');
   bindToggle('#glass-toggle', 'glass');
   bindToggle('#animatedbg-toggle', 'animatedBg');
   bindToggle('#reducemotion-toggle', 'reduceMotion');
