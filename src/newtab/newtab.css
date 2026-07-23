@@ -1314,11 +1314,13 @@ body.fx-liquid .settings-btn {
   box-shadow: inset 0 1px 0 var(--lg-hi-soft);
 }
 
-/* --- cards: glass material without per-card blur (perf) --- */
+/* --- cards: frosted glass material --- */
 body.fx-liquid .tab-card {
   background: linear-gradient(160deg,
-    color-mix(in srgb, var(--card-hover) 70%, transparent),
-    color-mix(in srgb, var(--card-bg) 55%, transparent));
+    color-mix(in srgb, var(--card-hover) 55%, transparent),
+    color-mix(in srgb, var(--card-bg) 40%, transparent));
+  backdrop-filter: blur(12px) saturate(1.35);
+  -webkit-backdrop-filter: blur(12px) saturate(1.35);
   border-color: var(--lg-rim);
   box-shadow:
     inset 0 1px 0 var(--lg-hi-soft),
@@ -1365,25 +1367,45 @@ body.fx-liquid .drop-zone.drop-active {
   100% { transform: scale(1); }
 }
 
-/* --- droplet layer (built by liquid.js) --- */
+/* --- ghost layer (built by liquid.js) ---
+   Two layers: the SVG-goo silhouettes (melt bridge into the target)
+   sit half-transparent underneath, and the readable glass card floats
+   unfiltered above — backdrop-filter can't live inside a filtered
+   parent, and this is also what keeps the text crisp. */
 #liquid-layer { position: fixed; inset: 0; z-index: 3000; pointer-events: none; display: none; }
 #liquid-layer.active { display: block; }
-#lg-goo-layer { position: absolute; inset: 0; filter: url(#lg-goo); }
+#lg-goo-layer { position: absolute; inset: 0; filter: url(#lg-goo); opacity: .5; }
 #lg-blob {
   position: absolute; left: 0; top: 0;
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 14px; border-radius: 16px;
-  background: color-mix(in srgb, var(--accent) 28%, var(--card-bg));
-  border: 1px solid rgba(var(--accent-rgb), .5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 12px 32px rgba(0, 0, 0, .4);
-  color: var(--text); font-size: 12px; font-weight: 500;
-  max-width: 240px; white-space: nowrap;
+  border-radius: calc(var(--radius) + 3px);
+  background: color-mix(in srgb, var(--accent) 45%, var(--card-bg));
   will-change: transform;
 }
-#lg-blob img { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; }
-#lg-blob span { overflow: hidden; text-overflow: ellipsis; }
 #lg-dock {
   position: absolute; border-radius: var(--radius);
-  background: color-mix(in srgb, var(--accent) 22%, var(--card-bg));
+  background: color-mix(in srgb, var(--accent) 40%, var(--card-bg));
   opacity: 0; transition: opacity 160ms ease;
+}
+#lg-card {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 11px; overflow: hidden;
+  border-radius: calc(var(--radius) + 3px);
+  background: color-mix(in srgb, var(--card-bg) 40%, transparent);
+  backdrop-filter: blur(10px) saturate(1.5);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 16px 40px rgba(0, 0, 0, .35);
+  color: var(--text);
+  will-change: transform;
+}
+#lg-card img { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; }
+#lg-card-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#lg-card-title {
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#lg-card-url {
+  font-size: 10px; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
