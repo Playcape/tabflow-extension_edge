@@ -2,27 +2,29 @@
    TabFlow — background (MV3 service worker on Chromium,
    event page on Firefox/Zen; both load this same module).
 
-   The new-tab takeover is declarative via `chrome_url_overrides.newtab`.
-   On top of that we keep a *single* TabFlow tab per window: opening
-   another new tab while one is already open sends the user back to the
-   existing tab (and focuses its search box) instead of piling up
-   duplicate copies of the same page.
+   New-tab takeover is done by *redirect*, not `chrome_url_overrides`:
+   a browser new tab is navigated to TabFlow's own page URL, so it loads
+   as an ordinary extension page. That's deliberate — an ordinary page
+   shows its favicon in the tab strip, whereas the browser never paints
+   one for its New Tab Page. On top of that we keep a *single* TabFlow
+   tab per window: a duplicate new tab sends the user back to the existing
+   tab (and focuses its search box) instead of piling up copies.
 
    Responsibilities:
      • global hotkey slots (commands API)
      • omnibox "to <alias>" navigation
      • toolbar action → focus or open the TabFlow page
-     • single-instance new-tab dedup
+     • new-tab redirect + single-instance dedup
      • first-run marker for theme auto-detection
    ================================================================ */
 
 import {
   ext,
   EXT_ORIGIN,
+  IS_CHROMIUM,
   NEWTAB_PAGE,
   focusOrOpen,
   focusTab,
-  isBrowserNewTabUrl,
 } from './common/ext.js';
 import { sameSite } from './common/util.js';
 
@@ -101,47 +103,120 @@ ext.action.onClicked.addListener(async () => {
   await focusOrOpen(NEWTAB_PAGE, (openUrl) => openUrl === NEWTAB_PAGE);
 });
 
-/* ---------- Single-instance new tab ----------
-   Every new tab renders TabFlow (chrome_url_overrides.newtab), so without
-   this each Ctrl+T spawns a *second* identical TabFlow tab. When one is
-   already open in the same window we send the user there and drop the fresh
-   duplicate — then ask that page to focus its search box so they can type
-   right away. Scope is deliberately per-window: we never jump the user to
-   another window, and never close the sole tab of a just-opened window
-   (Ctrl+N), which would take the window down with it. */
-function isNewTabCandidate(tab) {
-  const url = tab.url ?? '';
-  const pending = tab.pendingUrl ?? '';
-  return (
-    url.startsWith(EXT_ORIGIN) ||
-    pending.startsWith(EXT_ORIGIN) ||
-    isBrowserNewTabUrl(url) ||
-    isBrowserNewTabUrl(pending)
-  );
+/* ---------- New-tab redirect + single instance ----------
+   A browser new tab (edge://newtab/, chrome://newtab/, or a blank tab from
+   the new-tab button) is redirected to TabFlow's own page URL so it loads as
+   an ordinary extension page — which is what makes the favicon show. If a
+   TabFlow tab is already open in that window we go there instead and drop the
+   duplicate, then focus its search box so the user can type right away.
+
+   Scope is per-window on purpose: we never jump the user to another window,
+   and never close the sole tab of a freshly-opened window (Ctrl+N), which
+   would take the window down with it.
+
+   URL matching is loose because a just-created tab reports its URL
+   inconsistently — the browser new-tab URL, or nothing at all for a tick.
+   about:blank / about:home are excluded so we never grab an unrelated tab. */
+const NEWTAB_SURFACE_URLS = new Set([
+  'chrome://newtab/',
+  'edge://newtab/',
+  'about:newtab',
+]);
+
+function isBrowserNewTab(url) {
+  return NEWTAB_SURFACE_URLS.has(url ?? '');
 }
 
-ext.tabs.onCreated.addListener(async (tab) => {
-  if (tab.id == null || !isNewTabCandidate(tab)) return;
-  let tabs;
+/** A loaded/loading TabFlow page — the tab we keep and focus. */
+function isTabFlowPage(tab) {
+  const url = tab.url ?? '';
+  const pending = tab.pendingUrl ?? '';
+  return url.startsWith(EXT_ORIGIN) || pending.startsWith(EXT_ORIGIN);
+}
+
+/** Redirect this fresh new tab to the TabFlow page (ordinary page → favicon).
+    Chromium only — Firefox/Zen can't navigate away from its privileged
+    new-tab page, so those builds keep `chrome_url_overrides` instead. */
+async function redirectToTabFlow(tabId) {
+  if (!IS_CHROMIUM) return;
   try {
-    tabs = await ext.tabs.query({});
-  } catch {
-    return;
+    await ext.tabs.update(tabId, { url: NEWTAB_PAGE });
+  } catch (err) {
+    console.error('TabFlow: new-tab redirect failed', err);
   }
-  // An already-loaded TabFlow page in the *same* window (never cross windows).
-  const twin = tabs.find(
-    (t) =>
-      t.id !== tab.id &&
-      t.windowId === tab.windowId &&
-      (t.url ?? '').startsWith(NEWTAB_PAGE)
-  );
-  if (!twin) return; // first/only TabFlow tab here — leave it (and the omnibox) alone
+}
+
+/** Focus an existing TabFlow tab and drop the freshly-created duplicate. */
+async function dedupeInto(twin, duplicateId) {
   try {
     await focusTab(twin);
-    await ext.tabs.remove(tab.id);
+    await ext.tabs.remove(duplicateId);
     ext.tabs.sendMessage(twin.id, { type: 'tabflow:activate' }).catch(() => {});
   } catch (err) {
     console.error('TabFlow: new-tab dedup failed', err);
+  }
+}
+
+ext.tabs.onCreated.addListener(async (created) => {
+  if (created.id == null) return;
+  let tabs;
+  try {
+    // Re-read the window's tabs: the created tab's URL has usually resolved
+    // by the time this query returns, even when the event fired with none.
+    tabs = await ext.tabs.query({ windowId: created.windowId });
+  } catch {
+    return;
+  }
+  const self = tabs.find((t) => t.id === created.id) ?? created;
+  const url = self.url ?? '';
+  const pending = self.pendingUrl ?? '';
+  const blank = url === '' && pending === '';
+
+  // A link/script-opened tab (window.open, target=_blank) starts blank but has
+  // an opener — it's an intentional navigation, not a new-tab press. Leave it.
+  if (blank && self.openerTabId != null) return;
+
+  const isNewTab = blank || isBrowserNewTab(url) || isBrowserNewTab(pending) || isTabFlowPage(self);
+  if (!isNewTab) return;
+
+  const twin = tabs.find((t) => t.id !== created.id && isTabFlowPage(t));
+  if (twin) {
+    await dedupeInto(twin, created.id);
+  } else if (!isTabFlowPage(self)) {
+    await redirectToTabFlow(created.id);
+  }
+});
+
+/* Catch the races the create-time pass can miss: a tab manually navigated to
+   the browser new-tab page, and duplicates that only become visible once a
+   TabFlow page finishes loading (two new tabs opened before either resolved). */
+ext.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.url && isBrowserNewTab(changeInfo.url)) {
+    await redirectToTabFlow(tabId);
+    return;
+  }
+  const loaded =
+    changeInfo.url?.startsWith(EXT_ORIGIN) ||
+    (changeInfo.status === 'complete' && isTabFlowPage(tab));
+  if (!loaded) return;
+  let tabs;
+  try {
+    tabs = await ext.tabs.query({ windowId: tab.windowId });
+  } catch {
+    return;
+  }
+  const flowTabs = tabs.filter(isTabFlowPage);
+  if (flowTabs.length <= 1) return;
+  // Keep the one that just loaded; drop the rest in this window.
+  const keep = flowTabs.find((t) => t.id === tabId) ?? flowTabs[0];
+  for (const t of flowTabs) {
+    if (t.id !== keep.id) {
+      try {
+        await ext.tabs.remove(t.id);
+      } catch {
+        /* already gone */
+      }
+    }
   }
 });
 

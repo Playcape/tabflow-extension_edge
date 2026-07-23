@@ -83,6 +83,12 @@ foreach ($target in $targets) {
         $m.background.PSObject.Properties.Remove('service_worker')
         $m.background | Add-Member -NotePropertyName 'scripts' -NotePropertyValue @('background.js') -Force
         $m.permissions = @($m.permissions | Where-Object { $_ -ne 'favicon' })
+
+        # Firefox can't redirect its privileged new-tab page (that's the
+        # Chromium-only approach in src), so it takes over the new tab the
+        # declarative way. background.js already skips the redirect off-Chromium.
+        $m | Add-Member -NotePropertyName 'chrome_url_overrides' `
+            -NotePropertyValue ([pscustomobject]@{ newtab = 'newtab/newtab.html' }) -Force
     }
 
     $json = $m | ConvertTo-Json -Depth 10

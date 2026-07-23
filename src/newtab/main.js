@@ -5,7 +5,7 @@
 import { initStore, onExternalChange } from './store.js';
 import { renderAll } from './ui/bus.js';
 import { initAppearance } from './ui/appearance.js';
-import { initLayout, setNav } from './ui/layout.js';
+import { initLayout, setNav, focusSearch } from './ui/layout.js';
 import { initSpaces } from './ui/spaces.js';
 import { initCollections } from './ui/collections.js';
 import { initOpenTabs } from './ui/opentabs.js';
@@ -27,6 +27,11 @@ async function boot() {
 
   renderAll();
   setNav('collections');
+
+  // New tabs land as an ordinary page (see background.js redirect), so there's
+  // no browser omnibox to preserve — put the cursor in the search launcher so
+  // the user can type a query, a URL, or a Links alias straight away.
+  focusSearch();
 
   // Another TabFlow page saved changes — reflect them here.
   onExternalChange(() => renderAll());
