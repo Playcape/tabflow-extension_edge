@@ -372,6 +372,13 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
     )
   );
 
+  // Right-click on the header = same menu as the ⋯ button.
+  header.addEventListener('contextmenu', (event) => {
+    if (event.target.closest('.editing')) return;
+    event.preventDefault();
+    showCollectionMenu(event.clientX, event.clientY, collection, space, nameEl);
+  });
+
   /* drag handle for reordering (not while searching) */
   if (!searchContext) {
     const handle = h('span', {
@@ -395,7 +402,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       setDrag({ type: 'collection', collectionId: collection.id, spaceId: space.id });
       el.classList.add('col-dragging');
       event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', collection.name);
+      event.dataTransfer.setData('application/x-tabflow', collection.id);
     });
     el.addEventListener('dragend', () => {
       el.classList.remove('col-dragging');
@@ -494,6 +501,49 @@ function showSortMenu(x, y, collection) {
       render('collections');
     },
   })));
+}
+
+function showCardMenu(x, y, tab, collection) {
+  showMenu(x, y, [
+    { label: 'Open', icon: 'external-link', onClick: () => openUrl(tab.url) },
+    { label: 'Open in new tab', icon: 'plus', onClick: () => openUrl(tab.url, { newTab: true, active: true }) },
+    { label: 'Open in background', icon: 'copy', onClick: () => openUrl(tab.url, { newTab: true }) },
+    {
+      label: 'Open in new window',
+      icon: 'monitor',
+      onClick: () => ext.windows.create({ url: tab.url }).catch(() => {}),
+    },
+    { separator: true },
+    {
+      label: 'Copy URL',
+      icon: 'link',
+      onClick: async () => {
+        try {
+          await navigator.clipboard.writeText(tab.url);
+          toast('URL copied.');
+        } catch {
+          toast('Could not copy.');
+        }
+      },
+    },
+    { label: 'Edit…', icon: 'pencil', onClick: () => openTabModal({ mode: 'edit', collection, tab }) },
+    {
+      label: tab.pinned ? 'Unpin' : 'Pin to top',
+      icon: tab.pinned ? 'pin-off' : 'pin',
+      onClick: () => {
+        update(() => (tab.pinned = !tab.pinned));
+        render('collections');
+      },
+    },
+    {
+      label: tab.hotkeySlot ? `Hotkey: slot ${tab.hotkeySlot}…` : 'Assign hotkey…',
+      icon: 'keyboard',
+      active: !!tab.hotkeySlot,
+      onClick: () => openHotkeyModal(tab, collection),
+    },
+    { separator: true },
+    { label: 'Remove', icon: 'trash', danger: true, onClick: () => removeTab(collection.id, tab.id) },
+  ]);
 }
 
 /* ---------- card ---------- */
@@ -596,6 +646,12 @@ function buildCard(tab, collection, space) {
   card.addEventListener('auxclick', (event) => {
     if (event.button === 1) openUrl(tab.url, { newTab: true });
   });
+  card.addEventListener('contextmenu', (event) => {
+    if (event.target.closest('.editing')) return; // native menu inside rename
+    event.preventDefault();
+    event.stopPropagation();
+    showCardMenu(event.clientX, event.clientY, tab, collection);
+  });
   card.addEventListener('keydown', (event) => {
     if (event.target !== card) return;
     if (event.key === 'Enter') openUrl(tab.url, { newTab: event.ctrlKey || event.metaKey, active: true });
@@ -608,7 +664,10 @@ function buildCard(tab, collection, space) {
     setDrag({ type: 'card', tabId: tab.id, collectionId: collection.id });
     card.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', tab.url);
+    // Custom MIME type on purpose: a text/plain URL makes Edge pop its
+    // "Open in split screen" drop zone over the page on every card drag.
+    // Internal DnD reads dnd.js state, not the dataTransfer payload.
+    event.dataTransfer.setData('application/x-tabflow', tab.id);
   });
   card.addEventListener('dragend', () => {
     card.classList.remove('dragging');

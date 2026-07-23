@@ -67,6 +67,8 @@ export function applyAppearance() {
   // Advanced visual toggles (see Settings → Advanced).
   document.body.classList.toggle('fx-glass', !!s.glass);
   document.body.classList.toggle('fx-liquid', !!s.liquidGlass);
+  root.style.setProperty('--lg-alpha', `${s.lgOpacity}%`);
+  root.style.setProperty('--lg-blur', `${s.lgBlur}px`);
   document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
   document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
   document.body.classList.toggle('zen', !!s.zenMode);

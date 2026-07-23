@@ -1278,19 +1278,21 @@ body.zen .zen-exit-btn { display: block; }
    are here too. Works on light and dark themes via color-mix.
    ================================================================ */
 body.fx-liquid {
+  /* --lg-alpha (surface opacity, %) and --lg-blur (px) are set from
+     Settings → Advanced by appearance.js; these are the fallbacks. */
   --lg-hi: rgba(255, 255, 255, .35);
   --lg-hi-soft: rgba(255, 255, 255, .12);
   --lg-rim: color-mix(in srgb, var(--text) 14%, transparent);
-  --lg-tint: color-mix(in srgb, var(--sidebar-bg) 55%, transparent);
-  --lg-tint-strong: color-mix(in srgb, var(--card-bg) 78%, transparent);
+  --lg-tint: color-mix(in srgb, var(--sidebar-bg) var(--lg-alpha, 62%), transparent);
+  --lg-tint-strong: color-mix(in srgb, var(--card-bg) min(calc(var(--lg-alpha, 62%) + 25%), 95%), transparent);
 }
 
 /* --- chrome surfaces: real backdrop blur --- */
 body.fx-liquid #sidebar,
 body.fx-liquid #right-panel {
   background: var(--lg-tint);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(calc(var(--lg-blur, 12px) * 2)) saturate(1.6);
+  -webkit-backdrop-filter: blur(calc(var(--lg-blur, 12px) * 2)) saturate(1.6);
   border-color: var(--lg-rim);
   box-shadow: inset 0 1px 0 var(--lg-hi-soft);
 }
@@ -1299,8 +1301,8 @@ body.fx-liquid .cmdk-modal,
 body.fx-liquid .dropdown-menu,
 body.fx-liquid .context-menu {
   background: var(--lg-tint-strong);
-  backdrop-filter: blur(28px) saturate(1.6);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(calc(var(--lg-blur, 12px) * 2)) saturate(1.6);
+  -webkit-backdrop-filter: blur(calc(var(--lg-blur, 12px) * 2)) saturate(1.6);
   border-color: var(--lg-rim);
   box-shadow:
     inset 0 1px 0 var(--lg-hi),
@@ -1317,10 +1319,10 @@ body.fx-liquid .settings-btn {
 /* --- cards: frosted glass material --- */
 body.fx-liquid .tab-card {
   background: linear-gradient(160deg,
-    color-mix(in srgb, var(--card-hover) 55%, transparent),
-    color-mix(in srgb, var(--card-bg) 40%, transparent));
-  backdrop-filter: blur(12px) saturate(1.35);
-  -webkit-backdrop-filter: blur(12px) saturate(1.35);
+    color-mix(in srgb, var(--card-hover) var(--lg-alpha, 62%), transparent),
+    color-mix(in srgb, var(--card-bg) max(calc(var(--lg-alpha, 62%) - 15%), 10%), transparent));
+  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.35);
   border-color: var(--lg-rim);
   box-shadow:
     inset 0 1px 0 var(--lg-hi-soft),
@@ -1333,8 +1335,8 @@ body.fx-liquid .tab-card:hover,
 body.fx-liquid .tab-card:focus-visible {
   transform: translateY(-2px);
   background: linear-gradient(160deg,
-    color-mix(in srgb, var(--card-hover) 85%, transparent),
-    color-mix(in srgb, var(--card-bg) 65%, transparent));
+    color-mix(in srgb, var(--card-hover) min(calc(var(--lg-alpha, 62%) + 20%), 95%), transparent),
+    color-mix(in srgb, var(--card-bg) var(--lg-alpha, 62%), transparent));
   border-color: color-mix(in srgb, var(--accent) 55%, var(--lg-rim));
   box-shadow: inset 0 1px 0 var(--lg-hi), 0 10px 28px var(--shadow);
 }
@@ -1391,9 +1393,9 @@ body.fx-liquid .drop-zone.drop-active {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 11px; overflow: hidden;
   border-radius: calc(var(--radius) + 3px);
-  background: color-mix(in srgb, var(--card-bg) 40%, transparent);
-  backdrop-filter: blur(10px) saturate(1.5);
-  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  background: color-mix(in srgb, var(--card-bg) max(calc(var(--lg-alpha, 62%) - 20%), 15%), transparent);
+  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, .22);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 16px 40px rgba(0, 0, 0, .35);
   color: var(--text);

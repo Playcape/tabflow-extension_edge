@@ -41,6 +41,8 @@ function renderSettings() {
   });
   renderSlider('#sl-radius', '#sl-radius-val', 'borderRadius');
   renderSlider('#sl-sidebar', '#sl-sidebar-val', 'sidebarWidth');
+  renderSlider('#sl-lgopacity', '#sl-lgopacity-val', 'lgOpacity', '%');
+  renderSlider('#sl-lgblur', '#sl-lgblur-val', 'lgBlur');
   renderToggles();
   renderStorageStatus();
   renderSnapshots();
@@ -75,15 +77,15 @@ function renderPills(sel, key, onApply = null, codec = null) {
   }
 }
 
-function renderSlider(slSel, valSel, key) {
+function renderSlider(slSel, valSel, key, suffix = 'px') {
   const slider = q(slSel);
   const label = q(valSel);
   if (!slider || !label) return;
   slider.value = settings()[key];
-  label.textContent = `${settings()[key]}px`;
+  label.textContent = `${settings()[key]}${suffix}`;
   slider.oninput = () => {
     const value = parseInt(slider.value, 10);
-    label.textContent = `${value}px`;
+    label.textContent = `${value}${suffix}`;
     setSetting(key, value);
   };
 }
