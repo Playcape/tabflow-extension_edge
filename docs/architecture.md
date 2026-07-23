@@ -31,6 +31,7 @@ src/
       links.js / tasks.js  the two small views
       settings.js          the settings screens
       palette.js           command palette (Ctrl/⌘+K) over tabs/collections/…
+      liquid.js            Liquid Glass drag physics (droplet, goo merge, splash)
       modals.js            overlay stack + confirmDialog/promptDialog
       contextmenu.js       declarative context menu
       toast.js             snackbar with undo

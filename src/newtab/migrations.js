@@ -45,6 +45,7 @@ export const DEFAULT_SETTINGS = {
   cmdPalette: true,            // Ctrl/⌘+K quick launcher
   focusExistingTab: false,     // open a saved tab → focus it if already open
   glass: false,                // frosted-glass panels (backdrop blur)
+  liquidGlass: true,           // Apple-style material + gooey drag physics
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view

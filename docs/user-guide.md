@@ -205,6 +205,11 @@ nothing here talks to the network (except the favicon fallback, below).
   centered view. `Esc` (or the pill at the bottom) exits.
 
 **Visual effects**
+- **Liquid Glass** — Apple-style glass material: blurred translucent
+  surfaces with specular edges, a pointer-tracked sheen on cards, and drag
+  physics — while dragging, a glass droplet follows the pointer and visibly
+  melts into the card you hover before snapping in with a splash. On by
+  default; pauses under Reduce motion.
 - **Frosted glass** — translucent, blurred panels and modals.
 - **Animated background** — a slow "aurora" glow behind your collections
   (pauses when Reduce motion is on).

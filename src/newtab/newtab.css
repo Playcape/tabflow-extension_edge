@@ -1269,3 +1269,121 @@ body.zen .zen-exit-btn { display: block; }
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
   20%      { box-shadow: 0 0 0 2px var(--accent); }
 }
+
+/* ================================================================
+   LIQUID GLASS (Settings → Advanced → Visual Effects)
+   Apple-style material: translucent, blurred surfaces with a
+   specular top edge and a refractive bottom rim. The drag physics
+   (droplet, goo merge, splash) live in ui/liquid.js; their styles
+   are here too. Works on light and dark themes via color-mix.
+   ================================================================ */
+body.fx-liquid {
+  --lg-hi: rgba(255, 255, 255, .35);
+  --lg-hi-soft: rgba(255, 255, 255, .12);
+  --lg-rim: color-mix(in srgb, var(--text) 14%, transparent);
+  --lg-tint: color-mix(in srgb, var(--sidebar-bg) 55%, transparent);
+  --lg-tint-strong: color-mix(in srgb, var(--card-bg) 78%, transparent);
+}
+
+/* --- chrome surfaces: real backdrop blur --- */
+body.fx-liquid #sidebar,
+body.fx-liquid #right-panel {
+  background: var(--lg-tint);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-color: var(--lg-rim);
+  box-shadow: inset 0 1px 0 var(--lg-hi-soft);
+}
+body.fx-liquid .hotkey-modal,
+body.fx-liquid .cmdk-modal,
+body.fx-liquid .dropdown-menu,
+body.fx-liquid .context-menu {
+  background: var(--lg-tint-strong);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border-color: var(--lg-rim);
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi),
+    inset 0 -14px 24px -20px rgba(0, 0, 0, .55),
+    0 24px 64px rgba(0, 0, 0, .45);
+}
+body.fx-liquid .toolbar-btn,
+body.fx-liquid .pill,
+body.fx-liquid .settings-btn {
+  background: color-mix(in srgb, var(--input-bg) 65%, transparent);
+  box-shadow: inset 0 1px 0 var(--lg-hi-soft);
+}
+
+/* --- cards: glass material without per-card blur (perf) --- */
+body.fx-liquid .tab-card {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--card-hover) 70%, transparent),
+    color-mix(in srgb, var(--card-bg) 55%, transparent));
+  border-color: var(--lg-rim);
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi-soft),
+    inset 0 -8px 16px -14px rgba(0, 0, 0, .55),
+    0 2px 8px var(--shadow);
+  transition: transform 320ms cubic-bezier(.34, 1.56, .64, 1),
+    border-color var(--tr), background var(--tr), box-shadow var(--tr);
+}
+body.fx-liquid .tab-card:hover,
+body.fx-liquid .tab-card:focus-visible {
+  transform: translateY(-2px);
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--card-hover) 85%, transparent),
+    color-mix(in srgb, var(--card-bg) 65%, transparent));
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--lg-rim));
+  box-shadow: inset 0 1px 0 var(--lg-hi), 0 10px 28px var(--shadow);
+}
+/* Pointer-tracked specular highlight — liquid.js feeds --lg-mx/--lg-my. */
+body.fx-liquid .tab-card::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(140px circle at var(--lg-mx, 50%) var(--lg-my, -20%),
+    rgba(255, 255, 255, .16), transparent 65%);
+  opacity: 0; transition: opacity 200ms ease;
+}
+body.fx-liquid .tab-card:hover::after { opacity: 1; }
+
+/* --- drag physics --- */
+body.fx-liquid .tab-card.lg-attract {
+  transform: scale(1.07);
+  border-color: rgba(var(--accent-rgb), .6);
+  z-index: 5;
+}
+body.fx-liquid .drop-zone.drop-active {
+  border-color: rgba(var(--accent-rgb), .55);
+  background: rgba(var(--accent-rgb), .08);
+  box-shadow: inset 0 0 24px rgba(var(--accent-rgb), .12);
+}
+.lg-splash { animation: lg-splash 520ms cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes lg-splash {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.055); }
+  65%  { transform: scale(.975); }
+  100% { transform: scale(1); }
+}
+
+/* --- droplet layer (built by liquid.js) --- */
+#liquid-layer { position: fixed; inset: 0; z-index: 3000; pointer-events: none; display: none; }
+#liquid-layer.active { display: block; }
+#lg-goo-layer { position: absolute; inset: 0; filter: url(#lg-goo); }
+#lg-blob {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 28%, var(--card-bg));
+  border: 1px solid rgba(var(--accent-rgb), .5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 12px 32px rgba(0, 0, 0, .4);
+  color: var(--text); font-size: 12px; font-weight: 500;
+  max-width: 240px; white-space: nowrap;
+  will-change: transform;
+}
+#lg-blob img { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; }
+#lg-blob span { overflow: hidden; text-overflow: ellipsis; }
+#lg-dock {
+  position: absolute; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 22%, var(--card-bg));
+  opacity: 0; transition: opacity 160ms ease;
+}
