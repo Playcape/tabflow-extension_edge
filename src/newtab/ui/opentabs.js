@@ -125,7 +125,9 @@ function buildTabRow(tab) {
     });
     row.classList.add('dragging-src');
     event.dataTransfer.effectAllowed = 'copy';
-    event.dataTransfer.setData('text/plain', tab.url ?? '');
+    // Custom MIME type: a text/plain URL triggers Edge's "Open in split
+    // screen" drop zone. Internal DnD reads dnd.js state instead.
+    event.dataTransfer.setData('application/x-tabflow', String(tab.id ?? ''));
   });
   row.addEventListener('dragend', () => {
     row.classList.remove('dragging-src');

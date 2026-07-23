@@ -74,6 +74,7 @@ A collection is a named group of saved tabs inside a space.
 | Assign a hotkey | ⌨ action button (see *Hotkeys* below) |
 | Remove | ✕ in the corner — **Undo** toast appears |
 | Keyboard | Cards are focusable with Tab; **Enter** opens, **Delete** removes |
+| Right-click | Full context menu: open (tab/background/window), copy URL, edit, pin, hotkey, remove. Collection headers have one too |
 
 Notes appear as a small document icon (hover to read); tags show as pills on
 the card and are searchable.
@@ -207,9 +208,11 @@ nothing here talks to the network (except the favicon fallback, below).
 **Visual effects**
 - **Liquid Glass** — Apple-style glass material: blurred translucent
   surfaces with specular edges, a pointer-tracked sheen on cards, and drag
-  physics — while dragging, a glass droplet follows the pointer and visibly
-  melts into the card you hover before snapping in with a splash. On by
-  default; pauses under Reduce motion.
+  physics — while dragging, a glass copy of the card follows the pointer and
+  visibly melts into the card you hover before snapping in with a splash.
+  On by default; pauses under Reduce motion. Tune it with the **Glass
+  opacity** (how solid surfaces are) and **Glass blur** (frosting strength;
+  0 = clear) sliders.
 - **Frosted glass** — translucent, blurred panels and modals.
 - **Animated background** — a slow "aurora" glow behind your collections
   (pauses when Reduce motion is on).

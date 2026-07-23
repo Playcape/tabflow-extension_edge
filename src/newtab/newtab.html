@@ -402,6 +402,30 @@
           </div>
           <div class="settings-row">
             <div class="settings-row-info">
+              <div class="settings-row-label">Glass opacity</div>
+              <div class="settings-row-desc">How solid glass surfaces are. Lower = more of the background shows through.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">20%</span>
+            <input type="range" id="sl-lgopacity" min="20" max="90" step="1" class="sl" aria-label="Glass opacity" />
+            <span class="slider-label">90%</span>
+            <span class="slider-val" id="sl-lgopacity-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Glass blur</div>
+              <div class="settings-row-desc">Frosting strength. Lower = what's behind stays recognizable; 0 = clear glass.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-lgblur" min="0" max="40" step="1" class="sl" aria-label="Glass blur" />
+            <span class="slider-label">40px</span>
+            <span class="slider-val" id="sl-lgblur-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
               <div class="settings-row-label">Frosted glass</div>
               <div class="settings-row-desc">Translucent, blurred panels and modals for a layered, glassy look.</div>
             </div>

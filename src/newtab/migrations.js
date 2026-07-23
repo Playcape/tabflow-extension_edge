@@ -46,6 +46,8 @@ export const DEFAULT_SETTINGS = {
   focusExistingTab: false,     // open a saved tab → focus it if already open
   glass: false,                // frosted-glass panels (backdrop blur)
   liquidGlass: true,           // Apple-style material + gooey drag physics
+  lgOpacity: 62,               // Liquid Glass surface opacity, % (20–90)
+  lgBlur: 12,                  // Liquid Glass backdrop blur, px (0–40)
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
@@ -178,6 +180,9 @@ function normalizeSettings(raw) {
     }));
   settings.borderRadius = Math.min(20, Math.max(0, Number(settings.borderRadius) || 8));
   settings.sidebarWidth = Math.min(320, Math.max(160, Number(settings.sidebarWidth) || 220));
+  settings.lgOpacity = Math.min(90, Math.max(20, Number(settings.lgOpacity) || 62));
+  const lgBlur = Number(settings.lgBlur); // 0 is a valid value (no blur)
+  settings.lgBlur = Math.min(40, Math.max(0, Number.isFinite(lgBlur) ? lgBlur : 12));
   return settings;
 }
 
