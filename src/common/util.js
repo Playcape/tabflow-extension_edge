@@ -137,6 +137,23 @@ export function letterTile(url, cls) {
   return h('div', { class: cls, text: letter });
 }
 
+/**
+ * Chromium's local `_favicon` service can be cold right after the browser
+ * starts, so a saved tab's icon comes up blank on the very first page load
+ * and only appears after a manual refresh. Re-request those icons once,
+ * a moment after load, so they resolve on their own. A throwaway `_r`
+ * param bypasses any cached cold response; `_favicon` ignores it. Icons
+ * that already loaded just re-read from cache.
+ */
+export function warmFavicons(root = document) {
+  for (const img of root.querySelectorAll('img[src*="/_favicon/"]')) {
+    const src = img.getAttribute('src');
+    if (!src) continue;
+    const base = img.dataset.favBase ?? (img.dataset.favBase = src.split('&_r=')[0]);
+    img.src = `${base}&_r=${Date.now()}`;
+  }
+}
+
 /* ---------- text ---------- */
 /** Build a DocumentFragment of `text` with case-insensitive `query` wrapped in <mark>. */
 export function highlight(text, query) {

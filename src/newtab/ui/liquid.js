@@ -119,19 +119,32 @@ function onDragStart(event) {
     el.style.height = `${hSize}px`;
   }
 
-  const img = src.querySelector('img');
-  if (img?.src) {
-    ghostIcon.src = img.src;
-    ghostIcon.style.display = '';
-  } else {
+  // Content depends on WHAT is being dragged. dnd.js state isn't set yet
+  // (the element's own dragstart runs after this capture-phase handler),
+  // so read it from the source element itself. A collection must show its
+  // own name + tab count — not the URL of the first card inside it.
+  const isCollection = src.classList.contains('collection');
+  let title;
+  let sub;
+  if (isCollection) {
+    title = src.querySelector('.col-name')?.textContent?.trim() || 'Collection';
+    const count = src.querySelector('.col-count')?.textContent?.trim();
+    sub = count ? `${count} tab${count === '1' ? '' : 's'}` : '';
     ghostIcon.style.display = 'none';
+  } else {
+    title = (src.querySelector('.card-title, .tab-row-title')?.textContent ?? src.textContent).trim();
+    sub = src.querySelector('.card-url')?.textContent?.trim() ?? '';
+    const img = src.querySelector('img');
+    if (img?.src) {
+      ghostIcon.src = img.src;
+      ghostIcon.style.display = '';
+    } else {
+      ghostIcon.style.display = 'none';
+    }
   }
-  const title = (src.querySelector('.card-title, .col-name, .tab-row-title')?.textContent
-    ?? src.textContent).trim();
   ghostTitle.textContent = title;
-  const url = src.querySelector('.card-url')?.textContent.trim() ?? '';
-  ghostUrl.textContent = url;
-  ghostUrl.style.display = url ? '' : 'none';
+  ghostUrl.textContent = sub;
+  ghostUrl.style.display = sub ? '' : 'none';
 
   dragging = true;
   px = gx = event.clientX;

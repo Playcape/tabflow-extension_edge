@@ -3,6 +3,7 @@
    ================================================================ */
 
 import { initStore, onExternalChange } from './store.js';
+import { warmFavicons } from '../common/util.js';
 import { renderAll } from './ui/bus.js';
 import { initAppearance } from './ui/appearance.js';
 import { initLayout, setNav, focusSearch } from './ui/layout.js';
@@ -39,6 +40,11 @@ async function boot() {
 
   // Another TabFlow page saved changes — reflect them here.
   onExternalChange(() => renderAll());
+
+  // First paint after a browser start can hit a cold favicon cache; nudge
+  // the saved-tab icons so they appear without a manual refresh.
+  setTimeout(warmFavicons, 600);
+  setTimeout(warmFavicons, 1800);
 }
 
 boot().catch((err) => {
