@@ -201,6 +201,32 @@ export const THEMES = {
     },
     preview: { sidebar: '#ede8e0', main: '#f7f4ef', card: '#ffffff', card2: '#f0ebe0' },
   },
+  /* Companion themes tuned for the special design modes (Liquid Glass &
+     Material You): deep, evenly-stepped tonal ladders so glass gains real
+     depth and Material elevation separates cleanly. A cool indigo cast
+     lets accent tints read well. */
+  'prism-dark': {
+    name: 'Prism Dark',
+    vars: {
+      '--bg': '#0e0f14', '--sidebar-bg': '#14161f', '--main-bg': '#101219',
+      '--card-bg': '#1b1e2b', '--card-hover': '#232739', '--border': '#2a2f42',
+      '--text': '#eef0f7', '--text-muted': '#9aa0b5', '--text-faint': '#5a6076',
+      '--divider': '#232838', '--sidebar-active': '#232a40', '--shadow': 'rgba(0,0,0,.5)',
+      '--scrollbar': '#333a52', '--input-bg': '#14161f',
+    },
+    preview: { sidebar: '#14161f', main: '#101219', card: '#1b1e2b', card2: '#232739' },
+  },
+  'prism-light': {
+    name: 'Prism Light',
+    vars: {
+      '--bg': '#eceef5', '--sidebar-bg': '#f5f6fb', '--main-bg': '#f0f2f8',
+      '--card-bg': '#ffffff', '--card-hover': '#f6f7fc', '--border': '#d8dce8',
+      '--text': '#1b1e2a', '--text-muted': '#5b6172', '--text-faint': '#9aa0b2',
+      '--divider': '#e3e6ef', '--sidebar-active': '#e6e9f5', '--shadow': 'rgba(20,22,40,.14)',
+      '--scrollbar': '#c2c7d6', '--input-bg': '#ffffff',
+    },
+    preview: { sidebar: '#f5f6fb', main: '#f0f2f8', card: '#ffffff', card2: '#e6e9f5' },
+  },
 };
 
 export const ACCENT_COLORS = [

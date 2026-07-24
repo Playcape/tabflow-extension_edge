@@ -148,9 +148,12 @@ new-tab popup enabled.
 
 ## Appearance
 
-- **Themes** — 18 built-in themes (Dark, Light, Dracula, Nord, Monokai,
+- **Themes** — 20 built-in themes (Dark, Light, Dracula, Nord, Monokai,
   Solarized, Rosé Pine, Forest, Catppuccin ×2, Tokyo Night, One Dark,
-  Gruvbox, Ayu Mirage, Material Ocean, Synthwave, Midnight, Paper).
+  Gruvbox, Ayu Mirage, Material Ocean, Synthwave, Midnight, Paper, plus
+  **Prism Dark** and **Prism Light** — companion themes tuned for the
+  Liquid Glass and Material You modes, with evenly-stepped tonal ladders
+  so glass gains real depth and Material elevation separates cleanly).
 - **Custom Themes** — build your own with the color editor (12 color slots,
   live preview, saved alongside the presets).
 - **Accent Color** — 16 presets or any custom color; used for highlights,
