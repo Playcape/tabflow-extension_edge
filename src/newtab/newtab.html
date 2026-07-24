@@ -117,6 +117,7 @@
       <div id="settings-tabbar" role="tablist">
         <button class="stab active" data-stab="appearance" role="tab">Appearance</button>
         <button class="stab" data-stab="liquid" role="tab" style="display:none">Liquid Glass</button>
+        <button class="stab" data-stab="material" role="tab" style="display:none">Material You</button>
         <button class="stab" data-stab="typography" role="tab">Typography</button>
         <button class="stab" data-stab="layout" role="tab">Layout</button>
         <button class="stab" data-stab="data" role="tab">Data</button>
@@ -290,6 +291,75 @@
             </div>
             <label class="switch">
               <input type="checkbox" id="lgglow-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATERIAL YOU (tab is only visible while the feature is on) -->
+      <div class="stab-panel" id="stab-material">
+        <div class="settings-section">
+          <div class="settings-section-title">Material You</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Enabled</div>
+              <div class="settings-row-desc">Pixel-style Material 3 Expressive. Your accent color is the seed — surfaces, pills and highlights are tinted from it. Turning this off hides this tab; re-enable it under Advanced.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="materialyou-master" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Tone &amp; Shape</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Tonal tint</div>
+              <div class="settings-row-desc">How strongly your accent color tints surfaces — the “Material You” wall-to-wall dynamic color.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0%</span>
+            <input type="range" id="sl-mytint" min="0" max="100" step="1" class="sl" aria-label="Tonal tint" />
+            <span class="slider-label">100%</span>
+            <span class="slider-val" id="sl-mytint-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Corner roundness</div>
+              <div class="settings-row-desc">Material 3 Expressive loves big corners — cards, panels and dialogs follow this radius.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">8px</span>
+            <input type="range" id="sl-myradius" min="8" max="28" step="1" class="sl" aria-label="Corner roundness" />
+            <span class="slider-label">28px</span>
+            <span class="slider-val" id="sl-myradius-val"></span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Feel</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Springy motion</div>
+              <div class="settings-row-desc">Bouncy, physical transitions on cards and buttons — the Pixel launcher feel. Paused under Reduce motion.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mymotion-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Bold typography</div>
+              <div class="settings-row-desc">Heavier, more expressive headings — clock, breadcrumb and collection names.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mybold-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
           </div>
@@ -511,6 +581,16 @@
             </div>
             <label class="switch">
               <input type="checkbox" id="liquidglass-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Material You <span class="settings-hint-inline">(Pixel)</span></div>
+              <div class="settings-row-desc">Google's Material 3 Expressive design language: tonal surfaces tinted by your accent, big rounded corners, pill buttons, bold type and springy motion. Enabling this switches Liquid Glass off — a dedicated <b>Material You</b> tab appears with all options.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="materialyou-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
           </div>

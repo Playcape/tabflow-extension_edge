@@ -54,6 +54,12 @@ export const DEFAULT_SETTINGS = {
   lgSheen: true,               // pointer-tracked highlight on cards
   lgGlow: true,                // ambient accent glow behind collections
   lgUnified: true,             // pull the glass language through the whole chrome
+  // ---- Material You (Pixel / Material 3 Expressive) design language ----
+  materialYou: false,          // mutually exclusive with liquidGlass
+  myTint: 60,                  // tonal tint strength, % (0–100)
+  myRadius: 20,                // corner roundness, px (8–28)
+  myMotion: true,              // springy Pixel-style motion
+  myBold: true,                // bold expressive typography
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
@@ -195,6 +201,9 @@ function normalizeSettings(raw) {
   settings.lgBlur = clamp0(settings.lgBlur, 12, 40);
   settings.lgSpecular = clamp0(settings.lgSpecular, 60, 100);
   settings.lgDepth = clamp0(settings.lgDepth, 60, 100);
+  settings.myTint = clamp0(settings.myTint, 60, 100);
+  settings.myRadius = Math.min(28, Math.max(8, Number(settings.myRadius) || 20));
+  if (settings.materialYou && settings.liquidGlass) settings.liquidGlass = false;
   return settings;
 }
 

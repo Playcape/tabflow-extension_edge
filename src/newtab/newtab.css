@@ -1576,3 +1576,167 @@ body.fx-liquid.fx-lg-unified .zen-exit-btn {
   border-color: rgba(255, 255, 255, calc(.06 + .08 * var(--lg-spec, .6)));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.18 * var(--lg-spec, .6))), 0 8px 24px var(--shadow);
 }
+
+/* ================================================================
+   MATERIAL YOU — Pixel / Material 3 Expressive (Settings → Advanced)
+   A complete second design language, mutually exclusive with Liquid
+   Glass. Principles: OPAQUE tonal surfaces tinted from the accent
+   (dynamic color), separation by tone instead of borders/glass, big
+   rounded corners, pill-shaped controls, bold expressive type, and
+   springy motion. Driven by --m3-tint (0–1) and --m3-radius (px).
+   ================================================================ */
+body.m3 {
+  /* tonal palette derived from the accent (the "seed" color) */
+  --m3-prim-cont: color-mix(in srgb, var(--accent) calc(30% * var(--m3-tint, .6) + 8%), var(--card-bg));
+  --m3-on-prim-cont: color-mix(in srgb, var(--accent) 20%, var(--text));
+  --m3-surf: color-mix(in srgb, var(--accent) calc(5% * var(--m3-tint, .6)), var(--bg));
+  --m3-surf-1: color-mix(in srgb, var(--accent) calc(8% * var(--m3-tint, .6) + 2%), var(--card-bg));
+  --m3-surf-2: color-mix(in srgb, var(--accent) calc(12% * var(--m3-tint, .6) + 3%), var(--card-hover));
+  --m3-state: rgba(var(--accent-rgb), calc(.10 * var(--m3-tint, .6) + .04));
+}
+
+/* --- surfaces: tone instead of borders --- */
+body.m3 #main-content { background: var(--m3-surf); }
+body.m3 #sidebar,
+body.m3 #right-panel {
+  background: color-mix(in srgb, var(--accent) calc(9% * var(--m3-tint, .6) + 1%), var(--sidebar-bg));
+  border-color: transparent;
+}
+body.m3 #toolbar {
+  background: transparent;
+  border-bottom-color: transparent;
+}
+body.m3 .sidebar-header,
+body.m3 .right-panel-header,
+body.m3 .recently-closed-hdr { border-bottom-color: transparent; }
+
+/* --- cards: opaque tonal, big corners, no borders --- */
+body.m3 .tab-card {
+  background: var(--m3-surf-1);
+  border-color: transparent;
+  border-radius: var(--m3-radius, 20px);
+  box-shadow: none;
+  padding: 13px 14px;
+}
+body.m3 .tab-card:hover,
+body.m3 .tab-card:focus-visible {
+  background: var(--m3-surf-2);
+  border-color: transparent;
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, .35);
+}
+body.m3 .tab-card.pinned { border-color: transparent; }
+body.m3 .tab-card.pinned::before {
+  width: 4px; border-radius: 999px;
+  top: 12px; height: calc(100% - 24px); left: 4px;
+}
+body.m3 .collection { border-radius: calc(var(--m3-radius, 20px) + 4px); }
+body.m3 .drop-zone { border-radius: calc(var(--m3-radius, 20px) + 2px); }
+body.m3 .drop-zone.drop-active {
+  border-color: transparent;
+  background: var(--m3-state);
+  box-shadow: none;
+}
+
+/* --- pill controls --- */
+body.m3 #search-input {
+  border-radius: 999px;
+  background: var(--m3-surf-1);
+  border-color: transparent;
+  padding-top: 8px; padding-bottom: 8px;
+}
+body.m3 #search-input:focus {
+  border-color: transparent;
+  background: var(--m3-surf-2);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .35);
+}
+body.m3 .nav-item,
+body.m3 .space-item { border-radius: 999px; }
+body.m3 .nav-item:hover,
+body.m3 .space-item:hover,
+body.m3 .tab-row:hover { background: var(--m3-state); }
+body.m3 .nav-item.active,
+body.m3 .space-item.active {
+  background: var(--m3-prim-cont);
+  color: var(--m3-on-prim-cont);
+  font-weight: 700;
+}
+body.m3 .toolbar-btn,
+body.m3 .settings-btn,
+body.m3 .col-restore-btn,
+body.m3 .col-new-win-btn {
+  border-radius: 999px;
+  border-color: transparent;
+  background: var(--m3-surf-1);
+  text-transform: none; letter-spacing: 0;
+}
+body.m3 .toolbar-btn:hover,
+body.m3 .settings-btn:hover { background: var(--m3-prim-cont); color: var(--m3-on-prim-cont); border-color: transparent; }
+body.m3 .toolbar-btn.accent,
+body.m3 .accent-btn {
+  border-radius: 999px;
+  background: var(--accent);
+  border-color: transparent;
+}
+body.m3 .icon-btn { border-radius: 999px; }
+body.m3 .icon-btn:hover { background: var(--m3-state); }
+body.m3 .pill { border-radius: 999px; }
+body.m3 .pill.active {
+  background: var(--m3-prim-cont);
+  color: var(--m3-on-prim-cont);
+  border-color: transparent;
+}
+body.m3 .tag-pill { border-radius: 999px; background: var(--m3-state); }
+
+/* --- dialogs & menus: extra round, tonal --- */
+body.m3 .hotkey-modal,
+body.m3 .cmdk-modal {
+  border-radius: 28px;
+  background: var(--m3-surf-1);
+  border-color: transparent;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .45);
+}
+body.m3 .context-menu,
+body.m3 .dropdown-menu {
+  border-radius: 18px;
+  background: var(--m3-surf-2);
+  border-color: transparent;
+  padding: 6px;
+}
+body.m3 .context-item { border-radius: 12px; }
+body.m3 .context-item:hover { background: var(--m3-state); }
+body.m3 .cmdk-item { border-radius: 14px; }
+body.m3 .cmdk-item.selected { background: var(--m3-prim-cont); }
+body.m3 .snackbar { border-radius: 999px; background: var(--m3-surf-2); border-color: transparent; }
+body.m3 .settings-section { border-radius: calc(var(--m3-radius, 20px) + 4px); }
+body.m3 .zen-exit-btn { background: var(--m3-surf-2); border-color: transparent; }
+
+/* --- expressive typography --- */
+body.m3.m3-bold #space-breadcrumb { font-weight: 800; font-size: 16px; letter-spacing: -.4px; }
+body.m3.m3-bold .col-name { font-weight: 800; letter-spacing: -.3px; }
+body.m3.m3-bold #clock-time { font-weight: 800; letter-spacing: -1px; }
+body.m3.m3-bold .panel-title { font-weight: 800; letter-spacing: -.4px; }
+body.m3.m3-bold .settings-section-title { font-weight: 800; }
+body.m3.m3-bold .logo-text { font-weight: 800; letter-spacing: -.4px; }
+
+/* --- springy Pixel motion --- */
+body.m3.m3-motion .tab-card {
+  transition: transform 380ms cubic-bezier(.34, 1.8, .5, 1),
+    background 180ms ease, box-shadow 180ms ease;
+}
+body.m3.m3-motion .tab-card:hover { transform: translateY(-3px) scale(1.015); }
+body.m3.m3-motion .tab-card:active { transform: scale(.97); transition-duration: 90ms; }
+body.m3.m3-motion .nav-item,
+body.m3.m3-motion .space-item,
+body.m3.m3-motion .toolbar-btn,
+body.m3.m3-motion .settings-btn,
+body.m3.m3-motion .accent-btn,
+body.m3.m3-motion .icon-btn {
+  transition: transform 300ms cubic-bezier(.34, 1.8, .5, 1),
+    background 150ms ease, color 150ms ease;
+}
+body.m3.m3-motion .nav-item:active,
+body.m3.m3-motion .space-item:active,
+body.m3.m3-motion .toolbar-btn:active,
+body.m3.m3-motion .settings-btn:active,
+body.m3.m3-motion .accent-btn:active,
+body.m3.m3-motion .icon-btn:active { transform: scale(.94); }
