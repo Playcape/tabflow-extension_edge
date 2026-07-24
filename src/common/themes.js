@@ -222,6 +222,55 @@ export const ACCENT_COLORS = [
   { name: 'Sky', hex: '#0ea5e9' },
 ];
 
+/* Liquid Glass accents — luminous jewel/neon tones that glow through the
+   frosted material and keep strong contrast on translucent surfaces. */
+export const GLASS_ACCENTS = [
+  { name: 'Amethyst', hex: '#9b8cff' },
+  { name: 'Azure', hex: '#4c9aff' },
+  { name: 'Aqua', hex: '#2ae0e0' },
+  { name: 'Mint', hex: '#35e3a4' },
+  { name: 'Spring', hex: '#46e07a' },
+  { name: 'Citron', hex: '#f5d742' },
+  { name: 'Tangerine', hex: '#ff9e4a' },
+  { name: 'Coral', hex: '#ff6f6f' },
+  { name: 'Blossom', hex: '#ff6fb5' },
+  { name: 'Orchid', hex: '#e070ff' },
+  { name: 'Periwinkle', hex: '#7c8cff' },
+  { name: 'Sky Glow', hex: '#48c6ff' },
+  { name: 'Turquoise', hex: '#22d3c5' },
+  { name: 'Flamingo', hex: '#ff7a9c' },
+  { name: 'Gold', hex: '#ffc24a' },
+  { name: 'Lavender', hex: '#b39cff' },
+];
+
+/* Material You accents — Material 3 seed tones. Balanced chroma so they
+   tint the whole tonal interface pleasantly rather than overpowering it. */
+export const MATERIAL_ACCENTS = [
+  { name: 'Blue', hex: '#4285f4' },
+  { name: 'Indigo', hex: '#5c6bc0' },
+  { name: 'Deep Purple', hex: '#7e57c2' },
+  { name: 'Violet', hex: '#7c5dd6' },
+  { name: 'Pink', hex: '#e8477e' },
+  { name: 'Red', hex: '#e5484d' },
+  { name: 'Deep Orange', hex: '#f4783b' },
+  { name: 'Amber', hex: '#f5a623' },
+  { name: 'Yellow', hex: '#f6c244' },
+  { name: 'Green', hex: '#43a047' },
+  { name: 'Emerald', hex: '#1ba97a' },
+  { name: 'Teal', hex: '#009688' },
+  { name: 'Cyan', hex: '#00acc1' },
+  { name: 'Sky', hex: '#2196f3' },
+  { name: 'Lime', hex: '#7cb342' },
+  { name: 'Magenta', hex: '#c453c4' },
+];
+
+/** The accent palette tuned for the active design language. */
+export function accentsFor(settings = {}) {
+  if (settings.materialYou) return MATERIAL_ACCENTS;
+  if (settings.liquidGlass) return GLASS_ACCENTS;
+  return ACCENT_COLORS;
+}
+
 /*
  * Font choices are locally-available stacks instead of runtime Google Fonts:
  * remote fonts leak browsing signals, break offline, and are a review

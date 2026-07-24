@@ -7,7 +7,7 @@
 import { ext, caps, IS_FIREFOX } from '../../common/ext.js';
 import { q, qa, h, uid } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
-import { THEMES, ACCENT_COLORS, FONT_STACKS, THEME_SLOTS } from '../../common/themes.js';
+import { THEMES, accentsFor, FONT_STACKS, THEME_SLOTS } from '../../common/themes.js';
 import {
   getDoc, settings, update, replaceDoc, flush,
   loadSnapshots, saveSnapshot, deleteSnapshot, clearAllData,
@@ -319,10 +319,20 @@ function saveCustomTheme() {
 
 function renderAccentGrid() {
   const grid = q('#accent-grid');
+  const s = settings();
+  const hint = q('#accent-hint');
+  if (hint) {
+    hint.textContent = s.materialYou
+      ? 'Material 3 tones — tuned to tint the Material You interface.'
+      : s.liquidGlass
+        ? 'Luminous tones picked to glow through the glass.'
+        : '';
+    hint.style.display = hint.textContent ? '' : 'none';
+  }
   grid.replaceChildren(
-    ...ACCENT_COLORS.map((accent) =>
+    ...accentsFor(s).map((accent) =>
       h('button', {
-        class: 'accent-swatch' + (settings().accent === accent.hex ? ' selected' : ''),
+        class: 'accent-swatch' + (s.accent === accent.hex ? ' selected' : ''),
         style: `background:${accent.hex}`,
         title: accent.name,
         'aria-label': `Accent ${accent.name}`,

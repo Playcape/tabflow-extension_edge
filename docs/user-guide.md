@@ -154,7 +154,9 @@ new-tab popup enabled.
 - **Custom Themes** — build your own with the color editor (12 color slots,
   live preview, saved alongside the presets).
 - **Accent Color** — 16 presets or any custom color; used for highlights,
-  buttons, and selection.
+  buttons, and selection. The preset palette adapts to the active design
+  language: luminous tones that glow through **Liquid Glass**, Material 3
+  seed tones for **Material You**, and the standard set otherwise.
 - **Background** — solid, three gradient styles, or a custom color; plus an
   optional dot / grid / noise pattern.
 
