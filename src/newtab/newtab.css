@@ -448,6 +448,13 @@ mark { background: rgba(var(--accent-rgb), .28); color: var(--text); border-radi
 .tab-card.drop-after { box-shadow: 3px 0 0 0 var(--accent), 0 4px 12px var(--shadow); border-color: var(--accent); }
 .view-list .tab-card.drop-before { box-shadow: 0 -3px 0 0 var(--accent), 0 4px 12px var(--shadow); }
 .view-list .tab-card.drop-after { box-shadow: 0 3px 0 0 var(--accent), 0 4px 12px var(--shadow); }
+/* Middle third: the hovered card will trade places with the dragged one. */
+.tab-card.drop-swap {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 12px var(--shadow);
+  transform: scale(.96);
+}
+body.m3 .tab-card.drop-swap { box-shadow: 0 0 0 2px var(--accent); border-color: transparent; }
 
 .col-empty { font-size: 12px; color: var(--text-faint); padding: 10px 4px; font-style: italic; }
 
