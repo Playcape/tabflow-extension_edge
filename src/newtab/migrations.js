@@ -45,7 +45,7 @@ export const DEFAULT_SETTINGS = {
   cmdPalette: true,            // Ctrl/⌘+K quick launcher
   focusExistingTab: false,     // open a saved tab → focus it if already open
   glass: false,                // frosted-glass panels (backdrop blur)
-  liquidGlass: true,           // Apple-style material + gooey drag physics
+  liquidGlass: false,          // Aurora glass + gooey drag physics (opt-in; Normal is the safe default)
   lgOpacity: 62,               // Liquid Glass surface opacity, % (20–90)
   lgBlur: 12,                  // Liquid Glass backdrop blur, px (0–40)
   lgSpecular: 60,              // edge-highlight strength, % (0–100)

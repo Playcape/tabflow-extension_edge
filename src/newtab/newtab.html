@@ -116,8 +116,8 @@
     <div id="view-settings" class="view-panel">
       <div id="settings-tabbar" role="tablist">
         <button class="stab active" data-stab="appearance" role="tab">Appearance</button>
-        <button class="stab" data-stab="liquid" role="tab" style="display:none">Liquid Glass</button>
-        <button class="stab" data-stab="material" role="tab" style="display:none">Material You</button>
+        <button class="stab" data-stab="liquid" role="tab" style="display:none">Aurora</button>
+        <button class="stab" data-stab="material" role="tab" style="display:none">Tonal</button>
         <button class="stab" data-stab="typography" role="tab">Typography</button>
         <button class="stab" data-stab="layout" role="tab">Layout</button>
         <button class="stab" data-stab="data" role="tab">Data</button>
@@ -126,6 +126,12 @@
 
       <!-- APPEARANCE -->
       <div class="stab-panel active" id="stab-appearance">
+        <div class="settings-section">
+          <div class="settings-section-title">Design</div>
+          <div class="settings-row-desc" style="margin-bottom:12px">Pick the overall look. Normal is fastest and works everywhere; Aurora and Tonal are richer, opt-in styles.</div>
+          <div id="design-picker" class="design-picker"></div>
+        </div>
+
         <div class="settings-section">
           <div class="settings-section-title">Themes</div>
           <div id="theme-grid" class="theme-grid"></div>
@@ -185,14 +191,14 @@
         </div>
       </div>
 
-      <!-- LIQUID GLASS (tab is only visible while the feature is on) -->
+      <!-- AURORA (glass) — tab is only visible while the feature is on -->
       <div class="stab-panel" id="stab-liquid">
         <div class="settings-section">
-          <div class="settings-section-title">Liquid Glass</div>
+          <div class="settings-section-title">Aurora</div>
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Enabled</div>
-              <div class="settings-row-desc">Apple-style glass material and drag physics. Turning this off hides this tab; re-enable it under Advanced.</div>
+              <div class="settings-row-desc">A translucent, blurred glass material with real drag physics. Turning this off hides this tab; re-enable it under Advanced.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="liquidglass-master" />
@@ -298,14 +304,14 @@
         </div>
       </div>
 
-      <!-- MATERIAL YOU (tab is only visible while the feature is on) -->
+      <!-- TONAL (material) — tab is only visible while the feature is on -->
       <div class="stab-panel" id="stab-material">
         <div class="settings-section">
-          <div class="settings-section-title">Material You</div>
+          <div class="settings-section-title">Tonal</div>
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Enabled</div>
-              <div class="settings-row-desc">Pixel-style Material 3 Expressive. Your accent color is the seed — surfaces, pills and highlights are tinted from it. Turning this off hides this tab; re-enable it under Advanced.</div>
+              <div class="settings-row-desc">Opaque tonal surfaces tinted from your accent color as the seed — surfaces, pills and highlights all take its hue. Turning this off hides this tab; re-enable it under Advanced.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="materialyou-master" />
@@ -319,7 +325,7 @@
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Tonal tint</div>
-              <div class="settings-row-desc">How strongly your accent color tints surfaces — the “Material You” wall-to-wall dynamic color.</div>
+              <div class="settings-row-desc">How strongly your accent color tints surfaces — wall-to-wall dynamic color.</div>
             </div>
           </div>
           <div class="slider-row">
@@ -577,8 +583,8 @@
           <div class="settings-section-title">Visual Effects</div>
           <div class="settings-row">
             <div class="settings-row-info">
-              <div class="settings-row-label">Liquid Glass</div>
-              <div class="settings-row-desc">Apple-style glass material and drag physics. When enabled, a dedicated <b>Liquid Glass</b> tab appears above with all tuning options.</div>
+              <div class="settings-row-label">Aurora <span class="settings-hint-inline">(glass)</span></div>
+              <div class="settings-row-desc">A translucent, blurred glass material with real drag physics. When enabled, a dedicated <b>Aurora</b> tab appears above with all tuning options.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="liquidglass-toggle" />
@@ -587,8 +593,8 @@
           </div>
           <div class="settings-row">
             <div class="settings-row-info">
-              <div class="settings-row-label">Material You <span class="settings-hint-inline">(Pixel)</span></div>
-              <div class="settings-row-desc">Google's Material 3 Expressive design language: tonal surfaces tinted by your accent, big rounded corners, pill buttons, bold type and springy motion. Enabling this switches Liquid Glass off — a dedicated <b>Material You</b> tab appears with all options.</div>
+              <div class="settings-row-label">Tonal <span class="settings-hint-inline">(tonal surfaces)</span></div>
+              <div class="settings-row-desc">Opaque tonal surfaces tinted from your accent: big rounded corners, pill buttons, bold type and springy motion. Enabling this switches Aurora off — a dedicated <b>Tonal</b> tab appears with all options.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="materialyou-toggle" />

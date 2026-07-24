@@ -47,6 +47,7 @@ function renderSettings() {
   renderSlider('#sl-lgdepth', '#sl-lgdepth-val', 'lgDepth', '%');
   renderSlider('#sl-mytint', '#sl-mytint-val', 'myTint', '%');
   renderSlider('#sl-myradius', '#sl-myradius-val', 'myRadius');
+  renderDesignPicker();
   renderDesignTabs();
   renderToggles();
   renderStorageStatus();
@@ -100,6 +101,46 @@ function bindToggle(sel, key, extraRender = []) {
   if (!el) return;
   el.checked = !!settings()[key];
   el.onchange = () => setSetting(key, el.checked, { extraRender });
+}
+
+/* ---------- design-mode picker (top of Appearance) ---------- */
+
+const DESIGN_MODES = [
+  { id: 'normal', name: 'Normal', desc: 'Opaque & fastest — works on any theme.' },
+  { id: 'liquid', name: 'Aurora', desc: 'Translucent glass with drag physics.' },
+  { id: 'material', name: 'Tonal', desc: 'Accent-tinted surfaces, rounded & bold.' },
+];
+
+function currentDesignMode() {
+  const s = settings();
+  return s.materialYou ? 'material' : s.liquidGlass ? 'liquid' : 'normal';
+}
+
+function setDesignMode(id) {
+  update((doc) => {
+    doc.settings.liquidGlass = id === 'liquid';
+    doc.settings.materialYou = id === 'material';
+  });
+  render('appearance', 'layout', 'settings');
+}
+
+function renderDesignPicker() {
+  const wrap = q('#design-picker');
+  if (!wrap) return;
+  const active = currentDesignMode();
+  wrap.replaceChildren(
+    ...DESIGN_MODES.map((mode) =>
+      h('button', {
+        class: `design-card dp-${mode.id}` + (active === mode.id ? ' active' : ''),
+        'aria-pressed': active === mode.id ? 'true' : 'false',
+        onclick: () => setDesignMode(mode.id),
+      },
+        h('div', { class: 'dp-preview' }, h('span'), h('span'), h('span')),
+        h('div', { class: 'dp-name', text: mode.name }),
+        h('div', { class: 'dp-desc', text: mode.desc })
+      )
+    )
+  );
 }
 
 /** Switch the visible settings sub-tab programmatically. */
@@ -323,9 +364,9 @@ function renderAccentGrid() {
   const hint = q('#accent-hint');
   if (hint) {
     hint.textContent = s.materialYou
-      ? 'Material 3 tones — tuned to tint the Material You interface.'
+      ? 'Tonal seed colors — tuned to tint the Tonal interface.'
       : s.liquidGlass
-        ? 'Luminous tones picked to glow through the glass.'
+        ? 'Luminous tones picked to glow through Aurora glass.'
         : '';
     hint.style.display = hint.textContent ? '' : 'none';
   }

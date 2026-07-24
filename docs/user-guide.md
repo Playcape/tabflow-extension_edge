@@ -148,18 +148,26 @@ new-tab popup enabled.
 
 ## Appearance
 
+- **Design** — pick the overall look from three preview cards at the top:
+  **Normal** (opaque, fastest, works on any theme — the default), **Aurora**
+  (a translucent glass material with drag physics), and **Tonal** (opaque
+  accent-tinted surfaces, rounded and bold). Aurora and Tonal each reveal a
+  dedicated settings tab with their own tuning options. Aurora automatically
+  falls back to opaque surfaces when your OS asks for *reduced transparency*
+  or *increased contrast*.
+
 - **Themes** — 20 built-in themes (Dark, Light, Dracula, Nord, Monokai,
   Solarized, Rosé Pine, Forest, Catppuccin ×2, Tokyo Night, One Dark,
   Gruvbox, Ayu Mirage, Material Ocean, Synthwave, Midnight, Paper, plus
   **Prism Dark** and **Prism Light** — companion themes tuned for the
-  Liquid Glass and Material You modes, with evenly-stepped tonal ladders
-  so glass gains real depth and Material elevation separates cleanly).
+  Aurora and Tonal modes, with evenly-stepped tonal ladders
+  so glass gains real depth and tonal elevation separates cleanly).
 - **Custom Themes** — build your own with the color editor (12 color slots,
   live preview, saved alongside the presets).
 - **Accent Color** — 16 presets or any custom color; used for highlights,
   buttons, and selection. The preset palette adapts to the active design
-  language: luminous tones that glow through **Liquid Glass**, Material 3
-  seed tones for **Material You**, and the standard set otherwise.
+  language: luminous tones that glow through **Aurora** glass, tonal
+  seed tones for **Tonal**, and the standard set otherwise.
 - **Background** — solid, three gradient styles, or a custom color; plus an
   optional dot / grid / noise pattern.
 
@@ -211,20 +219,22 @@ nothing here talks to the network (except the favicon fallback, below).
 - **Zen mode (Ctrl/⌘ + .)** — hide the sidebar, panels and toolbar for a calm,
   centered view. `Esc` (or the pill at the bottom) exits.
 
-**Visual effects**
-- **Material You (Pixel)** — Google's Material 3 Expressive design language
-  as a complete alternative look: opaque surfaces tonally tinted from your
+**Visual effects** (the design modes are also reachable from the **Design**
+picker at the top of Appearance)
+- **Tonal** — an opaque tonal design language: surfaces tinted from your
   accent color (dynamic color), big rounded corners, pill-shaped buttons and
-  search, bold expressive type, and springy Pixel-style motion. Mutually
-  exclusive with Liquid Glass — enabling one switches the other off. While
-  on, a dedicated **Material You settings tab** appears with tonal-tint and
-  corner-roundness sliders plus motion/typography switches.
-- **Liquid Glass** — Apple-style glass material: blurred translucent
-  surfaces with specular edges, a pointer-tracked sheen on cards, and drag
-  physics — while dragging, a glass copy of the card follows the pointer and
-  visibly melts into the card you hover before snapping in with a splash.
-  On by default; pauses under Reduce motion. While enabled, a dedicated
-  **Liquid Glass settings tab** appears with the full tuning set: surface
+  search, bold expressive type, and springy motion. Mutually exclusive with
+  Aurora — enabling one switches the other off. While on, a dedicated
+  **Tonal settings tab** appears with tonal-tint and corner-roundness sliders
+  plus motion/typography switches.
+- **Aurora** — a glass material: blurred translucent surfaces with specular
+  edges, a pointer-tracked sheen on cards, and drag physics — while dragging,
+  a glass copy of the card follows the pointer and visibly melts into the card
+  you hover before snapping in with a splash. Opt-in (Normal is the default);
+  pauses under Reduce motion and falls back to opaque surfaces under the OS
+  *reduced transparency* / *increased contrast* settings. For performance,
+  only the chrome and the hovered card are blurred live. While enabled, a
+  dedicated **Aurora settings tab** appears with the full tuning set: surface
   opacity, blur (0 = clear), edge-highlight strength, depth, and separate
   switches for the **unified interface** (the glass language applied to the
   sidebar, panels, toolbar and buttons so everything matches the cards),
