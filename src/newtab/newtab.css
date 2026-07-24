@@ -1744,20 +1744,27 @@ body.fx-liquid.fx-lg-unified .sidebar-footer .nav-item.active {
    springy motion. Driven by --m3-tint (0–1) and --m3-radius (px).
    ================================================================ */
 body.m3 {
-  /* tonal palette derived from the accent (the "seed" color) */
+  /* Tonal surface ladder derived from the accent seed. Material 3 layers
+     surfaces by tone: background < container-low (panels) < container
+     (cards) < container-high (hover/dialogs). Each step adds accent tint
+     and a touch of luminance so the layers separate on any theme. */
   --m3-prim-cont: color-mix(in srgb, var(--accent) calc(30% * var(--m3-tint, .6) + 8%), var(--card-bg));
-  --m3-on-prim-cont: color-mix(in srgb, var(--accent) 20%, var(--text));
-  --m3-surf: color-mix(in srgb, var(--accent) calc(5% * var(--m3-tint, .6)), var(--bg));
-  --m3-surf-1: color-mix(in srgb, var(--accent) calc(8% * var(--m3-tint, .6) + 2%), var(--card-bg));
-  --m3-surf-2: color-mix(in srgb, var(--accent) calc(12% * var(--m3-tint, .6) + 3%), var(--card-hover));
-  --m3-state: rgba(var(--accent-rgb), calc(.10 * var(--m3-tint, .6) + .04));
+  --m3-on-prim-cont: color-mix(in srgb, var(--accent) 22%, var(--text));
+  --m3-surf: color-mix(in srgb, var(--accent) calc(4% * var(--m3-tint, .6)), var(--bg));
+  --m3-surf-low: color-mix(in srgb, var(--accent) calc(7% * var(--m3-tint, .6) + 2%), var(--sidebar-bg));
+  --m3-surf-1: color-mix(in srgb, var(--accent) calc(11% * var(--m3-tint, .6) + 4%), var(--card-bg));
+  --m3-surf-2: color-mix(in srgb, var(--accent) calc(16% * var(--m3-tint, .6) + 7%), var(--card-hover));
+  --m3-state: rgba(var(--accent-rgb), calc(.10 * var(--m3-tint, .6) + .05));
+  /* Material elevation (tonal shadow, subtle by design). */
+  --m3-elev-1: 0 1px 2px rgba(0, 0, 0, .30), 0 1px 3px 1px rgba(0, 0, 0, .14);
+  --m3-elev-2: 0 2px 6px rgba(0, 0, 0, .32), 0 6px 12px 2px rgba(0, 0, 0, .18);
 }
 
 /* --- surfaces: tone instead of borders --- */
 body.m3 #main-content { background: var(--m3-surf); }
 body.m3 #sidebar,
 body.m3 #right-panel {
-  background: color-mix(in srgb, var(--accent) calc(9% * var(--m3-tint, .6) + 1%), var(--sidebar-bg));
+  background: var(--m3-surf-low);
   border-color: transparent;
 }
 body.m3 #toolbar {
@@ -1768,19 +1775,27 @@ body.m3 .sidebar-header,
 body.m3 .right-panel-header,
 body.m3 .recently-closed-hdr { border-bottom-color: transparent; }
 
-/* --- cards: opaque tonal, big corners, no borders --- */
+/* --- cards: opaque tonal container with Material elevation --- */
 body.m3 .tab-card {
   background: var(--m3-surf-1);
   border-color: transparent;
   border-radius: var(--m3-radius, 20px);
-  box-shadow: none;
+  box-shadow: var(--m3-elev-1);
   padding: 13px 14px;
 }
+/* State layer: M3 overlays a translucent primary tint on hover/press. */
+body.m3 .tab-card::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: var(--m3-state); opacity: 0; transition: opacity 150ms ease;
+}
+body.m3 .tab-card:hover::after,
+body.m3 .tab-card:focus-visible::after { opacity: 1; }
 body.m3 .tab-card:hover,
 body.m3 .tab-card:focus-visible {
   background: var(--m3-surf-2);
   border-color: transparent;
-  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, .35);
+  box-shadow: var(--m3-elev-2);
 }
 body.m3 .tab-card.pinned { border-color: transparent; }
 body.m3 .tab-card.pinned::before {
@@ -1864,9 +1879,51 @@ body.m3 .context-item { border-radius: 12px; }
 body.m3 .context-item:hover { background: var(--m3-state); }
 body.m3 .cmdk-item { border-radius: 14px; }
 body.m3 .cmdk-item.selected { background: var(--m3-prim-cont); }
-body.m3 .snackbar { border-radius: 999px; background: var(--m3-surf-2); border-color: transparent; }
-body.m3 .settings-section { border-radius: calc(var(--m3-radius, 20px) + 4px); }
-body.m3 .zen-exit-btn { background: var(--m3-surf-2); border-color: transparent; }
+body.m3 .snackbar { border-radius: 999px; background: var(--m3-surf-2); border-color: transparent; box-shadow: var(--m3-elev-2); }
+body.m3 .hotkey-modal, body.m3 .cmdk-modal { box-shadow: var(--m3-elev-2); }
+body.m3 .zen-exit-btn { background: var(--m3-surf-2); border-color: transparent; box-shadow: var(--m3-elev-1); }
+
+/* --- settings screen: grouped tonal cards + Material tabs --- */
+body.m3 #settings-tabbar {
+  background: var(--m3-surf-low);
+  border-radius: 999px;
+  border-bottom: none;
+  padding: 4px;
+  gap: 2px;
+}
+body.m3 .stab { border-radius: 999px; border-bottom: none; }
+body.m3 .stab:hover { background: var(--m3-state); }
+body.m3 .stab.active {
+  border-bottom: none;
+  background: var(--m3-prim-cont);
+  color: var(--m3-on-prim-cont);
+  font-weight: 700;
+}
+body.m3 .settings-section {
+  background: var(--m3-surf-1);
+  border-radius: calc(var(--m3-radius, 20px) + 4px);
+  padding: 14px 18px 4px;
+  box-shadow: var(--m3-elev-1);
+}
+body.m3 .settings-row { border-bottom-color: color-mix(in srgb, var(--text) 8%, transparent); }
+body.m3 .slider-row { border-bottom: none; }
+body.m3 .theme-card,
+body.m3 .font-card,
+body.m3 .snapshot-item {
+  border-radius: 16px;
+  border-color: transparent;
+  background: var(--m3-surf-2);
+}
+body.m3 .theme-card:hover,
+body.m3 .font-card:hover { background: var(--m3-prim-cont); }
+body.m3 .theme-preview { border-radius: 12px; }
+/* M3 slider: rounded track with a large primary handle. */
+body.m3 .sl { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 22%, var(--m3-surf-2)); }
+body.m3 .sl::-webkit-slider-thumb {
+  width: 18px; height: 18px; background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+body.m3 .sl::-moz-range-thumb { width: 18px; height: 18px; background: var(--accent); }
 
 /* --- expressive typography --- */
 body.m3.m3-bold #space-breadcrumb { font-weight: 800; font-size: 16px; letter-spacing: -.4px; }
