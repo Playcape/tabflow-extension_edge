@@ -140,6 +140,7 @@ function renderToggles() {
       if (!master.checked) activateStab('appearance');
     };
   }
+  bindToggle('#lgunified-toggle', 'lgUnified');
   bindToggle('#lgphysics-toggle', 'lgPhysics');
   bindToggle('#lgsheen-toggle', 'lgSheen');
   bindToggle('#lgglow-toggle', 'lgGlow');

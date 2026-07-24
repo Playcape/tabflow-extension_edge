@@ -1448,3 +1448,131 @@ body.fx-liquid .drop-zone.drop-active {
   font-size: 10px; color: var(--text-muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ================================================================
+   LIQUID GLASS — UNIFIED INTERFACE (Liquid Glass tab → Unified interface)
+   Pulls the exact same directional-light language the cards use
+   through the whole chrome, so left/center/right read as ONE design:
+   specular top edges, refraction rims, translucent fills, depth
+   shadows — all driven by the same --lg-* variables.
+   ================================================================ */
+
+/* --- side panels: directional edges + depth over the content --- */
+body.fx-liquid.fx-lg-unified #sidebar {
+  border-right-color: rgba(255, 255, 255, calc(.04 + .08 * var(--lg-spec, .6)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.16 * var(--lg-spec, .6))),
+    inset -1px 0 0 rgba(255, 255, 255, calc(.05 * var(--lg-spec, .6))),
+    10px 0 28px -16px rgba(0, 0, 0, calc(.8 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified #right-panel {
+  border-left-color: rgba(255, 255, 255, calc(.04 + .08 * var(--lg-spec, .6)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.16 * var(--lg-spec, .6))),
+    inset 1px 0 0 rgba(255, 255, 255, calc(.05 * var(--lg-spec, .6))),
+    -10px 0 28px -16px rgba(0, 0, 0, calc(.8 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .sidebar-header,
+body.fx-liquid.fx-lg-unified .right-panel-header,
+body.fx-liquid.fx-lg-unified .recently-closed-hdr {
+  border-bottom-color: rgba(255, 255, 255, calc(.03 + .05 * var(--lg-spec, .6)));
+}
+
+/* --- toolbar: a glass bar, not a flat strip --- */
+body.fx-liquid.fx-lg-unified #toolbar {
+  background: color-mix(in srgb, var(--sidebar-bg) max(calc(var(--lg-alpha, 62%) - 12%), 15%), transparent);
+  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.4);
+  border-bottom-color: rgba(255, 255, 255, calc(.04 + .06 * var(--lg-spec, .6)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.12 * var(--lg-spec, .6))),
+    0 10px 24px -18px rgba(0, 0, 0, calc(.8 * var(--lg-depth, .6)));
+}
+
+/* --- search: an inset glass well --- */
+body.fx-liquid.fx-lg-unified #search-input {
+  background: color-mix(in srgb, var(--input-bg) 55%, transparent);
+  border-color: rgba(255, 255, 255, calc(.04 + .07 * var(--lg-spec, .6)));
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, calc(.45 * var(--lg-depth, .6))),
+    inset 0 -1px 0 rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6)));
+}
+body.fx-liquid.fx-lg-unified #search-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, calc(.35 * var(--lg-depth, .6))),
+    0 0 0 3px rgba(var(--accent-rgb), .15);
+}
+
+/* --- nav + space items: glass pills --- */
+body.fx-liquid.fx-lg-unified .nav-item:hover,
+body.fx-liquid.fx-lg-unified .space-item:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.06 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 55%, transparent);
+}
+body.fx-liquid.fx-lg-unified .nav-item.active,
+body.fx-liquid.fx-lg-unified .space-item.active {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6) + .02)), rgba(255, 255, 255, .01) 55%),
+    color-mix(in srgb, var(--sidebar-active) 75%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.22 * var(--lg-spec, .6))),
+    inset 0 -1px 0 rgba(0, 0, 0, calc(.28 * var(--lg-depth, .6))),
+    0 2px 8px -3px rgba(0, 0, 0, calc(.6 * var(--lg-depth, .6)));
+}
+
+/* --- open-tabs rows + recently closed: same hover language --- */
+body.fx-liquid.fx-lg-unified .tab-row:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.06 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 55%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6)));
+}
+
+/* --- buttons: glass chips, accent buttons get a specular cap --- */
+body.fx-liquid.fx-lg-unified .toolbar-btn,
+body.fx-liquid.fx-lg-unified .settings-btn,
+body.fx-liquid.fx-lg-unified .col-new-win-btn,
+body.fx-liquid.fx-lg-unified .col-restore-btn {
+  background: color-mix(in srgb, var(--input-bg) 50%, transparent);
+  border-color: rgba(255, 255, 255, calc(.05 + .07 * var(--lg-spec, .6)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.14 * var(--lg-spec, .6))),
+    0 1px 2px rgba(0, 0, 0, calc(.35 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .toolbar-btn:hover,
+body.fx-liquid.fx-lg-unified .settings-btn:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.07 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 65%, transparent);
+}
+body.fx-liquid.fx-lg-unified .toolbar-btn.accent,
+body.fx-liquid.fx-lg-unified .accent-btn {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(.24 * var(--lg-spec, .6))), rgba(255, 255, 255, 0) 55%),
+    var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, white 8%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.35 * var(--lg-spec, .6))),
+    0 4px 14px -4px rgba(var(--accent-rgb), calc(.7 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .icon-btn:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.08 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 60%, transparent);
+}
+
+/* --- clock: a faint glass glow so it sits in the same world --- */
+body.fx-liquid.fx-lg-unified #clock-time {
+  text-shadow: 0 2px 18px rgba(var(--accent-rgb), calc(.35 * var(--lg-depth, .6)));
+}
+
+/* --- zen exit pill joins the family --- */
+body.fx-liquid.fx-lg-unified .zen-exit-btn {
+  background: color-mix(in srgb, var(--card-bg) 60%, transparent);
+  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.4);
+  border-color: rgba(255, 255, 255, calc(.06 + .08 * var(--lg-spec, .6)));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.18 * var(--lg-spec, .6))), 0 8px 24px var(--shadow);
+}
