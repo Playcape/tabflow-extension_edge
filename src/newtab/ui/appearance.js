@@ -38,13 +38,31 @@ function applyAccent(hex) {
   if (![r, g, b].some(Number.isNaN)) root.style.setProperty('--accent-rgb', `${r},${g},${b}`);
 }
 
+/** Relative luminance of a #rrggbb color (WCAG); used to detect light themes. */
+function isLightColor(hex) {
+  if (typeof hex !== 'string') return false;
+  const m = hex.replace('#', '');
+  if (m.length < 6) return false;
+  const chan = (i) => {
+    const c = parseInt(m.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const L = 0.2126 * chan(0) + 0.7152 * chan(2) + 0.0722 * chan(4);
+  return L > 0.5;
+}
+
 export function applyAppearance() {
   const s = settings();
   const root = document.documentElement;
   const main = q('#main-content');
 
-  applyThemeVars(themeVars(s.theme, s.customThemes));
+  const vars = themeVars(s.theme, s.customThemes);
+  applyThemeVars(vars);
   applyAccent(s.accent);
+
+  // Light themes need the glass/tonal treatments inverted (dark edges,
+  // no white lift on text) — feature CSS keys off this class.
+  document.body.classList.toggle('theme-light', isLightColor(vars['--bg'] || vars['--main-bg']));
 
   root.style.setProperty('--font', fontStackFor(s.font));
   root.style.setProperty('--font-size-base', FONT_SIZES[s.fontSize] ?? FONT_SIZES.normal);

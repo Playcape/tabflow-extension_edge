@@ -1305,6 +1305,42 @@ body.fx-lg-glow #main-content:not(.bg-style-gradient-diag):not(.bg-style-gradien
     radial-gradient(60% 50% at 50% 105%, rgba(var(--accent-rgb), .09), transparent 62%);
 }
 
+/* Light themes: glass over a light background needs darker edges for
+   definition and no white lift on text (which would kill contrast). */
+body.theme-light.fx-liquid {
+  --lg-rim: color-mix(in srgb, var(--text) 16%, transparent);
+}
+body.theme-light.fx-liquid .card-title {
+  color: var(--text);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, calc(.10 * var(--lg-depth, .6)));
+}
+body.theme-light.fx-liquid .tab-card:hover .card-title { color: var(--text); }
+body.theme-light.fx-liquid .card-url {
+  color: color-mix(in srgb, var(--text-muted) 92%, transparent);
+  text-shadow: none;
+}
+body.theme-light.fx-liquid .tab-card {
+  border-color: color-mix(in srgb, var(--text) 12%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--text) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.55 * var(--lg-spec, .6))),
+    0 8px 20px -12px rgba(0, 0, 0, calc(.32 * var(--lg-depth, .6))),
+    0 2px 5px -2px rgba(0, 0, 0, calc(.20 * var(--lg-depth, .6)));
+}
+body.theme-light.fx-liquid #main-content {
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, calc(.05 + .07 * var(--lg-depth, .6)));
+}
+body.theme-light.fx-liquid.fx-lg-unified .settings-row,
+body.theme-light.fx-liquid.fx-lg-unified .settings-section {
+  border-color: color-mix(in srgb, var(--text) 9%, transparent);
+}
+body.theme-light.fx-liquid.fx-lg-unified .settings-row { border-top: none; }
+body.theme-light.fx-liquid.fx-lg-unified .toolbar-divider,
+body.theme-light.fx-liquid.fx-lg-unified .context-separator {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+body.theme-light.fx-liquid.fx-lg-unified ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .18); }
+
 /* --- chrome surfaces: real backdrop blur --- */
 body.fx-liquid #sidebar,
 body.fx-liquid #right-panel {
