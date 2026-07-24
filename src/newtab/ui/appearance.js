@@ -72,6 +72,7 @@ export function applyAppearance() {
   root.style.setProperty('--lg-spec', String(s.lgSpecular / 100));
   root.style.setProperty('--lg-depth', String(s.lgDepth / 100));
   document.body.classList.toggle('fx-lg-glow', !!s.liquidGlass && !!s.lgGlow);
+  document.body.classList.toggle('fx-lg-unified', !!s.liquidGlass && !!s.lgUnified);
   document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
   document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
   document.body.classList.toggle('zen', !!s.zenMode);

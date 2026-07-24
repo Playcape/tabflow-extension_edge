@@ -213,7 +213,9 @@ nothing here talks to the network (except the favicon fallback, below).
   On by default; pauses under Reduce motion. While enabled, a dedicated
   **Liquid Glass settings tab** appears with the full tuning set: surface
   opacity, blur (0 = clear), edge-highlight strength, depth, and separate
-  switches for drag physics, pointer sheen, and the ambient glow.
+  switches for the **unified interface** (the glass language applied to the
+  sidebar, panels, toolbar and buttons so everything matches the cards),
+  drag physics, pointer sheen, and the ambient glow.
 - **Frosted glass** — translucent, blurred panels and modals.
 - **Animated background** — a slow "aurora" glow behind your collections
   (pauses when Reduce motion is on).

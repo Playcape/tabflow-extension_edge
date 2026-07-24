@@ -53,6 +53,7 @@ export const DEFAULT_SETTINGS = {
   lgPhysics: true,             // drag droplet + goo merge
   lgSheen: true,               // pointer-tracked highlight on cards
   lgGlow: true,                // ambient accent glow behind collections
+  lgUnified: true,             // pull the glass language through the whole chrome
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
