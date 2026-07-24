@@ -73,6 +73,13 @@ export function applyAppearance() {
   root.style.setProperty('--lg-depth', String(s.lgDepth / 100));
   document.body.classList.toggle('fx-lg-glow', !!s.liquidGlass && !!s.lgGlow);
   document.body.classList.toggle('fx-lg-unified', !!s.liquidGlass && !!s.lgUnified);
+
+  // Material You (Pixel) design language — mutually exclusive with liquid.
+  document.body.classList.toggle('m3', !!s.materialYou);
+  document.body.classList.toggle('m3-motion', !!s.materialYou && !!s.myMotion && !s.reduceMotion);
+  document.body.classList.toggle('m3-bold', !!s.materialYou && !!s.myBold);
+  root.style.setProperty('--m3-tint', String(s.myTint / 100));
+  root.style.setProperty('--m3-radius', `${s.myRadius}px`);
   document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
   document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
   document.body.classList.toggle('zen', !!s.zenMode);

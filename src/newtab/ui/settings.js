@@ -45,7 +45,9 @@ function renderSettings() {
   renderSlider('#sl-lgblur', '#sl-lgblur-val', 'lgBlur');
   renderSlider('#sl-lgspec', '#sl-lgspec-val', 'lgSpecular', '%');
   renderSlider('#sl-lgdepth', '#sl-lgdepth-val', 'lgDepth', '%');
-  renderLiquidTab();
+  renderSlider('#sl-mytint', '#sl-mytint-val', 'myTint', '%');
+  renderSlider('#sl-myradius', '#sl-myradius-val', 'myRadius');
+  renderDesignTabs();
   renderToggles();
   renderStorageStatus();
   renderSnapshots();
@@ -106,13 +108,34 @@ function activateStab(name) {
   qa('.stab-panel').forEach((p) => p.classList.toggle('active', p.id === `stab-${name}`));
 }
 
-/** The Liquid Glass tab only exists while the feature is on. */
-function renderLiquidTab() {
-  const tab = q('.stab[data-stab="liquid"]');
-  if (!tab) return;
-  const on = !!settings().liquidGlass;
-  tab.style.display = on ? '' : 'none';
-  if (!on && tab.classList.contains('active')) activateStab('appearance');
+/** Design-language tabs only exist while their feature is on. */
+function renderDesignTabs() {
+  for (const [stab, key] of [['liquid', 'liquidGlass'], ['material', 'materialYou']]) {
+    const tab = q(`.stab[data-stab="${stab}"]`);
+    if (!tab) continue;
+    const on = !!settings()[key];
+    tab.style.display = on ? '' : 'none';
+    if (!on && tab.classList.contains('active')) activateStab('appearance');
+  }
+}
+
+/**
+ * Liquid Glass and Material You are competing design languages — turning
+ * one on turns the other off. Both the Advanced toggles and the master
+ * switches inside the design tabs go through here.
+ */
+function bindDesignToggle(sel, key, otherKey) {
+  const el = q(sel);
+  if (!el) return;
+  el.checked = !!settings()[key];
+  el.onchange = () => {
+    update((doc) => {
+      doc.settings[key] = el.checked;
+      if (el.checked) doc.settings[otherKey] = false;
+    });
+    render('appearance', 'layout', 'settings');
+    if (!el.checked) activateStab('appearance');
+  };
 }
 
 function renderToggles() {
@@ -128,22 +151,17 @@ function renderToggles() {
   bindToggle('#clock24h-toggle', 'clock24h');
   bindToggle('#clockseconds-toggle', 'clockSeconds');
 
-  // Liquid Glass: the Advanced toggle and the master toggle inside the
-  // Liquid Glass tab drive the same setting; both re-render settings so
-  // the tab's visibility follows.
-  bindToggle('#liquidglass-toggle', 'liquidGlass', ['settings']);
-  const master = q('#liquidglass-master');
-  if (master) {
-    master.checked = !!settings().liquidGlass;
-    master.onchange = () => {
-      setSetting('liquidGlass', master.checked, { extraRender: ['settings'] });
-      if (!master.checked) activateStab('appearance');
-    };
-  }
+  // Design languages (mutually exclusive; tabs follow the toggles).
+  bindDesignToggle('#liquidglass-toggle', 'liquidGlass', 'materialYou');
+  bindDesignToggle('#liquidglass-master', 'liquidGlass', 'materialYou');
+  bindDesignToggle('#materialyou-toggle', 'materialYou', 'liquidGlass');
+  bindDesignToggle('#materialyou-master', 'materialYou', 'liquidGlass');
   bindToggle('#lgunified-toggle', 'lgUnified');
   bindToggle('#lgphysics-toggle', 'lgPhysics');
   bindToggle('#lgsheen-toggle', 'lgSheen');
   bindToggle('#lgglow-toggle', 'lgGlow');
+  bindToggle('#mymotion-toggle', 'myMotion');
+  bindToggle('#mybold-toggle', 'myBold');
 
   const nameInput = q('#greeting-name-input');
   if (nameInput) {

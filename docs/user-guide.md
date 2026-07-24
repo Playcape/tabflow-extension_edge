@@ -206,6 +206,13 @@ nothing here talks to the network (except the favicon fallback, below).
   centered view. `Esc` (or the pill at the bottom) exits.
 
 **Visual effects**
+- **Material You (Pixel)** — Google's Material 3 Expressive design language
+  as a complete alternative look: opaque surfaces tonally tinted from your
+  accent color (dynamic color), big rounded corners, pill-shaped buttons and
+  search, bold expressive type, and springy Pixel-style motion. Mutually
+  exclusive with Liquid Glass — enabling one switches the other off. While
+  on, a dedicated **Material You settings tab** appears with tonal-tint and
+  corner-roundness sliders plus motion/typography switches.
 - **Liquid Glass** — Apple-style glass material: blurred translucent
   surfaces with specular edges, a pointer-tracked sheen on cards, and drag
   physics — while dragging, a glass copy of the card follows the pointer and
