@@ -1334,49 +1334,55 @@ body.fx-liquid .settings-btn {
   box-shadow: inset 0 1px 0 var(--lg-hi-soft);
 }
 
+/* --- canvas: deepen the edges so the side panels read as lifted layers
+   sitting above the content well (inset shadow avoids the ::before/::after
+   the aurora and noise pattern already use). --- */
+body.fx-liquid #main-content {
+  box-shadow: inset 0 0 140px rgba(0, 0, 0, calc(.18 + .22 * var(--lg-depth, .6)));
+}
+
 /* --- cards: premium frosted glass ---
-   Light comes from the top-left: a bright specular edge above, a dark
-   refraction rim below, a diagonal wash across the surface, an inner
-   glow, and layered depth shadows. Everything scales with the Edge
+   Light from the top-left. A crisp specular top edge, a diagonal wash,
+   a floating multi-layer shadow, and a backdrop brightness lift so the
+   card reads as glass even over a flat background. Scales with the Edge
    highlight (--lg-spec) and Depth (--lg-depth) sliders. */
 body.fx-liquid .tab-card {
   background:
-    linear-gradient(135deg,
-      rgba(255, 255, 255, calc(.09 * var(--lg-spec, .6) + .02)),
-      rgba(255, 255, 255, .01) 45%,
-      rgba(0, 0, 0, calc(.06 * var(--lg-depth, .6)))),
-    color-mix(in srgb, var(--card-bg) var(--lg-alpha, 62%), transparent);
-  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.35);
-  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.35);
-  border: 1px solid rgba(255, 255, 255, calc(.07 + .12 * var(--lg-spec, .6)));
-  border-top-color: rgba(255, 255, 255, calc(.10 + .20 * var(--lg-spec, .6)));
-  border-bottom-color: rgba(0, 0, 0, calc(.38 * var(--lg-depth, .6)));
+    linear-gradient(152deg,
+      rgba(255, 255, 255, calc(.16 * var(--lg-spec, .6) + .05)),
+      rgba(255, 255, 255, .02) 42%,
+      rgba(0, 0, 0, calc(.05 * var(--lg-depth, .6)))),
+    color-mix(in srgb, var(--card-hover) calc(var(--lg-alpha, 62%) + 6%), transparent);
+  backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.7) brightness(1.08);
+  -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.7) brightness(1.08);
+  border: 1px solid rgba(255, 255, 255, calc(.06 + .10 * var(--lg-spec, .6)));
+  border-top-color: rgba(255, 255, 255, calc(.14 + .30 * var(--lg-spec, .6)));
+  border-bottom-color: rgba(0, 0, 0, calc(.30 * var(--lg-depth, .6)));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, calc(.26 * var(--lg-spec, .6))),
-    inset 0 0 14px rgba(255, 255, 255, calc(.05 * var(--lg-spec, .6))),
-    inset 0 -10px 18px -16px rgba(0, 0, 0, calc(.9 * var(--lg-depth, .6))),
-    0 10px 24px -10px rgba(0, 0, 0, calc(.85 * var(--lg-depth, .6))),
-    0 1px 2px rgba(0, 0, 0, calc(.5 * var(--lg-depth, .6)));
-  transition: transform 320ms cubic-bezier(.34, 1.56, .64, 1),
+    inset 0 1px 0 rgba(255, 255, 255, calc(.40 * var(--lg-spec, .6))),
+    inset 0 -14px 22px -20px rgba(0, 0, 0, calc(.9 * var(--lg-depth, .6))),
+    0 14px 30px -14px rgba(0, 0, 0, calc(.75 * var(--lg-depth, .6))),
+    0 3px 8px -3px rgba(0, 0, 0, calc(.5 * var(--lg-depth, .6)));
+  transition: transform 340ms cubic-bezier(.2, .9, .3, 1.2),
     border-color var(--tr), background var(--tr), box-shadow var(--tr);
 }
 body.fx-liquid .tab-card:hover,
 body.fx-liquid .tab-card:focus-visible {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   background:
-    linear-gradient(135deg,
-      rgba(255, 255, 255, calc(.13 * var(--lg-spec, .6) + .03)),
-      rgba(255, 255, 255, .02) 45%,
-      rgba(0, 0, 0, calc(.05 * var(--lg-depth, .6)))),
-    color-mix(in srgb, var(--card-hover) min(calc(var(--lg-alpha, 62%) + 12%), 92%), transparent);
-  border-color: color-mix(in srgb, var(--accent) 45%,
-    rgba(255, 255, 255, calc(.10 + .14 * var(--lg-spec, .6))));
-  border-top-color: rgba(255, 255, 255, calc(.16 + .26 * var(--lg-spec, .6)));
+    linear-gradient(152deg,
+      rgba(255, 255, 255, calc(.22 * var(--lg-spec, .6) + .06)),
+      rgba(255, 255, 255, .03) 42%,
+      rgba(0, 0, 0, calc(.04 * var(--lg-depth, .6)))),
+    color-mix(in srgb, var(--card-hover) min(calc(var(--lg-alpha, 62%) + 16%), 94%), transparent);
+  border-color: color-mix(in srgb, var(--accent) 50%,
+    rgba(255, 255, 255, calc(.12 + .16 * var(--lg-spec, .6))));
+  border-top-color: rgba(255, 255, 255, calc(.20 + .32 * var(--lg-spec, .6)));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, calc(.36 * var(--lg-spec, .6))),
-    inset 0 0 16px rgba(255, 255, 255, calc(.06 * var(--lg-spec, .6))),
-    0 16px 36px -12px rgba(0, 0, 0, calc(1 * var(--lg-depth, .6))),
-    0 2px 4px rgba(0, 0, 0, calc(.45 * var(--lg-depth, .6)));
+    inset 0 1px 0 rgba(255, 255, 255, calc(.50 * var(--lg-spec, .6))),
+    0 22px 44px -16px rgba(0, 0, 0, calc(.95 * var(--lg-depth, .6))),
+    0 4px 10px -3px rgba(0, 0, 0, calc(.5 * var(--lg-depth, .6))),
+    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 /* Glass surface finish: a static top sheen (always on), plus the
    pointer-tracked specular spot on hover — liquid.js feeds --lg-mx/-my. */
@@ -1392,6 +1398,38 @@ body.fx-liquid .tab-card:hover::after {
       rgba(255, 255, 255, calc(.20 * var(--lg-spec, .6))), transparent 65%),
     radial-gradient(120% 80% at 30% -25%,
       rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6))), transparent 55%);
+}
+
+/* --- vibrant, layered card text (iOS-style) ---
+   Labels sit in tonal layers (primary title, secondary url) and catch
+   the light: a faint highlight halo above each glyph plus a soft depth
+   drop below, so the type reads as etched into the glass rather than
+   printed flat on it. */
+body.fx-liquid .card-title {
+  color: color-mix(in srgb, var(--text) 97%, white);
+  letter-spacing: -.1px;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, calc(.30 * var(--lg-depth, .6))),
+    0 -0.5px 0.5px rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6)));
+}
+body.fx-liquid .card-url {
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, calc(.22 * var(--lg-depth, .6)));
+}
+body.fx-liquid .tab-card:hover .card-title { color: color-mix(in srgb, var(--text) 100%, white 6%); }
+body.fx-liquid .card-fav-row .card-fav,
+body.fx-liquid .tab-fav-img {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, calc(.4 * var(--lg-depth, .6)));
+  border-radius: 4px;
+}
+body.fx-liquid .fav-fallback {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.25 * var(--lg-spec, .6))),
+    0 1px 2px rgba(0, 0, 0, calc(.4 * var(--lg-depth, .6)));
+}
+body.fx-liquid .card-tags .tag-pill {
+  background: color-mix(in srgb, var(--input-bg) 55%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.14 * var(--lg-spec, .6)));
 }
 
 /* --- drag physics --- */
@@ -1582,6 +1620,119 @@ body.fx-liquid.fx-lg-unified .zen-exit-btn {
   -webkit-backdrop-filter: blur(var(--lg-blur, 12px)) saturate(1.4);
   border-color: rgba(255, 255, 255, calc(.06 + .08 * var(--lg-spec, .6)));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.18 * var(--lg-spec, .6))), 0 8px 24px var(--shadow);
+}
+
+/* ---- unified, continued: dividers, scrollbars, the settings screen ----
+   Everything below shares one vocabulary: hairline light dividers (not
+   dark borders), thin glass scrollbars, and glass containers/chips so the
+   settings screen matches the cards instead of dropping back to flat. */
+
+/* Light hairline dividers everywhere in the chrome. */
+body.fx-liquid.fx-lg-unified .toolbar-divider,
+body.fx-liquid.fx-lg-unified .context-separator {
+  background: rgba(255, 255, 255, calc(.05 + .06 * var(--lg-spec, .6)));
+}
+
+/* Thin glass scrollbars. */
+body.fx-liquid.fx-lg-unified ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .14);
+  border-radius: 999px;
+}
+body.fx-liquid.fx-lg-unified ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .24); }
+
+/* Right panel: window headers + recently-closed rows share the hover glass. */
+body.fx-liquid.fx-lg-unified .win-group-hdr:hover .save-win-btn:hover,
+body.fx-liquid.fx-lg-unified .rc-item:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.06 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 55%, transparent);
+}
+
+/* Settings tab bar → a glass segmented control. */
+body.fx-liquid.fx-lg-unified #settings-tabbar {
+  background: color-mix(in srgb, var(--input-bg) 45%, transparent);
+  border: 1px solid rgba(255, 255, 255, calc(.05 + .06 * var(--lg-spec, .6)));
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.12 * var(--lg-spec, .6))),
+    inset 0 2px 6px rgba(0, 0, 0, calc(.3 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .stab {
+  border-radius: 999px;
+  border-bottom: none;
+}
+body.fx-liquid.fx-lg-unified .stab:hover {
+  background: color-mix(in srgb, var(--card-hover) 45%, transparent);
+}
+body.fx-liquid.fx-lg-unified .stab.active {
+  color: var(--text);
+  border-bottom: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(.16 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 75%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.22 * var(--lg-spec, .6))),
+    0 2px 8px -2px rgba(0, 0, 0, calc(.5 * var(--lg-depth, .6)));
+}
+
+/* Settings sections → subtle glass containers with a light rim. */
+body.fx-liquid.fx-lg-unified .settings-section {
+  background: color-mix(in srgb, var(--card-bg) calc(var(--lg-alpha, 62%) - 22%), transparent);
+  border: 1px solid rgba(255, 255, 255, calc(.04 + .05 * var(--lg-spec, .6)));
+  border-radius: 16px;
+  padding: 14px 18px 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.12 * var(--lg-spec, .6))),
+    0 6px 18px -12px rgba(0, 0, 0, calc(.7 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .settings-row { border-bottom-color: rgba(255, 255, 255, calc(.04 + .04 * var(--lg-spec, .6))); }
+body.fx-liquid.fx-lg-unified .slider-row { border-bottom: none; }
+
+/* Chips: pills, theme/font cards, accent swatches. */
+body.fx-liquid.fx-lg-unified .pill,
+body.fx-liquid.fx-lg-unified .theme-card,
+body.fx-liquid.fx-lg-unified .font-card,
+body.fx-liquid.fx-lg-unified .sml-btn,
+body.fx-liquid.fx-lg-unified .snapshot-item {
+  background: color-mix(in srgb, var(--input-bg) 50%, transparent);
+  border-color: rgba(255, 255, 255, calc(.05 + .06 * var(--lg-spec, .6)));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.12 * var(--lg-spec, .6)));
+}
+body.fx-liquid.fx-lg-unified .pill:hover,
+body.fx-liquid.fx-lg-unified .theme-card:hover,
+body.fx-liquid.fx-lg-unified .font-card:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.07 * var(--lg-spec, .6))), transparent 60%),
+    color-mix(in srgb, var(--card-hover) 60%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+body.fx-liquid.fx-lg-unified .pill.active {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(.24 * var(--lg-spec, .6))), rgba(255, 255, 255, 0) 55%),
+    var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, white 8%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(.35 * var(--lg-spec, .6)));
+}
+
+/* Sliders → a glass track with a lit thumb. */
+body.fx-liquid.fx-lg-unified .sl {
+  background: color-mix(in srgb, var(--input-bg) 55%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, calc(.4 * var(--lg-depth, .6)));
+}
+body.fx-liquid.fx-lg-unified .sl::-webkit-slider-thumb {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .5);
+}
+
+/* The bottom "Settings" nav item, when active, is a glass pill too. */
+body.fx-liquid.fx-lg-unified .sidebar-footer .nav-item.active {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, calc(.10 * var(--lg-spec, .6) + .02)), rgba(255, 255, 255, .01) 55%),
+    color-mix(in srgb, var(--sidebar-active) 75%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(.22 * var(--lg-spec, .6))),
+    0 2px 8px -3px rgba(0, 0, 0, calc(.6 * var(--lg-depth, .6)));
 }
 
 /* ================================================================
