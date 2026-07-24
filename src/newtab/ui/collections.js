@@ -937,11 +937,13 @@ function renderViewMenu() {
    Drag & drop (delegated on the collections area)
    ============================================================ */
 
-let dropTarget = null; // card: { colId, refTabId, after } | collection: { colId, before }
+let dropTarget = null;
+// card: { colId, refTabId, mode: 'before'|'swap'|'after' }
+// collection: { colId, before } | zone: { colId } | self: {}
 
 function clearIndicators() {
-  qa('.tab-card.drop-before, .tab-card.drop-after').forEach((el) =>
-    el.classList.remove('drop-before', 'drop-after')
+  qa('.tab-card.drop-before, .tab-card.drop-after, .tab-card.drop-swap').forEach((el) =>
+    el.classList.remove('drop-before', 'drop-after', 'drop-swap')
   );
   qa('.drop-zone.drop-active').forEach((el) => el.classList.remove('drop-active'));
   qa('.collection.col-drop-before, .collection.col-drop-after').forEach((el) =>
@@ -974,17 +976,25 @@ function onAreaDragOver(event) {
   clearIndicators();
 
   if (cardEl && drag.type === 'card') {
+    // Hovering the dragged card's own spot: it simply returns there.
+    if (cardEl.dataset.tabId === drag.tabId) {
+      dropTarget = { kind: 'self' };
+      return;
+    }
+    // Thirds: outer thirds insert before/after the hovered card, the
+    // middle third swaps the two cards' positions.
     const rect = cardEl.getBoundingClientRect();
     const listView = !!cardEl.closest('.view-list');
-    const before = listView
-      ? event.clientY < rect.top + rect.height / 2
-      : event.clientX < rect.left + rect.width / 2;
-    cardEl.classList.add(before ? 'drop-before' : 'drop-after');
+    const pos = listView
+      ? (event.clientY - rect.top) / rect.height
+      : (event.clientX - rect.left) / rect.width;
+    const mode = pos < 1 / 3 ? 'before' : pos > 2 / 3 ? 'after' : 'swap';
+    cardEl.classList.add(`drop-${mode}`);
     dropTarget = {
       kind: 'card',
       colId: cardEl.dataset.colId,
       refTabId: cardEl.dataset.tabId,
-      after: !before,
+      mode,
     };
   } else if (zoneEl) {
     zoneEl.classList.add('drop-active');
@@ -1020,6 +1030,7 @@ function onAreaDrop(event) {
 }
 
 function moveCard(drag, target) {
+  if (target.kind === 'self') return; // dropped back onto its own spot
   update(() => {
     const source = findCollection(drag.collectionId);
     if (!source) return;
@@ -1034,9 +1045,18 @@ function moveCard(drag, target) {
     }
     const tabs = destination.collection.tabs;
     if (target.kind === 'card') {
-      let idx = tabs.findIndex((t) => t.id === target.refTabId);
-      if (idx === -1) tabs.push(moved);
-      else tabs.splice(target.after ? idx + 1 : idx, 0, moved);
+      const idx = tabs.findIndex((t) => t.id === target.refTabId);
+      if (idx === -1) {
+        tabs.push(moved); // reference vanished mid-drag
+      } else if (target.mode === 'swap') {
+        // Middle third: the two cards trade places — the reference card
+        // takes the dragged card's old slot (also across collections).
+        const [ref] = tabs.splice(idx, 1, moved);
+        source.collection.tabs.splice(fromIdx, 0, ref);
+        source.collection.sortMode = 'manual';
+      } else {
+        tabs.splice(target.mode === 'after' ? idx + 1 : idx, 0, moved);
+      }
       // A manual placement implies manual ordering from now on.
       destination.collection.sortMode = 'manual';
     } else {

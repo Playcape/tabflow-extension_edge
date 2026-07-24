@@ -75,6 +75,7 @@ A collection is a named group of saved tabs inside a space.
 | Remove | ✕ in the corner — **Undo** toast appears |
 | Keyboard | Cards are focusable with Tab; **Enter** opens, **Delete** removes |
 | Right-click | Full context menu: open (tab/background/window), copy URL, edit, pin, hotkey, remove. Collection headers have one too |
+| Reorder (drag) | Drop on the **left third** of a card to insert before it, the **right third** to insert after, the **middle** to **swap places**; dropping back on its own spot leaves everything unchanged |
 
 Notes appear as a small document icon (hover to read); tags show as pills on
 the card and are searchable.
