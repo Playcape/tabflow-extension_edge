@@ -9,6 +9,7 @@ import { initAppearance } from './ui/appearance.js';
 import { initLayout, setNav, focusSearch } from './ui/layout.js';
 import { initSpaces } from './ui/spaces.js';
 import { initCollections } from './ui/collections.js';
+import { initPages } from './ui/pages.js';
 import { initOpenTabs } from './ui/opentabs.js';
 import { initLinks } from './ui/links.js';
 import { initTasks } from './ui/tasks.js';
@@ -23,6 +24,7 @@ async function boot() {
   initLayout();
   initSpaces();
   initCollections();
+  initPages();
   initOpenTabs();
   initLinks();
   initTasks();

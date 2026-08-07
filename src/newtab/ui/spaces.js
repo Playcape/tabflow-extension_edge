@@ -5,8 +5,10 @@
 import { q, h, uid } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { SPACE_COLORS, SPACE_EMOJIS } from '../../common/themes.js';
-import { getDoc, activeSpace, findSpace, update, settings } from '../store.js';
+import { getDoc, activeSpace, activePageSpace, findSpace, findPageSpace, update, settings } from '../store.js';
+import { makePageSpace } from '../migrations.js';
 import { registerRenderer, render } from './bus.js';
+import { currentNav } from './layout.js';
 import { showMenu } from './contextmenu.js';
 import { confirmDialog, openOverlay, closeOverlay, bindBackdropClose } from './modals.js';
 import { editInline } from './inline.js';
@@ -18,12 +20,24 @@ import { clearSearch } from './collections.js';
 function renderSpaces() {
   const doc = getDoc();
   const list = q('#spaces-list');
-  list.replaceChildren(...doc.spaces.map(buildSpaceItem));
+  const isPages = currentNav() === 'pages';
+
+  const heading = q('#spaces-heading');
+  if (heading) heading.textContent = isPages ? 'Page Spaces' : 'Spaces';
+
+  if (isPages) {
+    const spaces = doc.pageSpaces ?? [];
+    list.replaceChildren(...spaces.map(buildPageSpaceItem));
+  } else {
+    list.replaceChildren(...doc.spaces.map(buildSpaceItem));
+  }
   renderBreadcrumb();
 }
 
 function renderBreadcrumb() {
-  q('#space-breadcrumb').textContent = activeSpace()?.name ?? '';
+  const isPages = currentNav() === 'pages';
+  const name = isPages ? (activePageSpace()?.name ?? '') : (activeSpace()?.name ?? '');
+  q('#space-breadcrumb').textContent = name;
 }
 
 function buildSpaceItem(space) {
@@ -121,6 +135,57 @@ function buildSpaceItem(space) {
   return el;
 }
 
+function buildPageSpaceItem(space) {
+  const doc = getDoc();
+
+  const nameEl = h('span', { class: 'space-name', text: space.name });
+  nameEl.addEventListener('dblclick', (event) => {
+    event.stopPropagation();
+    startRename(space, nameEl);
+  });
+
+  const dot = space.icon
+    ? h('div', { class: 'space-dot space-icon', text: space.icon })
+    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '' });
+
+  const handle = h('div', {
+    class: 'space-drag-handle',
+    html: icon('grip-vertical', 10),
+    title: 'Drag to reorder',
+  });
+
+  const el = h('div',
+    {
+      class: 'space-item' + (space.id === doc.activePageSpaceId ? ' active' : ''),
+      dataset: { id: space.id },
+      onclick: () => switchPageSpace(space.id),
+      oncontextmenu: (event) => {
+        event.preventDefault();
+        showMenu(event.clientX, event.clientY, [
+          { label: 'Rename', icon: 'pencil', onClick: () => startRename(space, nameEl) },
+          { label: 'Customize…', icon: 'settings', onClick: () => openCustomize(space.id, true) },
+          { label: 'Delete', icon: 'trash', danger: true, onClick: () => deleteSpace(space.id, true) },
+        ]);
+      },
+    },
+    handle,
+    dot,
+    nameEl,
+    h('button', {
+      class: 'space-del-btn',
+      html: icon('x', 11),
+      title: `Delete space “${space.name}”`,
+      'aria-label': `Delete space ${space.name}`,
+      onclick: (event) => {
+        event.stopPropagation();
+        deleteSpace(space.id, true);
+      },
+    })
+  );
+
+  return el;
+}
+
 function clearSpaceDropMarkers() {
   q('#spaces-list')
     .querySelectorAll('.space-drop-before, .space-drop-after')
@@ -135,6 +200,11 @@ export function switchSpace(id) {
   render('spaces', 'collections', 'viewmenu');
 }
 
+export function switchPageSpace(id) {
+  update((doc) => (doc.activePageSpaceId = id));
+  render('spaces', 'pages');
+}
+
 function startRename(space, nameEl) {
   editInline(nameEl, space.name, (value) => {
     update(() => (space.name = value));
@@ -143,26 +213,51 @@ function startRename(space, nameEl) {
 }
 
 function addSpace() {
+  const isPages = currentNav() === 'pages';
   const id = uid();
   update((doc) => {
-    doc.spaces.push({
-      id,
-      name: 'New Space',
-      viewMode: settings().defaultView,
-      collections: [],
-    });
-    doc.activeSpaceId = id;
+    if (isPages) {
+      if (!doc.pageSpaces) doc.pageSpaces = [];
+      doc.pageSpaces.push(makePageSpace('New Page Space'));
+      doc.activePageSpaceId = doc.pageSpaces[doc.pageSpaces.length - 1].id;
+    } else {
+      doc.spaces.push({
+        id,
+        name: 'New Space',
+        viewMode: settings().defaultView,
+        collections: [],
+      });
+      doc.activeSpaceId = id;
+    }
   });
   clearSearch();
-  render('spaces', 'collections', 'viewmenu');
-  // Immediately offer a rename.
-  const nameEl = q(`.space-item[data-id="${id}"] .space-name`);
-  const space = findSpace(id);
-  if (nameEl && space) startRename(space, nameEl);
+  render('spaces', isPages ? 'pages' : 'collections');
 }
 
-async function deleteSpace(id) {
+async function deleteSpace(id, isPageSpace = false) {
   const doc = getDoc();
+  if (isPageSpace) {
+    if ((doc.pageSpaces ?? []).length <= 1) {
+      toast('Cannot delete the last page space.');
+      return;
+    }
+    const space = findPageSpace(id);
+    const count = space?.pages.length ?? 0;
+    const ok = await confirmDialog({
+      title: `Delete “${space?.name}”?`,
+      message: count ? `This removes ${count} HTML page(s).` : 'This space is empty.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
+    update((doc) => {
+      doc.pageSpaces = doc.pageSpaces.filter((s) => s.id !== id);
+      if (doc.activePageSpaceId === id) doc.activePageSpaceId = doc.pageSpaces[0].id;
+    });
+    render('spaces', 'pages');
+    return;
+  }
+
   if (doc.spaces.length <= 1) {
     toast('Cannot delete the last space.');
     return;
@@ -187,12 +282,12 @@ async function deleteSpace(id) {
 
 /* ---------- customize modal ---------- */
 
-let customizeState = null; // { spaceId, color, icon }
+let customizeState = null; // { spaceId, isPageSpace, color, icon }
 
-function openCustomize(spaceId) {
-  const space = findSpace(spaceId);
+function openCustomize(spaceId, isPageSpace = false) {
+  const space = isPageSpace ? findPageSpace(spaceId) : findSpace(spaceId);
   if (!space) return;
-  customizeState = { spaceId, color: space.color ?? null, icon: space.icon ?? null };
+  customizeState = { spaceId, isPageSpace, color: space.color ?? null, icon: space.icon ?? null };
   renderCustomizeRows();
   openOverlay('#space-customize-overlay');
 }
@@ -247,7 +342,9 @@ function renderCustomizeRows() {
 }
 
 function saveCustomize() {
-  const space = findSpace(customizeState?.spaceId);
+  const space = customizeState?.isPageSpace
+    ? findPageSpace(customizeState?.spaceId)
+    : findSpace(customizeState?.spaceId);
   if (space) {
     update(() => {
       if (customizeState.color) space.color = customizeState.color;

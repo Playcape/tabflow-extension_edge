@@ -58,22 +58,34 @@ function sameTarget(a, b) {
 
 export async function openUrl(url, { newTab = false, active = false } = {}) {
   if (!url) return;
-  if (newTab) {
-    ext.tabs.create({ url, active }).catch(() => {});
-    return;
-  }
-  if (settings().focusExistingTab) {
+  const s = settings();
+  if (s.focusExistingTab) {
     try {
       const open = await ext.tabs.query({});
-      const match = open.find((t) => t.url === url) ?? open.find((t) => sameTarget(t.url, url));
+      let currentTabId = null;
+      try {
+        const current = await ext.tabs.getCurrent?.();
+        currentTabId = current?.id;
+      } catch {
+        /* noop */
+      }
+      const match =
+        open.find((t) => t.id !== currentTabId && (t.url === url || t.pendingUrl === url)) ??
+        open.find((t) => t.id !== currentTabId && (sameTarget(t.url, url) || sameTarget(t.pendingUrl, url)));
+
       if (match?.id != null) {
         await ext.tabs.update(match.id, { active: true });
         if (match.windowId != null) await ext.windows.update(match.windowId, { focused: true });
         return;
       }
-    } catch {
-      /* fall through to normal open */
+    } catch (err) {
+      console.warn('TabFlow: focusExistingTab check failed', err);
     }
+  }
+
+  if (newTab) {
+    ext.tabs.create({ url, active }).catch(() => {});
+    return;
   }
   location.href = url;
 }
@@ -594,6 +606,8 @@ function buildCard(tab, collection, space) {
       'aria-label': tip,
       onclick: (event) => {
         event.stopPropagation();
+        event.currentTarget?.blur();
+        document.activeElement?.blur();
         onClick();
       },
     });

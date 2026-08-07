@@ -42,6 +42,22 @@ export function findSpace(spaceId) {
   return doc.spaces.find((space) => space.id === spaceId) ?? null;
 }
 
+export function activePageSpace() {
+  return (doc.pageSpaces ?? []).find((space) => space.id === doc.activePageSpaceId) ?? doc.pageSpaces?.[0] ?? null;
+}
+
+export function findPageSpace(spaceId) {
+  return (doc.pageSpaces ?? []).find((space) => space.id === spaceId) ?? null;
+}
+
+export function findPage(pageId) {
+  for (const space of (doc.pageSpaces ?? [])) {
+    const page = space.pages.find((p) => p.id === pageId);
+    if (page) return { page, space };
+  }
+  return null;
+}
+
 export function findCollection(collectionId) {
   for (const space of doc.spaces) {
     const collection = space.collections.find((c) => c.id === collectionId);

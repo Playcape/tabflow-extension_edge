@@ -9,8 +9,9 @@ import { q, h, domainOf } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { getDoc, settings } from '../store.js';
 import { setNav, toggleZen } from './layout.js';
-import { switchSpace } from './spaces.js';
+import { switchSpace, switchPageSpace } from './spaces.js';
 import { openUrl } from './collections.js';
+import { renderPages } from './pages.js';
 
 let overlay = null;
 let input = null;
@@ -29,6 +30,7 @@ function actionItems() {
     { group: 'Action', label: 'Toggle Zen mode', keywords: 'focus minimal hide chrome', ic: 'monitor', run: () => toggleZen() },
     { group: 'Action', label: 'Open Settings', keywords: 'preferences options config', ic: 'settings', run: () => setNav('settings') },
     { group: 'Action', label: 'Go to Collections', keywords: 'tabs home grid', ic: 'layout-grid', run: () => setNav('collections') },
+    { group: 'Action', label: 'Go to Pages', keywords: 'pages html study guide notes', ic: 'file-text', run: () => setNav('pages') },
     { group: 'Action', label: 'Go to Links', keywords: 'aliases omnibox shortcuts', ic: 'link', run: () => setNav('links') },
     { group: 'Action', label: 'Go to Tasks', keywords: 'todo read later queue', ic: 'check-square', run: () => setNav('tasks') },
   ];
@@ -53,6 +55,21 @@ function buildIndex() {
       }
     }
   }
+
+  for (const pageSpace of (doc.pageSpaces ?? [])) {
+    idx.push({ group: 'Page Space', label: pageSpace.name, ic: 'file-text', run: () => { switchPageSpace(pageSpace.id); setNav('pages'); } });
+    for (const page of pageSpace.pages) {
+      idx.push({
+        group: 'Page', label: page.title, sub: pageSpace.name, ic: 'file-text',
+        run: () => {
+          if (doc.activePageSpaceId !== pageSpace.id) switchPageSpace(pageSpace.id);
+          setNav('pages');
+          renderPages();
+        },
+      });
+    }
+  }
+
   for (const link of doc.links) {
     idx.push({ group: 'Link', label: link.name, sub: link.url, url: link.url, ic: 'link', run: () => openUrl(link.url) });
   }
@@ -97,7 +114,7 @@ function score(item, queryLower) {
   return s;
 }
 
-const GROUP_ORDER = { Action: 0, Space: 1, Collection: 2, Tab: 3, Link: 4, Task: 5 };
+const GROUP_ORDER = { Action: 0, Space: 1, 'Page Space': 1.5, Collection: 2, Tab: 3, Page: 3.5, Link: 4, Task: 5 };
 
 function filterItems(query) {
   const all = buildIndex();

@@ -129,67 +129,65 @@ function isBrowserNewTab(url) {
 
 /** A loaded/loading TabFlow page — the tab we keep and focus. */
 function isTabFlowPage(tab) {
-  const url = tab.url ?? '';
-  const pending = tab.pendingUrl ?? '';
+  const url = tab?.url ?? '';
+  const pending = tab?.pendingUrl ?? '';
   return url.startsWith(EXT_ORIGIN) || pending.startsWith(EXT_ORIGIN);
 }
 
-/** Redirect this fresh new tab to the TabFlow page (ordinary page → favicon).
-    Chromium only — Firefox/Zen can't navigate away from its privileged
-    new-tab page, so those builds keep `chrome_url_overrides` instead. */
+/** Redirect fresh browser new tab to TabFlow's page URL (ordinary page → renders favicon icon in tab strip). */
 async function redirectToTabFlow(tabId) {
-  if (!IS_CHROMIUM) return;
+  if (!IS_CHROMIUM || tabId == null) return;
   try {
-    await ext.tabs.update(tabId, { url: NEWTAB_PAGE });
-  } catch (err) {
-    console.error('TabFlow: new-tab redirect failed', err);
+    const tab = await ext.tabs.get(tabId).catch(() => null);
+    if (!tab || isTabFlowPage(tab)) return;
+    await ext.tabs.update(tabId, { url: NEWTAB_PAGE }).catch(() => {});
+  } catch {
+    /* tab closed or navigated before update */
   }
 }
 
 /** Focus an existing TabFlow tab and drop the freshly-created duplicate. */
 async function dedupeInto(twin, duplicateId) {
   try {
-    await focusTab(twin);
-    await ext.tabs.remove(duplicateId);
+    await focusTab(twin).catch(() => {});
+    const dup = await ext.tabs.get(duplicateId).catch(() => null);
+    if (dup) {
+      await ext.tabs.remove(duplicateId).catch(() => {});
+    }
     ext.tabs.sendMessage(twin.id, { type: 'tabflow:activate' }).catch(() => {});
-  } catch (err) {
-    console.error('TabFlow: new-tab dedup failed', err);
+  } catch {
+    /* tab closed or already removed */
   }
 }
 
+/* Handle new-tab redirection & single-instance deduplication */
 ext.tabs.onCreated.addListener(async (created) => {
   if (created.id == null) return;
-  let tabs;
   try {
-    // Re-read the window's tabs: the created tab's URL has usually resolved
-    // by the time this query returns, even when the event fired with none.
-    tabs = await ext.tabs.query({ windowId: created.windowId });
+    const tab = await ext.tabs.get(created.id).catch(() => null);
+    if (!tab) return;
+
+    const url = tab.url ?? '';
+    const pending = tab.pendingUrl ?? '';
+    const blank = url === '' && pending === '';
+    if (blank && tab.openerTabId != null) return;
+
+    const isNewTab = blank || isBrowserNewTab(url) || isBrowserNewTab(pending) || isTabFlowPage(tab);
+    if (!isNewTab) return;
+
+    const tabs = (await ext.tabs.query({ windowId: tab.windowId }).catch(() => [])) ?? [];
+    const twin = tabs.find((t) => t.id !== tab.id && isTabFlowPage(t));
+    if (twin) {
+      await dedupeInto(twin, tab.id);
+    } else if (!isTabFlowPage(tab)) {
+      await redirectToTabFlow(tab.id);
+    }
   } catch {
-    return;
-  }
-  const self = tabs.find((t) => t.id === created.id) ?? created;
-  const url = self.url ?? '';
-  const pending = self.pendingUrl ?? '';
-  const blank = url === '' && pending === '';
-
-  // A link/script-opened tab (window.open, target=_blank) starts blank but has
-  // an opener — it's an intentional navigation, not a new-tab press. Leave it.
-  if (blank && self.openerTabId != null) return;
-
-  const isNewTab = blank || isBrowserNewTab(url) || isBrowserNewTab(pending) || isTabFlowPage(self);
-  if (!isNewTab) return;
-
-  const twin = tabs.find((t) => t.id !== created.id && isTabFlowPage(t));
-  if (twin) {
-    await dedupeInto(twin, created.id);
-  } else if (!isTabFlowPage(self)) {
-    await redirectToTabFlow(created.id);
+    /* ignore transient tab lifecycle errors */
   }
 });
 
-/* Catch the races the create-time pass can miss: a tab manually navigated to
-   the browser new-tab page, and duplicates that only become visible once a
-   TabFlow page finishes loading (two new tabs opened before either resolved). */
+/* Catch duplicates that become visible once a TabFlow page finishes loading */
 ext.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.url && isBrowserNewTab(changeInfo.url)) {
     await redirectToTabFlow(tabId);
@@ -199,24 +197,18 @@ ext.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     changeInfo.url?.startsWith(EXT_ORIGIN) ||
     (changeInfo.status === 'complete' && isTabFlowPage(tab));
   if (!loaded) return;
-  let tabs;
   try {
-    tabs = await ext.tabs.query({ windowId: tab.windowId });
-  } catch {
-    return;
-  }
-  const flowTabs = tabs.filter(isTabFlowPage);
-  if (flowTabs.length <= 1) return;
-  // Keep the one that just loaded; drop the rest in this window.
-  const keep = flowTabs.find((t) => t.id === tabId) ?? flowTabs[0];
-  for (const t of flowTabs) {
-    if (t.id !== keep.id) {
-      try {
-        await ext.tabs.remove(t.id);
-      } catch {
-        /* already gone */
+    const tabs = (await ext.tabs.query({ windowId: tab.windowId }).catch(() => [])) ?? [];
+    const flowTabs = tabs.filter(isTabFlowPage);
+    if (flowTabs.length <= 1) return;
+    const keep = flowTabs.find((t) => t.id === tabId) ?? flowTabs[0];
+    for (const t of flowTabs) {
+      if (t.id !== keep.id) {
+        ext.tabs.remove(t.id).catch(() => {});
       }
     }
+  } catch {
+    /* ignore */
   }
 });
 

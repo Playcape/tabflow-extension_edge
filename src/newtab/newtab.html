@@ -36,7 +36,10 @@
       <button class="nav-item active" data-view="collections">
         <span class="nav-icon" data-icon="layout-grid" aria-hidden="true"></span><span>Collections</span>
       </button>
-      <button class="nav-item" data-view="links">
+      <button class="nav-item" data-view="pages" id="nav-item-pages">
+        <span class="nav-icon" data-icon="file-text" aria-hidden="true"></span><span>Pages</span>
+      </button>
+      <button class="nav-item" data-view="links" id="nav-item-links" style="display:none;">
         <span class="nav-icon" data-icon="link" aria-hidden="true"></span><span>Links</span>
       </button>
       <button class="nav-item" data-view="tasks">
@@ -85,6 +88,35 @@
         <div id="clock-greeting"></div>
       </div>
       <div id="collections-area"></div>
+    </div>
+
+    <div id="view-pages" class="view-panel">
+      <div id="pages-list-wrap" class="panel-inner">
+        <div class="pages-header">
+          <div>
+            <h2 class="panel-title" id="page-space-title">Pages</h2>
+            <p class="panel-subtitle">Manage study guides, cheat sheets, and custom HTML documents.</p>
+          </div>
+          <button id="btn-add-page" class="accent-btn">+ Add Page</button>
+        </div>
+        <div id="pages-grid" class="pages-grid"></div>
+      </div>
+      <div id="page-viewer-wrap" class="page-viewer-wrap" style="display:none;">
+        <div class="page-viewer-toolbar">
+          <button id="btn-page-viewer-back" class="settings-btn slim">← Back to Pages</button>
+          <div class="page-viewer-title-area">
+            <span id="page-viewer-title" class="page-viewer-title"></span>
+            <span id="page-viewer-badge" class="page-method-badge"></span>
+          </div>
+          <div class="page-viewer-actions">
+            <button id="btn-page-viewer-edit" class="icon-btn" title="Edit Page" aria-label="Edit Page"></button>
+            <button id="btn-page-viewer-open-tab" class="icon-btn" title="Open in new browser tab" aria-label="Open in new browser tab"></button>
+          </div>
+        </div>
+        <div class="page-viewer-frame-container">
+          <iframe id="page-viewer-frame" class="page-viewer-frame" sandbox="allow-scripts allow-forms allow-popups"></iframe>
+        </div>
+      </div>
     </div>
 
     <div id="view-links" class="view-panel">
@@ -549,6 +581,16 @@
           <div class="settings-section-title">Interface</div>
           <div class="settings-row">
             <div class="settings-row-info">
+              <div class="settings-row-label">Show Links in sidebar</div>
+              <div class="settings-row-desc">Show the "Links" address-bar shortcuts item in the sidebar navigation.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="showlinks-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
               <div class="settings-row-label">Command palette <span class="settings-hint-inline">(Ctrl/⌘ + K)</span></div>
               <div class="settings-row-desc">A quick launcher to jump to any tab, collection, space, link, task or action.</div>
             </div>
@@ -816,6 +858,48 @@
     <div id="add-to-col-list" class="add-to-col-list"></div>
     <div class="hotkey-actions">
       <button id="add-to-col-cancel" class="settings-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- HTML Page edit / add modal -->
+<div id="page-edit-overlay" class="hotkey-overlay" style="display:none">
+  <div class="hotkey-modal page-modal" role="dialog" aria-modal="true" aria-label="Add/Edit Page">
+    <div class="hotkey-modal-title" id="page-edit-overlay-title">Add Page</div>
+    <div class="page-edit-tabs" id="page-method-tabs">
+      <button class="page-mtab active" data-method="code">Direct Code</button>
+      <button class="page-mtab" data-method="upload">Upload File</button>
+      <button class="page-mtab" data-method="embed">Embed URL</button>
+    </div>
+    <div class="card-edit-fields">
+      <label class="card-edit-label" for="page-edit-title">Title</label>
+      <input type="text" id="page-edit-title" placeholder="Page title (e.g. Math Study Guide)" />
+
+      <!-- Direct Code Section -->
+      <div id="page-method-sec-code" class="page-method-sec">
+        <label class="card-edit-label" for="page-edit-code">HTML Code</label>
+        <textarea id="page-edit-code" class="page-code-textarea" spellcheck="false" placeholder="<h1>My Study Guide</h1>&#10;<p>Notes...</p>"></textarea>
+      </div>
+
+      <!-- Upload File Section -->
+      <div id="page-method-sec-upload" class="page-method-sec" style="display:none;">
+        <label class="card-edit-label" for="page-edit-file">Select .html / .htm file</label>
+        <input type="file" id="page-edit-file" accept=".html,.htm,.txt,text/html" />
+        <div id="page-file-info" class="settings-hint" style="margin-top:4px;"></div>
+      </div>
+
+      <!-- Embed Section -->
+      <div id="page-method-sec-embed" class="page-method-sec" style="display:none;">
+        <label class="card-edit-label" for="page-edit-url">Page or Embed URL</label>
+        <input type="text" id="page-edit-url" placeholder="https://example.com/guide.html" />
+      </div>
+
+      <label class="card-edit-label" for="page-edit-tags">Tags <span class="settings-hint-inline">(comma separated)</span></label>
+      <input type="text" id="page-edit-tags" placeholder="study, cheat-sheet, work..." />
+    </div>
+    <div class="hotkey-actions">
+      <button id="page-edit-cancel" class="settings-btn">Cancel</button>
+      <button id="page-edit-save" class="settings-btn accent-save">Save Page</button>
     </div>
   </div>
 </div>

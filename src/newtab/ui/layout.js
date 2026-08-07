@@ -27,13 +27,16 @@ export function setNav(view) {
   qa('.view-panel').forEach((panel) =>
     panel.classList.toggle('active', panel.id === `view-${view}`)
   );
+  renderLayout();
   const rendererFor = {
     collections: 'collections',
+    pages: 'pages',
     links: 'links',
     tasks: 'tasks',
     settings: 'settings',
   };
   render(rendererFor[view] ?? 'collections');
+  render('spaces');
 }
 
 /* ---------- panels ---------- */
@@ -42,9 +45,17 @@ function renderLayout() {
   const doc = getDoc();
   const app = q('#app');
   app.classList.toggle('sidebar-collapsed', !doc.ui.sidebarOpen);
-  app.classList.toggle('right-hidden', !doc.ui.rightPanelOpen);
+
+  const hideRight = activeNav === 'pages' || !doc.ui.rightPanelOpen;
+  app.classList.toggle('right-hidden', hideRight);
   q('#sidebar-show-btn').style.display = doc.ui.sidebarOpen ? 'none' : 'flex';
-  q('#right-panel-show-btn').style.display = doc.ui.rightPanelOpen ? 'none' : 'flex';
+  q('#right-panel-show-btn').style.display = (activeNav === 'pages' || doc.ui.rightPanelOpen) ? 'none' : 'flex';
+
+  const showLinks = settings().showLinks;
+  const linksNavBtn = q('#nav-item-links');
+  if (linksNavBtn) linksNavBtn.style.display = showLinks ? 'flex' : 'none';
+  if (!showLinks && activeNav === 'links') setNav('collections');
+
   renderClock();
 }
 

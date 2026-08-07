@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: auto; background: transparent; }
+</style>
+</head>
+<body>
+<script>
+var currentPageId = null;
+var saveTimer = null;
+
+function saveFormState() {
+  if (!currentPageId) return;
+  try {
+    var values = {};
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el, i) {
+      var key = el.id || el.name || 'cb_' + i;
+      values[key] = el.checked;
+    });
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="search"], textarea').forEach(function(el, i) {
+      var key = el.id || el.name || 'txt_' + i;
+      values[key] = el.value;
+    });
+    localStorage.setItem('tabflow_form_' + currentPageId, JSON.stringify(values));
+  } catch(e) {}
+}
+
+function restoreFormState() {
+  if (!currentPageId) return;
+  try {
+    var raw = localStorage.getItem('tabflow_form_' + currentPageId);
+    if (!raw) return;
+    var values = JSON.parse(raw);
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el, i) {
+      var key = el.id || el.name || 'cb_' + i;
+      if (key in values) el.checked = Boolean(values[key]);
+    });
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="search"], textarea').forEach(function(el, i) {
+      var key = el.id || el.name || 'txt_' + i;
+      if (key in values) el.value = values[key];
+    });
+  } catch(e) {}
+}
+
+function triggerSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveFormState, 300);
+}
+
+function attachListeners() {
+  document.addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveFormState();
+  }, true);
+
+  document.addEventListener('change', triggerSave, true);
+  document.addEventListener('input', triggerSave, true);
+
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    while (t && t.tagName !== 'A' && t !== document.body) t = t.parentElement;
+    if (t && t.tagName === 'A') {
+      var href = t.getAttribute('href') || '';
+      if (href.charAt(0) === '#') {
+        e.preventDefault();
+        var targetEl = document.getElementById(href.slice(1)) || document.querySelector('[name="' + href.slice(1) + '"]');
+        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+      } else if (/^https?:\/\//i.test(href)) {
+        e.preventDefault();
+        window.parent.postMessage({ type: 'tabflow:open-external-url', url: href }, '*');
+      } else if (href === '' || href.indexOf('javascript:') === 0) {
+        /* allow */
+      } else {
+        e.preventDefault();
+      }
+    }
+    setTimeout(triggerSave, 100);
+  }, true);
+
+  restoreFormState();
+}
+
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'tabflow:load-page') {
+    currentPageId = event.data.pageId || null;
+    document.open();
+    document.write(event.data.html);
+    document.close();
+    // Wait for scripts in the written content to execute before attaching our listeners
+    setTimeout(attachListeners, 200);
+  }
+});
+</script>
+</body>
+</html>

@@ -63,6 +63,7 @@ function devShim() {
       onChanged: noopEvent(),
     },
     tabs: {
+      async get(id) { return demoTabs.find((t) => t.id === id) ?? null; },
       async query() { return demoTabs; },
       async create({ url }) { window.open(url, '_blank'); return { id: 0 }; },
       async update() { return {}; },

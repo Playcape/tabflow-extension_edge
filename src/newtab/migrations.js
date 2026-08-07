@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS = {
   customThemes: [],            // [{ id, name, vars, preview }]
   customCss: '',
   // ---- Advanced feature toggles (all local, all opt-in unless noted) ----
+  showLinks: false,            // show "Links" in sidebar (default off per requirements)
   cmdPalette: true,            // Ctrl/⌘+K quick launcher
   focusExistingTab: false,     // open a saved tab → focus it if already open
   glass: false,                // frosted-glass panels (backdrop blur)
@@ -88,6 +89,22 @@ export function makeSpace(name = 'New Space') {
   return { id: uid(), name, viewMode: 'card', collections: [] };
 }
 
+export function makePage({ title = '', method = 'code', content = '', tags = [] } = {}) {
+  return {
+    id: uid(),
+    title: title || 'Untitled Page',
+    method: ['upload', 'embed', 'code'].includes(method) ? method : 'code',
+    content: typeof content === 'string' ? content : '',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    tags: Array.isArray(tags) ? tags : [],
+  };
+}
+
+export function makePageSpace(name = 'Pages') {
+  return { id: uid(), name, pages: [] };
+}
+
 export function defaultDoc() {
   const space = makeSpace('My Collections');
   space.collections = [
@@ -96,11 +113,21 @@ export function defaultDoc() {
       makeTab({ title: 'Drag tabs here from the Open Tabs panel →', url: 'https://example.com' }),
     ]),
   ];
+  const pageSpace = makePageSpace('My Pages');
+  pageSpace.pages = [
+    makePage({
+      title: 'Sample Study Guide',
+      method: 'code',
+      content: '<div style="font-family:system-ui,sans-serif;padding:20px;max-width:800px;margin:0 auto;line-height:1.6;"><h1>📚 Study Guide</h1><p>Welcome to <strong>Pages</strong> in TabFlow!</p><p>You can upload HTML files, embed URLs, or paste HTML code directly to view here.</p></div>',
+    }),
+  ];
   return {
     schemaVersion: SCHEMA_VERSION,
     meta: { rev: 0, writer: '', savedAt: 0 },
     spaces: [space],
     activeSpaceId: space.id,
+    pageSpaces: [pageSpace],
+    activePageSpaceId: pageSpace.id,
     links: [],
     tasks: [],
     settings: { ...DEFAULT_SETTINGS },
@@ -207,6 +234,29 @@ function normalizeSettings(raw) {
   return settings;
 }
 
+function normalizePage(raw) {
+  const method = ['upload', 'embed', 'code'].includes(raw?.method) ? raw.method : 'code';
+  return {
+    id: typeof raw?.id === 'string' ? raw.id : uid(),
+    title: typeof raw?.title === 'string' && raw.title ? raw.title : 'Untitled Page',
+    method,
+    content: typeof raw?.content === 'string' ? raw.content : '',
+    createdAt: typeof raw?.createdAt === 'number' ? raw.createdAt : Date.now(),
+    updatedAt: typeof raw?.updatedAt === 'number' ? raw.updatedAt : Date.now(),
+    tags: Array.isArray(raw?.tags) ? raw.tags.filter((t) => typeof t === 'string' && t).slice(0, 12) : [],
+  };
+}
+
+function normalizePageSpace(raw) {
+  return {
+    id: typeof raw?.id === 'string' ? raw.id : uid(),
+    name: typeof raw?.name === 'string' && raw.name ? raw.name : 'Pages',
+    color: typeof raw?.color === 'string' ? raw.color : undefined,
+    icon: typeof raw?.icon === 'string' ? raw.icon : undefined,
+    pages: Array.isArray(raw?.pages) ? raw.pages.map(normalizePage) : [],
+  };
+}
+
 export function normalizeDoc(raw) {
   const base = defaultDoc();
   if (!raw || typeof raw !== 'object') return base;
@@ -219,6 +269,14 @@ export function normalizeDoc(raw) {
   const activeSpaceId = spaces.some((space) => space.id === raw.activeSpaceId)
     ? raw.activeSpaceId
     : spaces[0].id;
+
+  const pageSpaces = Array.isArray(raw.pageSpaces) && raw.pageSpaces.length
+    ? raw.pageSpaces.map(normalizePageSpace)
+    : base.pageSpaces;
+
+  const activePageSpaceId = pageSpaces.some((ps) => ps.id === raw.activePageSpaceId)
+    ? raw.activePageSpaceId
+    : pageSpaces[0].id;
 
   const links = (Array.isArray(raw.links) ? raw.links : [])
     .map((link) => ({
@@ -242,6 +300,8 @@ export function normalizeDoc(raw) {
     meta: { rev: Number(raw.meta?.rev) || 0, writer: '', savedAt: 0 },
     spaces,
     activeSpaceId,
+    pageSpaces,
+    activePageSpaceId,
     links,
     tasks,
     settings,
@@ -335,6 +395,8 @@ export function buildExport(doc) {
     doc: {
       spaces: doc.spaces,
       activeSpaceId: doc.activeSpaceId,
+      pageSpaces: doc.pageSpaces,
+      activePageSpaceId: doc.activePageSpaceId,
       links: doc.links,
       tasks: doc.tasks,
       settings: doc.settings,

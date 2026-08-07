@@ -183,6 +183,7 @@ function renderToggles() {
   bindToggle('#remote-favicons-toggle', 'remoteFavicons', ['collections', 'opentabs']);
 
   // Advanced feature toggles.
+  bindToggle('#showlinks-toggle', 'showLinks', ['layout']);
   bindToggle('#cmdpalette-toggle', 'cmdPalette');
   bindToggle('#focusexisting-toggle', 'focusExistingTab');
   bindToggle('#zenmode-toggle', 'zenMode');
