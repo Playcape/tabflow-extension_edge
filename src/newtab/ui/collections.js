@@ -941,6 +941,49 @@ let dropTarget = null;
 // card: { colId, refTabId, mode: 'before'|'swap'|'after' }
 // collection: { colId, before } | zone: { colId } | self: {}
 
+/* ---------- live drop preview ----------
+   A card-shaped ghost stands in the flow exactly where the dragged card
+   would land, while the source card is lifted out of the layout — so the
+   grid previews the real result instead of just marking an edge. */
+
+let dropGhost = null;
+let ghostSource = null; // the .tab-card currently pulled out of the flow
+
+function removeDropGhost() {
+  dropGhost?.remove();
+  ghostSource?.classList.remove('drag-source-hidden');
+  ghostSource = null;
+}
+
+/** Put the ghost `where` ('before' | 'after' | 'in') relative to `refEl`. */
+function showDropGhost(drag, refEl, where) {
+  if (!dropGhost) dropGhost = h('div', { class: 'drop-ghost', 'aria-hidden': 'true' });
+
+  const source = drag.type === 'card' ? q(`.tab-card[data-tab-id="${drag.tabId}"]`) : null;
+  const label = drag.type === 'card'
+    ? (source?.querySelector('.card-title')?.textContent ?? '')
+    : (drag.title ?? '');
+  dropGhost.replaceChildren(h('span', { text: label }));
+
+  // Match the dragged card's footprint so the preview is true to size.
+  const sample = source ?? (refEl.classList.contains('tab-card') ? refEl : null);
+  const rect = sample?.getBoundingClientRect();
+  dropGhost.style.width = rect?.width ? `${rect.width}px` : '';
+  dropGhost.style.height = rect?.height ? `${rect.height}px` : '';
+
+  if (where === 'in') (refEl.querySelector('.cards-wrap') ?? refEl).append(dropGhost);
+  else if (where === 'before') refEl.before(dropGhost);
+  else refEl.after(dropGhost);
+
+  // Lifting the source out keeps the layout width constant while reordering,
+  // so the surrounding cards barely move as the ghost travels.
+  if (source && source !== ghostSource) {
+    ghostSource?.classList.remove('drag-source-hidden');
+    ghostSource = source;
+    source.classList.add('drag-source-hidden');
+  }
+}
+
 function clearIndicators() {
   qa('.tab-card.drop-before, .tab-card.drop-after, .tab-card.drop-swap').forEach((el) =>
     el.classList.remove('drop-before', 'drop-after', 'drop-swap')
@@ -949,7 +992,19 @@ function clearIndicators() {
   qa('.collection.col-drop-before, .collection.col-drop-after').forEach((el) =>
     el.classList.remove('col-drop-before', 'col-drop-after')
   );
+  removeDropGhost();
+  lastTargetSig = '';
   dropTarget = null;
+}
+
+let lastTargetSig = '';
+
+/** True while the pointer sits over the standing ghost (keeps the target). */
+function overGhost(event) {
+  if (!dropGhost?.isConnected) return false;
+  const r = dropGhost.getBoundingClientRect();
+  return event.clientX >= r.left && event.clientX <= r.right
+    && event.clientY >= r.top && event.clientY <= r.bottom;
 }
 
 function onAreaDragOver(event) {
@@ -960,24 +1015,37 @@ function onAreaDragOver(event) {
     const colEl = event.target.closest('.collection');
     if (!colEl || colEl.dataset.id === drag.collectionId) return;
     event.preventDefault();
-    clearIndicators();
     const rect = colEl.getBoundingClientRect();
     const before = event.clientY < rect.top + rect.height / 2;
+    const sig = `col:${colEl.dataset.id}:${before}`;
+    if (sig === lastTargetSig) return;
+    clearIndicators();
+    lastTargetSig = sig;
     colEl.classList.add(before ? 'col-drop-before' : 'col-drop-after');
     dropTarget = { kind: 'collection', colId: colEl.dataset.id, before };
     return;
   }
 
   // card / open-tab
+  // The ghost occupies the gap the card would fall into; while the pointer
+  // is inside it, keep the current target so the preview doesn't flip-flop
+  // as the surrounding cards reflow.
+  if (overGhost(event)) {
+    event.preventDefault();
+    return;
+  }
+
   const cardEl = event.target.closest('.tab-card');
   const zoneEl = event.target.closest('.drop-zone');
   if (!cardEl && !zoneEl) return;
   event.preventDefault();
-  clearIndicators();
 
   if (cardEl && drag.type === 'card') {
     // Hovering the dragged card's own spot: it simply returns there.
     if (cardEl.dataset.tabId === drag.tabId) {
+      if (lastTargetSig === 'self') return;
+      clearIndicators();
+      lastTargetSig = 'self';
       dropTarget = { kind: 'self' };
       return;
     }
@@ -989,16 +1057,28 @@ function onAreaDragOver(event) {
       ? (event.clientY - rect.top) / rect.height
       : (event.clientX - rect.left) / rect.width;
     const mode = pos < 1 / 3 ? 'before' : pos > 2 / 3 ? 'after' : 'swap';
-    cardEl.classList.add(`drop-${mode}`);
+    const sig = `card:${cardEl.dataset.tabId}:${mode}`;
+    if (sig === lastTargetSig) return;
+    clearIndicators();
+    lastTargetSig = sig;
     dropTarget = {
       kind: 'card',
       colId: cardEl.dataset.colId,
       refTabId: cardEl.dataset.tabId,
       mode,
     };
+    // Swap keeps the ring (two cards trade places — no insertion gap);
+    // before/after preview the landing spot with the ghost.
+    if (mode === 'swap') cardEl.classList.add('drop-swap');
+    else showDropGhost(drag, cardEl, mode);
   } else if (zoneEl) {
+    const sig = `zone:${zoneEl.dataset.colId}`;
+    if (sig === lastTargetSig) return;
+    clearIndicators();
+    lastTargetSig = sig;
     zoneEl.classList.add('drop-active');
     dropTarget = { kind: 'zone', colId: zoneEl.dataset.colId };
+    showDropGhost(drag, zoneEl, 'in');
   }
 }
 
@@ -1126,4 +1206,7 @@ export function initCollections() {
   area.addEventListener('dragleave', (event) => {
     if (event.target === area) clearIndicators();
   });
+  // Safety net: drags that start elsewhere (open-tab rows) end outside this
+  // area, and would otherwise leave the preview ghost standing.
+  document.addEventListener('dragend', clearIndicators);
 }

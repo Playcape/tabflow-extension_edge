@@ -75,7 +75,11 @@ A collection is a named group of saved tabs inside a space.
 | Remove | ✕ in the corner — **Undo** toast appears |
 | Keyboard | Cards are focusable with Tab; **Enter** opens, **Delete** removes |
 | Right-click | Full context menu: open (tab/background/window), copy URL, edit, pin, hotkey, remove. Collection headers have one too |
-| Reorder (drag) | Drop on the **left third** of a card to insert before it, the **right third** to insert after, the **middle** to **swap places**; dropping back on its own spot leaves everything unchanged |
+| Reorder (drag) | Drop on the **left third** of a card to insert before it, the **right third** to insert after, the **middle** to **swap places**; dropping back on its own spot leaves everything unchanged. While dragging, a **ghost of the card previews the exact spot** it will land in |
+
+The action buttons live in a small bar that **floats up over the card on
+hover** — it takes no space while hidden, so cards stay compact. (Dense
+**Grid** view leaves it out; right-click gives you the same actions there.)
 
 Notes appear as a small document icon (hover to read); tags show as pills on
 the card and are searchable.
