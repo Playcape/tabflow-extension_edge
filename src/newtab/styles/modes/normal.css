@@ -1,0 +1,19 @@
+/* NORMAL — an editorial workbench. Horizontal collection bands, quiet chrome. */
+body[data-design="normal"] #sidebar { background: var(--sidebar-bg); }
+body[data-design="normal"] .nav-item.active { box-shadow: inset 2px 0 var(--accent); border-radius: 4px 8px 8px 4px; }
+body[data-design="normal"] .workspace-overview { padding-bottom: 18px; border-bottom: 1px solid var(--divider); margin-bottom: 8px; }
+body[data-design="normal"] .collection { display: grid; grid-template-columns: minmax(125px, 18%) minmax(0, 1fr); gap: 18px; border-bottom: 1px solid var(--divider); padding: 18px 0 26px; }
+body[data-design="normal"] .collection-header { position: relative; display: grid; grid-template-columns: 18px 1fr; gap: 5px; align-content: start; align-items: start; margin: 0; }
+body[data-design="normal"] .col-drag-handle { position: absolute; left: -16px; top: 7px; opacity: 0; }
+body[data-design="normal"] .collection:hover .col-drag-handle { opacity: 1; }
+body[data-design="normal"] .col-name-wrap { flex-wrap: wrap; padding-top: 3px; gap: 7px; }
+body[data-design="normal"] .col-name { white-space: normal; width: 100%; font-size: 13px; margin: 0; padding: 0; }
+body[data-design="normal"] .col-restore-btn { margin-left: 0; opacity: 1; pointer-events: auto; border: 0; background: transparent; color: var(--readable-muted); padding: 0; }
+body[data-design="normal"] .col-actions { grid-column: 2; justify-content: flex-start; margin-top: 7px; }
+body[data-design="normal"] .col-actions .icon-btn { width: 27px; height: 27px; }
+body[data-design="normal"] .tab-card { background: var(--card-bg); border-color: color-mix(in srgb, var(--text) 10%, var(--card-bg)); }
+body[data-design="normal"] .tab-card:hover { background: var(--card-hover); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+body[data-design="normal"] .collection.collapsed { padding-bottom: 18px; }
+body[data-design="normal"] .collection.collapsed .col-actions, body[data-design="normal"] .collection.collapsed .col-restore-btn { display: none; }
+body[data-design="normal"] .collection.collapsed .col-name-wrap { flex-wrap: nowrap; }
+body[data-design="normal"] .collection.collapsed .collection-header { grid-column: 1 / -1; }

@@ -8,28 +8,105 @@
 
 import { q, h } from '../../common/util.js';
 
-const openStack = []; // [{ el, onClose }]
+const openStack = []; // [{ el, onClose, returnFocus }]
+const inertBeforeOpen = new Map();
+const FOCUSABLE = 'a[href], button, input:not([type=hidden]), textarea, select, [tabindex]';
+let focusGuardsInstalled = false;
+let nextDialogId = 0;
+
+function focusableWithin(el) {
+  return [...el.querySelectorAll(FOCUSABLE)].filter((node) =>
+    !node.disabled && node.tabIndex >= 0 && !node.closest('[inert]') &&
+    node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden'
+  );
+}
+
+function focusEntry(entry) {
+  const targets = focusableWithin(entry.el);
+  const target = targets.find((node) => node.matches('input, textarea, select')) ?? targets[0];
+  if (target) target.focus({ preventScroll: true });
+  else {
+    const dialog = entry.el.querySelector('[role="dialog"]') ?? entry.el;
+    dialog.tabIndex = -1;
+    dialog.focus({ preventScroll: true });
+  }
+}
+
+/** Only the top overlay is interactive. Preserve pre-existing inert attributes. */
+function syncInertBackground() {
+  for (const [el, inert] of inertBeforeOpen) el.inert = inert;
+  inertBeforeOpen.clear();
+  const top = openStack.at(-1);
+  if (!top) return;
+  // Walking ancestors also supports overlays embedded inside a component.
+  for (let active = top.el; active && active !== document.body; active = active.parentElement) {
+    for (const sibling of active.parentElement?.children ?? []) {
+      if (sibling === active || sibling.matches('script, style, link')) continue;
+      if (!inertBeforeOpen.has(sibling)) inertBeforeOpen.set(sibling, sibling.inert);
+      sibling.inert = true;
+    }
+  }
+}
+
+function installFocusGuards() {
+  if (focusGuardsInstalled) return;
+  focusGuardsInstalled = true;
+  document.addEventListener('keydown', (event) => {
+    const top = openStack.at(-1);
+    if (!top || event.key !== 'Tab') return;
+    const targets = focusableWithin(top.el);
+    const first = targets[0];
+    const last = targets.at(-1);
+    const active = document.activeElement;
+    if (!targets.length) {
+      event.preventDefault();
+      focusEntry(top);
+    } else if (!top.el.contains(active) || (event.shiftKey ? active === first : active === last)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus({ preventScroll: true });
+    }
+  }, true);
+  document.addEventListener('focusin', (event) => {
+    const top = openStack.at(-1);
+    if (top && !top.el.contains(event.target)) focusEntry(top);
+  });
+}
 
 export function openOverlay(id, { onClose } = {}) {
   const el = typeof id === 'string' ? q(id) : id;
+  if (!el) return null;
+  const existing = openStack.find((entry) => entry.el === el);
+  if (existing) {
+    if (existing === openStack.at(-1)) focusEntry(existing);
+    return el;
+  }
+  installFocusGuards();
+  const entry = { el, onClose, returnFocus: document.activeElement };
   el.style.display = 'flex';
-  openStack.push({ el, onClose });
-
-  const focusable = el.querySelector(
-    'input:not([type=hidden]), textarea, select, button.accent-save, button'
-  );
-  if (focusable) setTimeout(() => focusable.focus(), 30);
+  openStack.push(entry);
+  syncInertBackground();
+  focusEntry(entry);
   return el;
 }
 
 export function closeOverlay(id) {
   const el = typeof id === 'string' ? q(id) : id;
+  if (!el) return;
   const idx = openStack.findIndex((entry) => entry.el === el);
+  const wasTop = idx === openStack.length - 1;
+  el.style.display = 'none';
   if (idx !== -1) {
     const [entry] = openStack.splice(idx, 1);
+    syncInertBackground();
     entry.onClose?.();
+    if (wasTop) {
+      const top = openStack.at(-1);
+      const opener = entry.returnFocus;
+      if (opener?.isConnected && (!top || top.el.contains(opener))) {
+        opener.focus({ preventScroll: true });
+      } else if (top) focusEntry(top);
+    }
   }
-  el.style.display = 'none';
 }
 
 export function closeTopOverlay() {
@@ -53,8 +130,9 @@ export function bindBackdropClose(overlayEl) {
 /* ---------- one-off dialogs (built on demand, removed after) ---------- */
 
 function buildDialog({ title, body, actions }) {
-  const modal = h('div', { class: 'hotkey-modal', role: 'dialog', 'aria-modal': 'true' },
-    h('div', { class: 'hotkey-modal-title', text: title }),
+  const titleId = `dialog-title-${++nextDialogId}`;
+  const modal = h('div', { class: 'hotkey-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId },
+    h('div', { class: 'hotkey-modal-title', id: titleId, text: title }),
     body,
     h('div', { class: 'hotkey-actions' }, actions)
   );

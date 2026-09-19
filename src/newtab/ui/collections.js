@@ -26,6 +26,8 @@ import { editInline } from './inline.js';
 import { toast } from './toast.js';
 import { setDrag, getDrag, clearDrag } from './dnd.js';
 import { makeCollection, makeTab } from '../migrations.js';
+import { applyDesign } from './design.js';
+import { currentNav, setNav } from './layout.js';
 
 const SLOT_COUNT = 4;
 const SLOT_KEYS = ['Alt+1', 'Alt+2', 'Alt+3', 'Alt+4'];
@@ -123,6 +125,7 @@ function viewModeOf(space) {
 }
 
 function renderCollections() {
+  applyDesign();
   const area = q('#collections-area');
   const space = activeSpace();
   const viewMode = viewModeOf(space);
@@ -207,6 +210,7 @@ function emptyState() {
 
 export function handleSearch(value) {
   searchQuery = value.trim().toLowerCase();
+  if (searchQuery && currentNav() !== 'collections') setNav('collections');
   q('#search-clear').style.display = searchQuery ? 'flex' : 'none';
   render('collections');
 }
@@ -439,13 +443,13 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       cardsWrap.append(
         h('div', {
           class: 'add-tab-card',
-          html: icon('plus', 18),
+          html: icon('plus', 18) + '<span class="add-tab-label">Save a tab</span>',
           title: 'Add a tab to this collection',
           role: 'button',
           tabindex: '0',
           onclick: () => openTabModal({ mode: 'add', collection }),
           onkeydown: (event) => {
-            if (event.key === 'Enter') openTabModal({ mode: 'add', collection });
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openTabModal({ mode: 'add', collection }); }
           },
         })
       );
@@ -467,6 +471,8 @@ function startRename(collection, nameEl) {
 function showCollectionMenu(x, y, collection, space, nameEl) {
   const doc = getDoc();
   showMenu(x, y, [
+    { label: 'Open all tabs', icon: 'external-link', onClick: () => openMany(collection.tabs.map(t => t.url)) },
+    { label: 'Open in new window', icon: 'monitor', onClick: () => openMany(collection.tabs.map(t => t.url), { windowed: true }) },
     { label: 'Rename', icon: 'pencil', onClick: () => startRename(collection, nameEl) },
     caps.tabGroups && {
       label: 'Open as tab group',
@@ -606,8 +612,6 @@ function buildCard(tab, collection, space) {
       'aria-label': tip,
       onclick: (event) => {
         event.stopPropagation();
-        event.currentTarget?.blur();
-        document.activeElement?.blur();
         onClick();
       },
     });
@@ -668,6 +672,11 @@ function buildCard(tab, collection, space) {
   });
   card.addEventListener('keydown', (event) => {
     if (event.target !== card) return;
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault();
+      const rect = card.getBoundingClientRect();
+      showCardMenu(rect.left, rect.bottom, tab, collection);
+    }
     if (event.key === 'Enter') openUrl(tab.url, { newTab: event.ctrlKey || event.metaKey, active: true });
     if (event.key === 'Delete') removeTab(collection.id, tab.id);
   });

@@ -20,7 +20,7 @@
 
 import {
   ext,
-  EXT_ORIGIN,
+  isTabFlowTab,
   IS_CHROMIUM,
   NEWTAB_PAGE,
   focusOrOpen,
@@ -104,114 +104,82 @@ ext.action.onClicked.addListener(async () => {
 });
 
 /* ---------- New-tab redirect + single instance ----------
-   A browser new tab (edge://newtab/, chrome://newtab/, or a blank tab from
-   the new-tab button) is redirected to TabFlow's own page URL so it loads as
-   an ordinary extension page — which is what makes the favicon show. If a
-   TabFlow tab is already open in that window we go there instead and drop the
-   duplicate, then focus its search box so the user can type right away.
+   Chromium redirects confirmed browser new-tab URLs. Firefox/Zen use the
+   packaged manifest override. An empty URL is not evidence of a new tab:
+   session restoration and tabs created by other extensions can begin empty.
 
-   Scope is per-window on purpose: we never jump the user to another window,
-   and never close the sole tab of a freshly-opened window (Ctrl+N), which
-   would take the window down with it.
-
-   URL matching is loose because a just-created tab reports its URL
-   inconsistently — the browser new-tab URL, or nothing at all for a tick.
-   about:blank / about:home are excluded so we never grab an unrelated tab. */
+   A per-window queue and one deterministic keeper prevent overlapping tab
+   events from closing each other's chosen survivor. Re-read immediately
+   before navigation/removal so a user navigation is never intentionally
+   swallowed by a stale lifecycle event. Other extension pages are excluded. */
 const NEWTAB_SURFACE_URLS = new Set([
   'chrome://newtab/',
+  'chrome://newtab',
   'edge://newtab/',
+  'edge://newtab',
   'about:newtab',
 ]);
+const windowQueues = new Map();
 
-function isBrowserNewTab(url) {
-  return NEWTAB_SURFACE_URLS.has(url ?? '');
+function isBrowserNewTab(tab) {
+  return NEWTAB_SURFACE_URLS.has(tab?.pendingUrl || tab?.url || '');
 }
 
-/** A loaded/loading TabFlow page — the tab we keep and focus. */
-function isTabFlowPage(tab) {
-  const url = tab?.url ?? '';
-  const pending = tab?.pendingUrl ?? '';
-  return url.startsWith(EXT_ORIGIN) || pending.startsWith(EXT_ORIGIN);
-}
+async function reconcileWindow(tabId) {
+  let tab = await ext.tabs.get(tabId).catch(() => null);
+  if (!tab || !(isTabFlowTab(tab) || (IS_CHROMIUM && isBrowserNewTab(tab)))) return;
+  const tabs = await ext.tabs.query({ windowId: tab.windowId });
+  const flows = tabs.filter(isTabFlowTab).sort((a, b) => a.id - b.id);
+  const keep = flows[0];
 
-/** Redirect fresh browser new tab to TabFlow's page URL (ordinary page → renders favicon icon in tab strip). */
-async function redirectToTabFlow(tabId) {
-  if (!IS_CHROMIUM || tabId == null) return;
-  try {
-    const tab = await ext.tabs.get(tabId).catch(() => null);
-    if (!tab || isTabFlowPage(tab)) return;
-    await ext.tabs.update(tabId, { url: NEWTAB_PAGE }).catch(() => {});
-  } catch {
-    /* tab closed or navigated before update */
-  }
-}
-
-/** Focus an existing TabFlow tab and drop the freshly-created duplicate. */
-async function dedupeInto(twin, duplicateId) {
-  try {
-    await focusTab(twin).catch(() => {});
-    const dup = await ext.tabs.get(duplicateId).catch(() => null);
-    if (dup) {
-      await ext.tabs.remove(duplicateId).catch(() => {});
+  if (!keep) {
+    // Recheck after query: tabs may have navigated while the API was pending.
+    tab = await ext.tabs.get(tabId).catch(() => null);
+    if (IS_CHROMIUM && tab && isBrowserNewTab(tab)) {
+      await ext.tabs.update(tabId, { url: NEWTAB_PAGE });
     }
-    ext.tabs.sendMessage(twin.id, { type: 'tabflow:activate' }).catch(() => {});
-  } catch {
-    /* tab closed or already removed */
-  }
-}
-
-/* Handle new-tab redirection & single-instance deduplication */
-ext.tabs.onCreated.addListener(async (created) => {
-  if (created.id == null) return;
-  try {
-    const tab = await ext.tabs.get(created.id).catch(() => null);
-    if (!tab) return;
-
-    const url = tab.url ?? '';
-    const pending = tab.pendingUrl ?? '';
-    const blank = url === '' && pending === '';
-    if (blank && tab.openerTabId != null) return;
-
-    const isNewTab = blank || isBrowserNewTab(url) || isBrowserNewTab(pending) || isTabFlowPage(tab);
-    if (!isNewTab) return;
-
-    const tabs = (await ext.tabs.query({ windowId: tab.windowId }).catch(() => [])) ?? [];
-    const twin = tabs.find((t) => t.id !== tab.id && isTabFlowPage(t));
-    if (twin) {
-      await dedupeInto(twin, tab.id);
-    } else if (!isTabFlowPage(tab)) {
-      await redirectToTabFlow(tab.id);
-    }
-  } catch {
-    /* ignore transient tab lifecycle errors */
-  }
-});
-
-/* Catch duplicates that become visible once a TabFlow page finishes loading */
-ext.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.url && isBrowserNewTab(changeInfo.url)) {
-    await redirectToTabFlow(tabId);
     return;
   }
-  const loaded =
-    changeInfo.url?.startsWith(EXT_ORIGIN) ||
-    (changeInfo.status === 'complete' && isTabFlowPage(tab));
-  if (!loaded) return;
-  try {
-    const tabs = (await ext.tabs.query({ windowId: tab.windowId }).catch(() => [])) ?? [];
-    const flowTabs = tabs.filter(isTabFlowPage);
-    if (flowTabs.length <= 1) return;
-    const keep = flowTabs.find((t) => t.id === tabId) ?? flowTabs[0];
-    for (const t of flowTabs) {
-      if (t.id !== keep.id) {
-        ext.tabs.remove(t.id).catch(() => {});
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-});
 
+  const duplicates = tabs.filter((candidate) => candidate.id !== keep.id &&
+    (isTabFlowTab(candidate) || (IS_CHROMIUM && isBrowserNewTab(candidate))));
+  if (!duplicates.length) return;
+
+  // Do not close anything if focusing the keeper fails.
+  await focusTab(keep);
+  for (const duplicate of duplicates) {
+    const [liveKeep, liveDuplicate] = await Promise.all([
+      ext.tabs.get(keep.id).catch(() => null),
+      ext.tabs.get(duplicate.id).catch(() => null),
+    ]);
+    if (!liveKeep || !isTabFlowTab(liveKeep) || !liveDuplicate ||
+        liveKeep.windowId !== liveDuplicate.windowId) continue;
+    if (isTabFlowTab(liveDuplicate) || (IS_CHROMIUM && isBrowserNewTab(liveDuplicate))) {
+      await ext.tabs.remove(liveDuplicate.id).catch(() => {});
+    }
+  }
+  // Extension pages receive runtime messages; tabs.sendMessage targets content scripts.
+  ext.runtime.sendMessage({ type: 'tabflow:activate', tabId: keep.id }).catch(() => {});
+}
+
+function queueNewTab(tab) {
+  if (tab?.id == null || tab.windowId == null) return Promise.resolve();
+  if (!(isTabFlowTab(tab) || (IS_CHROMIUM && isBrowserNewTab(tab)))) return Promise.resolve();
+  const previous = windowQueues.get(tab.windowId) ?? Promise.resolve();
+  const next = previous.then(() => reconcileWindow(tab.id)).catch(() => {
+    // Closing/moving a tab during an event is an expected lifecycle race.
+  });
+  windowQueues.set(tab.windowId, next);
+  next.finally(() => {
+    if (windowQueues.get(tab.windowId) === next) windowQueues.delete(tab.windowId);
+  });
+  return next;
+}
+
+ext.tabs.onCreated.addListener(queueNewTab);
+ext.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url || changeInfo.status === 'complete') return queueNewTab(tab);
+});
 /* ---------- Install / update ---------- */
 ext.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {

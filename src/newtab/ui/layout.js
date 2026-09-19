@@ -14,6 +14,10 @@ import { hideMenu, menuVisible } from './contextmenu.js';
 
 let activeNav = 'collections';
 let clockTimer = null;
+const narrow = matchMedia('(max-width: 760px)');
+const drawer = matchMedia('(max-width: 1050px)');
+let mobileSidebar = false;
+let mobileTabs = false;
 
 export function currentNav() {
   return activeNav;
@@ -21,9 +25,12 @@ export function currentNav() {
 
 export function setNav(view) {
   activeNav = view;
-  qa('.nav-item[data-view]').forEach((btn) =>
-    btn.classList.toggle('active', btn.dataset.view === view)
-  );
+  document.body.dataset.view = view;
+  if (narrow.matches) mobileSidebar = false;
+  qa('.nav-item[data-view]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+    btn.setAttribute('aria-current', btn.dataset.view === view ? 'page' : 'false');
+  });
   qa('.view-panel').forEach((panel) =>
     panel.classList.toggle('active', panel.id === `view-${view}`)
   );
@@ -44,12 +51,19 @@ export function setNav(view) {
 function renderLayout() {
   const doc = getDoc();
   const app = q('#app');
-  app.classList.toggle('sidebar-collapsed', !doc.ui.sidebarOpen);
+  const sidebarOpen = narrow.matches ? mobileSidebar : doc.ui.sidebarOpen;
+  const tabsOpen = drawer.matches ? mobileTabs : doc.ui.rightPanelOpen;
+  app.classList.toggle('sidebar-collapsed', !sidebarOpen);
 
-  const hideRight = activeNav === 'pages' || !doc.ui.rightPanelOpen;
+  const hideRight = activeNav === 'pages' || !tabsOpen;
   app.classList.toggle('right-hidden', hideRight);
-  q('#sidebar-show-btn').style.display = doc.ui.sidebarOpen ? 'none' : 'flex';
-  q('#right-panel-show-btn').style.display = (activeNav === 'pages' || doc.ui.rightPanelOpen) ? 'none' : 'flex';
+  q('#sidebar-show-btn').style.display = sidebarOpen ? 'none' : 'flex';
+  q('#right-panel-show-btn').style.display = (activeNav === 'pages' || tabsOpen) ? 'none' : 'flex';
+  q('#sidebar').inert = !sidebarOpen;
+  q('#right-panel').inert = hideRight;
+  q('#workspace-sidebar-toggle').setAttribute('aria-expanded', String(sidebarOpen));
+  q('#workspace-tabs-toggle').setAttribute('aria-expanded', String(!hideRight));
+  q('#workspace-tabs-toggle').hidden = activeNav === 'pages';
 
   const showLinks = settings().showLinks;
   const linksNavBtn = q('#nav-item-links');
@@ -111,6 +125,8 @@ function setIcon(sel, name, size = 14) {
 
 function initStaticIcons() {
   setIcon('#btn-sidebar-toggle', 'panel-left');
+  setIcon('#workspace-sidebar-toggle', 'panel-left');
+  setIcon('#workspace-tabs-toggle', 'panel-right');
   setIcon('#sidebar-show-btn', 'panel-left', 13);
   setIcon('#search-clear', 'x', 12);
   setIcon('.search-icon-wrap', 'search', 13);
@@ -138,7 +154,6 @@ export function focusSearch() {
   if (!input) return;
   // Respect a deliberately-collapsed sidebar — don't force it open on every
   // new tab. The search box lives there, so there's nothing to focus if hidden.
-  if (!getDoc().ui.sidebarOpen) return;
   input.focus();
   input.select();
 }
@@ -194,22 +209,32 @@ function onGlobalKeydown(event) {
 export function initLayout() {
   initStaticIcons();
   registerRenderer('layout', renderLayout);
+  const toggleSidebar = (force) => {
+    if (narrow.matches) mobileSidebar = force ?? !mobileSidebar;
+    else update(doc => { doc.ui.sidebarOpen = force ?? !doc.ui.sidebarOpen; });
+    renderLayout();
+  };
+  const toggleTabs = (force) => {
+    if (drawer.matches) mobileTabs = force ?? !mobileTabs;
+    else update(doc => { doc.ui.rightPanelOpen = force ?? !doc.ui.rightPanelOpen; });
+    renderLayout();
+  };
+  q('#workspace-sidebar-toggle').addEventListener('click', () => toggleSidebar());
+  q('#workspace-tabs-toggle').addEventListener('click', () => toggleTabs());
+  narrow.addEventListener('change', renderLayout);
+  drawer.addEventListener('change', renderLayout);
 
   q('#btn-sidebar-toggle').addEventListener('click', () => {
-    update((doc) => (doc.ui.sidebarOpen = false));
-    renderLayout();
+    toggleSidebar(false);
   });
   q('#sidebar-show-btn').addEventListener('click', () => {
-    update((doc) => (doc.ui.sidebarOpen = true));
-    renderLayout();
+    toggleSidebar(true);
   });
   q('#btn-right-toggle').addEventListener('click', () => {
-    update((doc) => (doc.ui.rightPanelOpen = false));
-    renderLayout();
+    toggleTabs(false);
   });
   q('#right-panel-show-btn').addEventListener('click', () => {
-    update((doc) => (doc.ui.rightPanelOpen = true));
-    renderLayout();
+    toggleTabs(true);
   });
   q('#zen-exit-btn')?.addEventListener('click', () => toggleZen(false));
 
@@ -223,6 +248,7 @@ export function initLayout() {
   // here (single-instance behavior). runtime.onMessage is absent in the dev
   // shim, hence the optional chaining.
   ext.runtime.onMessage?.addListener((message) => {
-    if (message?.type === 'tabflow:activate') focusSearch();
+    if (message?.type !== 'tabflow:activate') return;
+    ext.tabs.getCurrent?.().then(tab => { if (tab?.id === message.tabId) focusSearch(); }).catch(() => {});
   });
 }

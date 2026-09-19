@@ -37,7 +37,7 @@ function buildTaskRow(task, index) {
     render('tasks');
   });
 
-  const title = h('span', { class: 'next-title', text: task.title, title: task.url ?? '' });
+  const title = h(task.url ? 'button' : 'span', { class: 'next-title', style: 'text-align:left', text: task.title, title: task.url ?? '' });
   if (task.url) {
     title.classList.add('has-url');
     title.addEventListener('click', () => ext.tabs.create({ url: task.url }).catch(() => {}));
@@ -88,8 +88,9 @@ function buildTaskRow(task, index) {
     row.classList.add('drop-above');
   });
   row.addEventListener('drop', (event) => {
+    if (!event.dataTransfer.types.includes('application/x-tabflow-task')) return;
     const fromIdx = Number(event.dataTransfer.getData('application/x-tabflow-task'));
-    if (!Number.isInteger(fromIdx) || fromIdx === index) return;
+    if (!Number.isInteger(fromIdx) || fromIdx < 0 || fromIdx >= getDoc().tasks.length || fromIdx === index) return;
     event.preventDefault();
     update((doc) => {
       const [moved] = doc.tasks.splice(fromIdx, 1);

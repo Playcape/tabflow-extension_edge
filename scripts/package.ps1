@@ -7,8 +7,8 @@
     dist/zen       → Zen & Firefox  (event-page background, no Chromium-only
                                      keys, so no manifest warnings)
 
-  src/ itself is directly loadable everywhere for development; this script
-  exists so each browser/store gets a clean manifest without foreign keys.
+  src/ is Chromium-native. Firefox/Zen require the generated dist/zen
+  manifest for their event page and declarative new-tab override.
 
   Implementation notes (both bit us in the wild):
     • Zips are written with System.IO.Compression using forward-slash entry
@@ -31,7 +31,12 @@ $src  = Join-Path $root 'src'
 $dist = Join-Path $root 'dist'
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
-if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
+if (Test-Path $dist) {
+    $resolvedDist = [IO.Path]::GetFullPath($dist)
+    $expectedDist = [IO.Path]::GetFullPath((Join-Path $root 'dist'))
+    if ($resolvedDist -ne $expectedDist -or (Get-Item -LiteralPath $dist).LinkType) { throw 'Unsafe distribution directory.' }
+    Remove-Item -LiteralPath $resolvedDist -Recurse -Force
+}
 
 function Read-Manifest {
     [System.IO.File]::ReadAllText((Join-Path $src 'manifest.json'), $utf8NoBom) | ConvertFrom-Json
@@ -83,6 +88,10 @@ foreach ($target in $targets) {
         $m.background.PSObject.Properties.Remove('service_worker')
         $m.background | Add-Member -NotePropertyName 'scripts' -NotePropertyValue @('background.js') -Force
         $m.permissions = @($m.permissions | Where-Object { $_ -ne 'favicon' })
+        # Chromium's manifest sandbox is unsupported in Firefox. The viewer
+        # uses a sandboxed srcdoc frame there and retains the extension CSP.
+        $m.PSObject.Properties.Remove('sandbox')
+        $m.content_security_policy.PSObject.Properties.Remove('sandbox')
 
         # Firefox can't redirect its privileged new-tab page (that's the
         # Chromium-only approach in src), so it takes over the new tab the

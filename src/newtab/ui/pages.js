@@ -7,16 +7,17 @@
 import { q, qa, h, uid } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { ext } from '../../common/ext.js';
-import { getDoc, activePageSpace, findPage, update } from '../store.js';
+import { getDoc, activePageSpace, findPage, update, flush } from '../store.js';
 import { registerRenderer, render } from './bus.js';
 import { openOverlay, closeOverlay } from './modals.js';
 import { toast } from './toast.js';
-import { savePageContent, getPageContent, deletePageContent } from '../pageStorage.js';
-import { makePage } from '../migrations.js';
+import { preparePageContent, resolvePageContent } from '../pageStorage.js';
+import { mountPage } from '../pageViewer.js';
 
 let activeViewingPageId = null;
 let pageModalState = null; // { mode: 'add' | 'edit', page?: object }
 let selectedFileContent = null;
+let savingPage = false;
 
 const METHOD_LABELS = {
   code: { label: 'Direct Code', icon: 'code' },
@@ -36,11 +37,12 @@ export function renderPages() {
   // If currently viewing a page, ensure viewer stays active unless closed
   if (activeViewingPageId) {
     const found = findPage(activeViewingPageId);
-    if (found) {
+    if (found && found.space === space) {
       openPageViewer(found.page);
       return;
     }
-    activeViewingPageId = null;
+    closePageViewer();
+    return;
   }
 
   q('#page-viewer-wrap').style.display = 'none';
@@ -106,8 +108,6 @@ function buildPageCard(page, space) {
       'aria-label': tip,
       onclick: (e) => {
         e.stopPropagation();
-        e.currentTarget?.blur();
-        document.activeElement?.blur();
         onClick();
       },
     });
@@ -122,7 +122,15 @@ function buildPageCard(page, space) {
     {
       class: 'tab-card page-card',
       tabindex: '0',
+      role: 'button', 'aria-label': `Open ${page.title}`,
       onclick: () => openPageViewer(page, true),
+      onkeydown: (event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openPageViewer(page, true);
+        }
+      },
     },
     h('button', {
       class: 'card-remove',
@@ -144,91 +152,8 @@ function buildPageCard(page, space) {
    Main Area Sandboxed Viewer
    ============================================================ */
 
-function saveFormState(pageId, doc) {
-  try {
-    if (!doc || !doc.body) return;
-    const values = {};
-    doc.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((el, i) => {
-      const key = el.id || el.name || `cb_${i}`;
-      values[key] = el.checked;
-    });
-    doc.querySelectorAll('input[type="text"], input[type="number"], input[type="search"], textarea').forEach((el, i) => {
-      const key = el.id || el.name || `txt_${i}`;
-      values[key] = el.value;
-    });
-    localStorage.setItem(`tabflow_form_${pageId}`, JSON.stringify(values));
-  } catch (e) {}
-}
-
-function restoreFormState(pageId, doc) {
-  try {
-    const raw = localStorage.getItem(`tabflow_form_${pageId}`);
-    if (!raw) return;
-    const values = JSON.parse(raw);
-    doc.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((el, i) => {
-      const key = el.id || el.name || `cb_${i}`;
-      if (key in values) {
-        el.checked = Boolean(values[key]);
-      }
-    });
-    doc.querySelectorAll('input[type="text"], input[type="number"], input[type="search"], textarea').forEach((el, i) => {
-      const key = el.id || el.name || `txt_${i}`;
-      if (key in values) {
-        el.value = values[key];
-      }
-    });
-  } catch (e) {}
-}
-
-function attachIframeListeners(pageId, frame) {
-  try {
-    const doc = frame.contentDocument || frame.contentWindow?.document;
-    if (!doc || !doc.body) return;
-    if (doc.querySelector('#app') || doc.querySelector('#page-viewer-frame')) return;
-
-    // Restore static form state
-    restoreFormState(pageId, doc);
-
-    // Prevent form submits from reloading iframe
-    doc.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveFormState(pageId, doc);
-    }, true);
-
-    let saveTimer = null;
-    const triggerSave = () => {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => saveFormState(pageId, doc), 300);
-    };
-
-    doc.addEventListener('change', triggerSave, true);
-    doc.addEventListener('input', triggerSave, true);
-
-    // Link handling: smooth scroll anchors, open external links in new tab, block relative reload
-    doc.addEventListener('click', (e) => {
-      let t = e.target;
-      while (t && t.tagName !== 'A' && t !== doc.body) t = t.parentElement;
-      if (t && t.tagName === 'A') {
-        const href = t.getAttribute('href') || '';
-        if (href.startsWith('#')) {
-          e.preventDefault();
-          const targetEl = doc.getElementById(href.slice(1)) || doc.querySelector(`[name="${href.slice(1)}"]`);
-          if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
-        } else if (/^https?:\/\//i.test(href)) {
-          e.preventDefault();
-          ext.tabs.create({ url: href, active: true }).catch(() => {});
-        } else if (href === '' || href.startsWith('javascript:')) {
-          /* allow inline js actions */
-        } else {
-          e.preventDefault();
-        }
-      }
-      setTimeout(triggerSave, 100);
-    }, true);
-  } catch (err) {
-    console.warn('TabFlow: could not attach listeners to iframe', err);
-  }
-}
+let viewerRequest = 0;
+let viewerContent = null;
 
 async function openPageViewer(page, forceReload = false) {
   const frame = q('#page-viewer-frame');
@@ -236,7 +161,8 @@ async function openPageViewer(page, forceReload = false) {
   const isAlreadyActive = !forceReload &&
                           activeViewingPageId === page.id &&
                           viewerWrap.style.display !== 'none' &&
-                          frame.dataset.pageId === page.id;
+                          frame.dataset.pageId === page.id &&
+                          viewerContent === JSON.stringify([page.method, page.contentKey, page.content]);
 
   activeViewingPageId = page.id;
   q('#pages-list-wrap').style.display = 'none';
@@ -252,32 +178,29 @@ async function openPageViewer(page, forceReload = false) {
     return; // Preserve live iframe DOM and form/checkbox state across re-renders
   }
 
-  frame.dataset.pageId = page.id;
-  let content = await getPageContent(page.id, page.content);
-
-  // Clean up legacy corrupted entries
-  if (typeof content === 'string' && (content.includes('...[large]') || content.includes('id="app"'))) {
-    content = content.replace(/<div id="app"[\s\S]*$/i, '').replace('...[large]', '');
-    if (page.content && typeof page.content === 'string' && !page.content.includes('...[large]')) {
-      content = page.content;
-    }
-    await savePageContent(page.id, content);
+  const request = ++viewerRequest;
+  let content;
+  try {
+    content = await resolvePageContent(page, { strict: Boolean(page.contentStorage || page.content === '...[large]') });
+  } catch {
+    if (activeViewingPageId === page.id) toast('Could not load this page from local storage.');
+    return;
   }
+  if (request !== viewerRequest || activeViewingPageId !== page.id) return;
 
-  if (page.method === 'embed' && /^https?:\/\//i.test(content.trim())) {
-    frame.removeAttribute('srcdoc');
-    frame.src = content.trim();
-  } else {
-    // srcdoc with sandbox="allow-scripts allow-forms allow-popups" (no allow-same-origin)
-    // gives the iframe an opaque origin, exempt from extension CSP, so inline scripts execute
-    frame.removeAttribute('src');
-    frame.srcdoc = content;
-  }
+  try {
+    mountPage(frame, page, content);
+    frame.dataset.pageId = page.id;
+    viewerContent = JSON.stringify([page.method, page.contentKey, page.content]);
+  } catch (error) { toast(error.message); }
 }
 
 function closePageViewer() {
+  viewerRequest++;
   activeViewingPageId = null;
+  viewerContent = null;
   const frame = q('#page-viewer-frame');
+  frame.onload = null;
   frame.removeAttribute('srcdoc');
   frame.src = 'about:blank';
   delete frame.dataset.pageId;
@@ -285,14 +208,19 @@ function closePageViewer() {
 }
 
 async function openInNewTab(page) {
-  const content = await getPageContent(page.id, page.content);
+  let content;
+  try {
+    content = await resolvePageContent(page, { strict: Boolean(page.contentStorage || page.content === '...[large]') });
+  } catch {
+    toast('Could not load this page from local storage.');
+    return;
+  }
   if (page.method === 'embed' && /^https?:\/\//i.test(content.trim())) {
     ext.tabs.create({ url: content.trim(), active: true });
     return;
   }
-  const blob = new Blob([content], { type: 'text/html' });
-  const blobUrl = URL.createObjectURL(blob);
-  ext.tabs.create({ url: blobUrl, active: true });
+  if (!(await flush())) { toast('Save your changes before opening this Page.'); return; }
+  ext.tabs.create({ url: ext.runtime.getURL(`newtab/page-host.html?page=${encodeURIComponent(page.id)}`), active: true }).catch(()=>toast('Could not open this Page.'));
 }
 
 /* ============================================================
@@ -305,7 +233,8 @@ function deletePage(pageId) {
   update((doc) => {
     space.pages = space.pages.filter((p) => p.id !== pageId);
   });
-  deletePageContent(pageId);
+  // Retain versioned payloads until Clear All: another window may still
+  // reference the previous document while this metadata write is pending.
   if (activeViewingPageId === pageId) {
     closePageViewer();
   } else {
@@ -324,7 +253,8 @@ function setModalMethod(method) {
 }
 
 async function openPageModal({ mode, page = null }) {
-  pageModalState = { mode, page };
+  const modal = { mode, page, pageId: page?.id ?? uid(), spaceId: activePageSpace()?.id };
+  pageModalState = modal;
   selectedFileContent = null;
 
   q('#page-edit-overlay-title').textContent = mode === 'edit' ? 'Edit Page' : 'Add Page';
@@ -332,9 +262,15 @@ async function openPageModal({ mode, page = null }) {
 
   let fullContent = '';
   if (page) {
-    fullContent = await getPageContent(page.id, page.content ?? '');
+    try {
+      fullContent = await resolvePageContent(page, { strict: Boolean(page.contentStorage || page.content === '...[large]') });
+    } catch {
+      toast('Could not load this page from local storage.');
+      return;
+    }
   }
 
+  if (pageModalState !== modal) return;
   q('#page-edit-code').value = page?.method === 'code' || page?.method === 'upload' ? fullContent : '';
   q('#page-edit-url').value = page?.method === 'embed' ? fullContent : '';
   q('#page-edit-tags').value = (page?.tags ?? []).join(', ');
@@ -349,10 +285,16 @@ async function openPageModal({ mode, page = null }) {
 }
 
 async function savePageModal() {
-  if (!pageModalState) return;
-  const { mode, page } = pageModalState;
-  const space = activePageSpace();
-  if (!space) return;
+  if (!pageModalState || savingPage) return;
+  savingPage = true;
+  q('#page-edit-save').disabled = true;
+  try { await persistPageModal(); }
+  finally { savingPage = false; q('#page-edit-save').disabled = false; }
+}
+
+async function persistPageModal() {
+  const modal = pageModalState;
+  const { mode, page, pageId, spaceId } = modal;
 
   const activeTab = q('.page-mtab.active');
   const method = activeTab ? activeTab.dataset.method : 'code';
@@ -367,7 +309,12 @@ async function savePageModal() {
   } else if (method === 'upload') {
     let existingContent = '';
     if (page) {
-      existingContent = await getPageContent(page.id, page.content ?? '');
+      try {
+        existingContent = await resolvePageContent(page, { strict: Boolean(page.contentStorage || page.content === '...[large]') });
+      } catch {
+        toast('Could not load this page from local storage.');
+        return;
+      }
     }
     content = selectedFileContent || existingContent;
   }
@@ -382,30 +329,53 @@ async function savePageModal() {
   }
 
   const tags = q('#page-edit-tags').value.split(',').map((t) => t.trim()).filter(Boolean);
-  const pageId = mode === 'edit' && page ? page.id : uid();
+  if (method === 'embed') {
+    try { const url = new URL(content); if (!['http:','https:'].includes(url.protocol)) throw new Error(); content = url.href; }
+    catch { toast('Use an HTTP or HTTPS address for embedded Pages.'); return; }
+  }
+  let prepared;
+  try {
+    prepared = await preparePageContent(pageId, content);
+  } catch (error) {
+    toast(error.message || 'Could not save page content.');
+    return;
+  }
 
-  await savePageContent(pageId, content);
-
+  if (pageModalState !== modal) return;
+  const space = getDoc().pageSpaces.find(s => s.id === spaceId);
+  const existing = space?.pages.find(p => p.id === pageId);
+  if (!space || (mode === 'edit' && !existing)) {
+    toast('This Page or Page Space was removed in another window.');
+    return;
+  }
   update(() => {
-    if (mode === 'add') {
+    if (!existing) {
       space.pages.unshift({
         id: pageId,
         title,
         method,
-        content,
+        ...prepared,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         tags,
       });
-    } else if (page) {
-      page.title = title;
-      page.method = method;
-      page.content = content;
-      page.updatedAt = Date.now();
-      page.tags = tags;
+    } else {
+      existing.title = title;
+      existing.method = method;
+      delete existing.contentKey;
+      delete existing.contentStorage;
+      Object.assign(existing, prepared);
+      existing.updatedAt = Date.now();
+      existing.tags = tags;
     }
   });
 
+  if (!(await flush())) {
+    toast('Page changes could not be saved.');
+    return;
+  }
+
+  if (pageModalState !== modal) return;
   closeOverlay('#page-edit-overlay');
   pageModalState = null;
   selectedFileContent = null;
@@ -469,8 +439,18 @@ export function initPages() {
 
   // Listen for messages from sandbox iframe (external link clicks)
   window.addEventListener('message', (event) => {
-    if (event.data?.type === 'tabflow:open-external-url' && event.data?.url) {
-      ext.tabs.create({ url: event.data.url, active: true }).catch(() => {});
-    }
+    const frame = q('#page-viewer-frame');
+    const url = event.data?.url;
+    if (event.source !== frame?.contentWindow || event.data?.type !== 'tabflow:open-external-url' || typeof url !== 'string') return;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+      ext.tabs.create({ url: parsed.href, active: true }).catch(() => {});
+    } catch {}
   });
+}
+
+export function openPage(pageId) {
+  const found = findPage(pageId);
+  if (found) openPageViewer(found.page, true);
 }

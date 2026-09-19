@@ -9,6 +9,7 @@ import { q } from '../../common/util.js';
 import { THEMES, fontStackFor } from '../../common/themes.js';
 import { settings } from '../store.js';
 import { registerRenderer } from './bus.js';
+import { applyDesign, initDesign } from './design.js';
 
 const FONT_SIZES = { small: '12px', normal: '13px', large: '14px' };
 const BG_STYLES = ['gradient-diag', 'gradient-radial', 'gradient-sunset'];
@@ -18,7 +19,7 @@ const DENSITIES = ['comfortable', 'cozy', 'compact'];
 export function themeVars(themeId, customThemes) {
   if (/^custom_\d+$/.test(themeId)) {
     const custom = customThemes?.[Number(themeId.split('_')[1])];
-    if (custom?.vars) return custom.vars;
+    if (custom?.vars) return { ...THEMES.dark.vars, ...custom.vars };
   }
   return (THEMES[themeId] ?? THEMES.dark).vars;
 }
@@ -36,6 +37,9 @@ function applyAccent(hex) {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   if (![r, g, b].some(Number.isNaN)) root.style.setProperty('--accent-rgb', `${r},${g},${b}`);
+  const channels = [r, g, b].map(c => { c /= 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; });
+  const light = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+  root.style.setProperty('--on-accent', light > .179 ? '#111827' : '#ffffff');
 }
 
 /** Relative luminance of a #rrggbb color (WCAG); used to detect light themes. */
@@ -102,6 +106,7 @@ export function applyAppearance() {
   document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
   document.body.classList.toggle('zen', !!s.zenMode);
 
+  applyDesign();
   applyCustomCss(s.customCss);
 }
 
@@ -116,5 +121,6 @@ export function applyCustomCss(css) {
 }
 
 export function initAppearance() {
+  initDesign();
   registerRenderer('appearance', applyAppearance);
 }

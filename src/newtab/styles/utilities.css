@@ -1,0 +1,49 @@
+/* ---------- Settings: text input (greeting name) ---------- */
+.settings-text-input {
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font: inherit;
+  padding: 7px 10px; width: 160px; outline: none;
+  transition: border-color var(--tr);
+}
+.settings-text-input:focus { border-color: var(--accent); }
+
+/* ---------- Frosted glass ---------- */
+body.fx-glass #sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+}
+body.fx-glass #right-panel {
+  background: color-mix(in srgb, var(--sidebar-bg) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+}
+body.fx-glass .hotkey-modal,
+body.fx-glass .cmdk-modal,
+body.fx-glass .dropdown-menu,
+body.fx-glass .context-menu {
+  background: color-mix(in srgb, var(--card-bg) 68%, transparent);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+}
+
+/* ---------- Zen mode ---------- */
+body.zen #sidebar,
+body.zen #right-panel,
+body.zen #toolbar,
+body.zen .sidebar-show-btn,
+body.zen .right-show-btn { display: none !important; }
+body.zen #app { grid-template-columns: 0 minmax(0, 1fr) 0; }
+body.zen #view-collections { padding-top: 28px; }
+body.zen #collections-area { max-width: 880px; margin-inline: auto; width: 100%; }
+
+.zen-exit-btn {
+  display: none; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 900; padding: 7px 14px; border-radius: 999px;
+  background: var(--card-bg); border: 1px solid var(--border); color: var(--text-muted);
+  font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 8px 24px var(--shadow);
+  opacity: .5; transition: opacity var(--tr), color var(--tr);
+}
+body.zen .zen-exit-btn { display: block; }
+.zen-exit-btn:hover { opacity: 1; color: var(--text); }
+

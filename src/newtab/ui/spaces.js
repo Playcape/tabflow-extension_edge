@@ -8,7 +8,7 @@ import { SPACE_COLORS, SPACE_EMOJIS } from '../../common/themes.js';
 import { getDoc, activeSpace, activePageSpace, findSpace, findPageSpace, update, settings } from '../store.js';
 import { makePageSpace } from '../migrations.js';
 import { registerRenderer, render } from './bus.js';
-import { currentNav } from './layout.js';
+import { currentNav, setNav } from './layout.js';
 import { showMenu } from './contextmenu.js';
 import { confirmDialog, openOverlay, closeOverlay, bindBackdropClose } from './modals.js';
 import { editInline } from './inline.js';
@@ -35,9 +35,12 @@ function renderSpaces() {
 }
 
 function renderBreadcrumb() {
-  const isPages = currentNav() === 'pages';
+  const nav = currentNav();
+  const isPages = nav === 'pages';
   const name = isPages ? (activePageSpace()?.name ?? '') : (activeSpace()?.name ?? '');
-  q('#space-breadcrumb').textContent = name;
+  q('#space-breadcrumb').textContent = ['collections', 'pages'].includes(nav) ? name : {tasks:'Your next steps', links:'A shorter way there', settings:'Make it yours'}[nav];
+  q('#workspace-eyebrow').textContent = {collections:'Your workspace', pages:'Pages / Your library', tasks:'Tasks', links:'Links', settings:'Preferences'}[nav];
+  q('#workspace-description').textContent = {collections:'A little less scattered. A lot more focused.', pages:'Documents, references and small tools. Right here.', tasks:'Make room for what matters next.', links:'Your favorite destinations, one alias away.', settings:'One workspace. Your way of seeing it.'}[nav];
 }
 
 function buildSpaceItem(space) {
@@ -63,6 +66,13 @@ function buildSpaceItem(space) {
     {
       class: 'space-item' + (space.id === doc.activeSpaceId ? ' active' : ''),
       dataset: { id: space.id },
+      tabindex: '0', role: 'button', 'aria-pressed': String(space.id === doc.activeSpaceId),
+      onkeydown: event => {
+        if (event.target !== event.currentTarget || event.target.isContentEditable) return;
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); switchSpace(space.id); }
+        if (event.key === 'F2') { event.preventDefault(); startRename(space, nameEl); }
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) { event.preventDefault(); const r = event.currentTarget.getBoundingClientRect(); event.currentTarget.dispatchEvent(new MouseEvent('contextmenu', {clientX:r.left, clientY:r.bottom})); }
+      },
       onclick: () => switchSpace(space.id),
       oncontextmenu: (event) => {
         event.preventDefault();
@@ -158,6 +168,12 @@ function buildPageSpaceItem(space) {
     {
       class: 'space-item' + (space.id === doc.activePageSpaceId ? ' active' : ''),
       dataset: { id: space.id },
+      tabindex: '0', role: 'button', 'aria-pressed': String(space.id === doc.activePageSpaceId),
+      onkeydown: event => {
+        if (event.target !== event.currentTarget || event.target.isContentEditable) return;
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); switchPageSpace(space.id); }
+        if (event.key === 'F2') { event.preventDefault(); startRename(space, nameEl); }
+      },
       onclick: () => switchPageSpace(space.id),
       oncontextmenu: (event) => {
         event.preventDefault();
@@ -197,6 +213,7 @@ function clearSpaceDropMarkers() {
 export function switchSpace(id) {
   update((doc) => (doc.activeSpaceId = id));
   clearSearch();
+  if (currentNav() !== 'collections') setNav('collections');
   render('spaces', 'collections', 'viewmenu');
 }
 

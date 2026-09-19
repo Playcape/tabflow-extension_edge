@@ -11,7 +11,8 @@ import { getDoc, settings } from '../store.js';
 import { setNav, toggleZen } from './layout.js';
 import { switchSpace, switchPageSpace } from './spaces.js';
 import { openUrl } from './collections.js';
-import { renderPages } from './pages.js';
+import { openPage } from './pages.js';
+import { openOverlay, closeOverlay } from './modals.js';
 
 let overlay = null;
 let input = null;
@@ -64,7 +65,7 @@ function buildIndex() {
         run: () => {
           if (doc.activePageSpaceId !== pageSpace.id) switchPageSpace(pageSpace.id);
           setNav('pages');
-          renderPages();
+          openPage(page.id);
         },
       });
     }
@@ -88,7 +89,7 @@ function goToCollection(spaceId, colId) {
   requestAnimationFrame(() => {
     const el = q(`.collection[data-id="${colId}"]`);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.scrollIntoView({ behavior: settings().reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
     el.classList.add('cmdk-flash');
     setTimeout(() => el.classList.remove('cmdk-flash'), 1200);
   });
@@ -132,12 +133,14 @@ function filterItems(query) {
 
 function renderResults() {
   if (!items.length) {
+    input.removeAttribute('aria-activedescendant');
     resultList.replaceChildren(h('div', { class: 'cmdk-empty', text: 'No matches' }));
     return;
   }
   resultList.replaceChildren(
     ...items.map((it, i) =>
       h('div', {
+        id: `cmdk-option-${i}`,
         class: 'cmdk-item' + (i === selected ? ' selected' : ''),
         role: 'option',
         'aria-selected': i === selected ? 'true' : 'false',
@@ -156,9 +159,11 @@ function renderResults() {
       )
     )
   );
+  input.setAttribute('aria-activedescendant', `cmdk-option-${selected}`);
 }
 
 function updateSelection() {
+  input.setAttribute('aria-activedescendant', `cmdk-option-${selected}`);
   const rows = resultList.querySelectorAll('.cmdk-item');
   rows.forEach((row, i) => {
     const on = i === selected;
@@ -178,7 +183,7 @@ function run(i) {
 
 function open() {
   if (!settings().cmdPalette) return;
-  overlay.style.display = 'flex';
+  openOverlay(overlay);
   input.value = '';
   items = filterItems('');
   selected = 0;
@@ -187,7 +192,7 @@ function open() {
 }
 
 function close() {
-  if (overlay) overlay.style.display = 'none';
+  if (overlay) closeOverlay(overlay);
 }
 
 function onInputKey(event) {
@@ -230,6 +235,11 @@ export function initPalette() {
   input = q('#cmdk-input');
   resultList = q('#cmdk-results');
   if (!overlay || !input || !resultList) return;
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-controls', 'cmdk-results');
+  input.setAttribute('aria-expanded', 'true');
+  input.setAttribute('aria-autocomplete', 'list');
+  q('#btn-command-palette').addEventListener('click', open);
 
   q('.cmdk-input-icon').innerHTML = icon('search', 15);
 
