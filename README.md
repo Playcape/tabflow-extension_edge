@@ -31,7 +31,7 @@ The design mode changes the composition and interaction treatment; the theme sup
 | --- | --- |
 | **Normal** | An editorial workbench: Collections form horizontal bands with an identity/action column beside their cards. Quiet navigation and compact controls make it the everyday default. |
 | **Tonal** | A tactile board: view navigation moves above the canvas, Spaces become a dedicated index, and rounded Collections tile into columns. Strong headings, pills, and accent-derived surfaces complete the composition. |
-| **Aurora** | A spatial glass workspace: floating panels, a larger overview, atmospheric color, illuminated edges, layered cards, reactive highlights, and a fluid drag treatment. The flagship visual mode. |
+| **Aurora** | A spatial glass workspace: floating panels, atmospheric color, illuminated edges, layered cards, reactive highlights, and a fluid drag treatment. The flagship visual mode. |
 
 All three support light and dark themes. Aurora's enhancements scale back for reduced motion, reduced transparency, increased contrast, and constrained rendering conditions. Custom CSS can override built-in styling, so start with the supplied controls when tuning accessibility or performance.
 

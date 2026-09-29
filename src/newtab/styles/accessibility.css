@@ -9,9 +9,9 @@
 body.effects-static *, body.effects-static *::before, body.effects-static *::after,
 body.fx-reduce-motion *, body.fx-reduce-motion *::before, body.fx-reduce-motion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 body.effects-static .tab-card:hover, body.fx-reduce-motion .tab-card:hover { transform: none !important; }
-body.effects-opaque #sidebar, body.effects-opaque #right-panel, body.effects-opaque .collection, body.effects-opaque .workspace-overview { background: var(--sidebar-bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.effects-opaque #sidebar, body.effects-opaque #right-panel, body.effects-opaque .collection { background: var(--sidebar-bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.effects-opaque .tab-card, body.effects-opaque .hotkey-modal, body.effects-opaque .cmdk-modal, body.effects-opaque .card-actions { background: var(--card-bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-body.effects-opaque .atmosphere, body.effects-opaque .orbital-mark, body.effects-opaque #liquid-layer { display: none !important; }
+body.effects-opaque .atmosphere, body.effects-opaque #liquid-layer { display: none !important; }
 body.effects-opaque .hotkey-overlay, body.effects-opaque .cmdk-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(0,0,0,.75); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -19,17 +19,17 @@ body.effects-opaque .hotkey-overlay, body.effects-opaque .cmdk-overlay { backdro
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   body * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-  body[data-design] #sidebar, body[data-design] #right-panel, body[data-design] .collection, body[data-design] .workspace-overview { background: var(--sidebar-bg) !important; }
+  body[data-design] #sidebar, body[data-design] #right-panel, body[data-design] .collection { background: var(--sidebar-bg) !important; }
   body[data-design] .tab-card, body[data-design] .hotkey-modal, body[data-design] .cmdk-modal, body[data-design] .context-menu, body[data-design] .dropdown-menu { background: var(--card-bg) !important; }
-  .atmosphere, .orbital-mark, #liquid-layer { display: none !important; }
+  .atmosphere, #liquid-layer { display: none !important; }
 }
 @media (prefers-contrast: more) {
   body { --readable-muted: var(--text); --readable-faint: var(--text); --text-muted: var(--text); --text-faint: var(--text); }
   body[data-design] .tab-card, body[data-design] .collection, input, button { border: 1px solid currentColor; }
 }
 @media (forced-colors: active) {
-  body[data-design] #sidebar, body[data-design] #main-content, body[data-design] #right-panel, body[data-design] .collection, body[data-design] .tab-card, body[data-design] .workspace-overview, body[data-design] .hotkey-modal, body[data-design] .cmdk-modal { background: Canvas !important; color: CanvasText !important; border: 1px solid CanvasText !important; box-shadow: none !important; }
-  .atmosphere, .orbital-mark, #liquid-layer, .tab-card::after { display: none !important; }
+  body[data-design] #sidebar, body[data-design] #main-content, body[data-design] #right-panel, body[data-design] .collection, body[data-design] .tab-card, body[data-design] .hotkey-modal, body[data-design] .cmdk-modal { background: Canvas !important; color: CanvasText !important; border: 1px solid CanvasText !important; box-shadow: none !important; }
+  .atmosphere, #liquid-layer, .tab-card::after { display: none !important; }
   :focus-visible { outline: 2px solid Highlight !important; }
   .active, [aria-selected="true"] { outline: 1px solid Highlight; }
 }

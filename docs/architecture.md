@@ -50,6 +50,7 @@ src/
       design.js               Mode composition and adaptive enhancement policy
       spaces.js               Collection Spaces and Page Spaces
       collections.js          Saved tabs, search, collection actions, delegated DnD
+      collectionLayout.js     Resize-aware packing of unequal Collection heights
       opentabs.js              Browser tabs, session/window capture, recently closed
       pages.js                Page editing, storage coordination, sandbox viewer
       links.js / tasks.js     Aliases and task queue
@@ -203,9 +204,15 @@ Existing `liquidGlass` and `materialYou` storage flags remain the compatibility 
 | --- | --- |
 | Normal | Collections form horizontal editorial bands: a compact identity/action column beside the saved-card area. Navigation remains a conventional sidebar. |
 | Tonal | Primary view navigation moves above the canvas, the sidebar emphasizes Spaces, and Collections tile into a rounded multi-column board. Larger typography and pill controls reinforce the composition. |
-| Aurora | A detached shell frames an atmospheric workspace. A larger overview, floating Collection containers, optical card layers, illuminated edges, and interaction depth create a spatial composition. |
+| Aurora | A detached shell frames an atmospheric workspace. Floating Collection containers, optical card layers, illuminated edges, and interaction depth create a spatial composition. |
 
 Changing mode must preserve document data, active view, card-view preference, and working feature hooks. Mode-specific navigation should move shared controls rather than duplicate competing event handlers. Settings, Pages, dialogs, menus, and live tabs must inherit the mode language too.
+
+Multi-column boards place each Collection in the shortest available column, avoiding gaps caused by shared grid row heights. `collectionLayout.js` uses natural item heights, explicit grid cells and one animation-frame-bounded ResizeObserver; DOM order stays the saved order. Search summaries and setup notices span the board. Single-column layouts clear the packing cells.
+
+Collection dragging inserts an inert, full-size preview and temporarily hides the source from layout. The same packing function places the preview and final Collection, so the surrounding arrangement is visible before drop. The document changes only on drop; Escape, leaving the board, and drag end remove the preview. Card dragging continues to use its existing insertion/swap behavior.
+
+Collection views omit the repeated Space heading and use a compact, single-line statistics summary at the right of the action toolbar. The Space heading remains available to screen readers. Other views retain their contextual headings.
 
 The stylesheet entry point orders shared modules, workspace composition, mode styles, responsive adjustments, then accessibility. Custom CSS is appended afterwards. Keep future mode rules in their owning file rather than growing a second catch-all override block.
 

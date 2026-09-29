@@ -26,7 +26,7 @@ The review covered the five existing documentation files, manifest, background, 
 
 **Tonal: tactile board.** Move primary view navigation above the canvas, leave Spaces as an index, and tile Collections into generous rounded containers. Use an accent-derived tonal scale, pill controls, and more expressive headings to establish a different rhythm.
 
-**Aurora: spatial workspace.** Detach the shell from an atmospheric background, build a larger project overview, and give Collections and cards their own optical layers. Light, edges, pointer response, and drag feedback provide depth without applying blur to every saved card.
+**Aurora: spatial workspace.** Detach the shell from an atmospheric background, keep workspace statistics in a compact toolbar line, and give Collections and cards their own optical layers. Light, edges, pointer response, and drag feedback provide depth without applying blur to every saved card.
 
 These modes share saved data, actions, and browser capabilities. They do not require separate document schemas or forked feature implementations. Theme colors and card-view choices remain independent of the design mode.
 

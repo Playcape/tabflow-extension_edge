@@ -30,10 +30,7 @@ body[data-design="tonal"] #space-breadcrumb { font-size: clamp(28px, 3.1vw, 44px
 body[data-design="tonal"].m3-bold #space-breadcrumb { font-weight: 820; }
 body[data-design="tonal"] #workspace-eyebrow { display: none; }
 body[data-design="tonal"] .workspace-description { max-width: 380px; line-height: 1.6; }
-body[data-design="tonal"] .workspace-overview { padding: 16px 20px; border-radius: 999px; background: var(--m3-prim-cont); }
-body[data-design="tonal"] .workspace-metrics { width: 100%; justify-content: space-around; gap: 10px; }
-body[data-design="tonal"] .workspace-metrics strong { font-size: 21px; letter-spacing: -.7px; }
-body[data-design="tonal"] #collections-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); align-content: start; align-items: start; gap: 18px; }
+body[data-design="tonal"] #collections-area { --collection-gap: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); align-content: start; align-items: start; column-gap: var(--collection-gap); }
 body[data-design="tonal"] .collection { padding: 20px 16px 16px; border: 0; border-radius: var(--board-radius); background: var(--m3-surf-1); }
 body[data-design="tonal"] .collection-header { flex-wrap: wrap; gap: 5px; }
 body[data-design="tonal"] .col-name-wrap { flex-wrap: wrap; min-width: 70px; }
@@ -57,8 +54,6 @@ body[data-design="tonal"] .right-panel-actions .icon-btn { background: var(--m3-
 body[data-design="tonal"] .open-tabs-filter input { border-radius: 999px; background: var(--m3-surf-low); border: 0; }
 body[data-design="tonal"] .drop-ghost { background: var(--m3-prim-cont); border: 2px dashed var(--accent); border-radius: 18px; }
 body[data-design="tonal"] .drop-zone.drop-active { background: var(--m3-state); border-radius: 20px; }
-body[data-design="tonal"] .collection.col-drop-before { box-shadow: 0 -3px 0 var(--accent); }
-body[data-design="tonal"] .collection.col-drop-after { box-shadow: 0 3px 0 var(--accent); }
 body[data-design="tonal"] .hotkey-modal, body[data-design="tonal"] .cmdk-modal { background: var(--m3-surf-1); border-radius: 30px; }
 body[data-design="tonal"] .context-menu, body[data-design="tonal"] .dropdown-menu { background: var(--m3-surf-2); border-radius: 16px; padding: 6px; }
 body[data-design="tonal"] .context-item, body[data-design="tonal"] .cmdk-item { border-radius: 12px; }

@@ -4,8 +4,6 @@
   border-top: 2px solid transparent; border-bottom: 2px solid transparent;
   transition: border-color 120ms ease, opacity 120ms ease;
 }
-.collection.col-drop-before { border-top-color: var(--accent); }
-.collection.col-drop-after { border-bottom-color: var(--accent); }
 .collection.col-dragging { opacity: 0.4; }
 .collection-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 2px 0; user-select: none; }
 .col-chevron {

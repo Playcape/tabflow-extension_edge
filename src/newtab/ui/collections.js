@@ -28,6 +28,7 @@ import { setDrag, getDrag, clearDrag } from './dnd.js';
 import { makeCollection, makeTab } from '../migrations.js';
 import { applyDesign } from './design.js';
 import { currentNav, setNav } from './layout.js';
+import { observeCollectionLayout, layoutCollections } from './collectionLayout.js';
 
 const SLOT_COUNT = 4;
 const SLOT_KEYS = ['Alt+1', 'Alt+2', 'Alt+3', 'Alt+4'];
@@ -125,6 +126,8 @@ function viewModeOf(space) {
 }
 
 function renderCollections() {
+  if (getDrag()?.type === 'collection') clearDrag(); // A new document/view invalidates the active preview.
+  clearIndicators();
   applyDesign();
   const area = q('#collections-area');
   const space = activeSpace();
@@ -133,6 +136,7 @@ function renderCollections() {
 
   if (searchQuery) {
     renderSearchResults(area, viewMode);
+    observeCollectionLayout(area);
     return;
   }
 
@@ -146,6 +150,7 @@ function renderCollections() {
     nodes.push(...space.collections.map((col) => buildCollectionEl(col, space, viewMode)));
   }
   area.replaceChildren(...nodes);
+  observeCollectionLayout(area);
 }
 
 /**
@@ -971,6 +976,41 @@ let dropTarget = null;
 
 let dropGhost = null;
 let ghostSource = null; // the .tab-card currently pulled out of the flow
+let collectionPreview = null;
+let collectionSource = null;
+let collectionPointer = null;
+
+function removeCollectionPreview() {
+  collectionPreview?.remove();
+  collectionSource?.classList.remove('collection-drag-source');
+  collectionPreview = collectionSource = collectionPointer = null;
+}
+
+function previewCollection(source, reference, before) {
+  if (!collectionPreview) {
+    collectionSource = source;
+    collectionPreview = source.cloneNode(true);
+    collectionPreview.classList.remove('col-dragging');
+    collectionPreview.classList.add('collection-drop-preview');
+    collectionPreview.setAttribute('aria-hidden', 'true');
+    collectionPreview.inert = true;
+    for (const el of [collectionPreview, ...collectionPreview.querySelectorAll('*')]) {
+      for (const attr of [...el.attributes]) {
+        if (['id', 'draggable', 'data-id', 'data-tab-id', 'data-col-id', 'data-sp-id'].includes(attr.name)) el.removeAttribute(attr.name);
+      }
+    }
+    source.classList.add('collection-drag-source');
+  }
+  if (before) reference.before(collectionPreview);
+  else reference.after(collectionPreview);
+  layoutCollections();
+}
+
+function overCollectionPreview(event) {
+  if (!collectionPreview?.isConnected) return false;
+  const rect = collectionPreview.getBoundingClientRect();
+  return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+}
 
 function removeDropGhost() {
   dropGhost?.remove();
@@ -1012,10 +1052,9 @@ function clearIndicators() {
     el.classList.remove('drop-before', 'drop-after', 'drop-swap')
   );
   qa('.drop-zone.drop-active').forEach((el) => el.classList.remove('drop-active'));
-  qa('.collection.col-drop-before, .collection.col-drop-after').forEach((el) =>
-    el.classList.remove('col-drop-before', 'col-drop-after')
-  );
   removeDropGhost();
+  removeCollectionPreview();
+  layoutCollections();
   lastTargetSig = '';
   dropTarget = null;
 }
@@ -1035,17 +1074,33 @@ function onAreaDragOver(event) {
   if (!drag || searchQuery) return;
 
   if (drag.type === 'collection') {
-    const colEl = event.target.closest('.collection');
-    if (!colEl || colEl.dataset.id === drag.collectionId) return;
     event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    if (overCollectionPreview(event)) return;
+    const area = event.currentTarget;
+    // Reflow can generate dragover without any pointer movement. Keep the
+    // current landing position until the user moves, rather than oscillating.
+    const pointer = [event.clientX, event.clientY, area.scrollTop];
+    if (collectionPointer && pointer.every((value, i) => Math.abs(value - collectionPointer[i]) < 4)) return;
+    collectionPointer = pointer;
+    const candidates = [...area.children].filter(el => el.classList.contains('collection') && el.dataset.id && el.dataset.id !== drag.collectionId);
+    let colEl = event.target.closest('.collection[data-id]');
+    if (colEl?.dataset.id === drag.collectionId) return;
+    // Gaps and the area below the final Collection are also valid targets.
+    if (!colEl) colEl = candidates.reduce((nearest, el) => {
+      const rect = el.getBoundingClientRect();
+      const distance = Math.hypot(Math.max(rect.left - event.clientX, 0, event.clientX - rect.right), Math.max(rect.top - event.clientY, 0, event.clientY - rect.bottom));
+      return !nearest || distance < nearest.distance ? { el, distance } : nearest;
+    }, null)?.el;
+    if (!colEl) return;
     const rect = colEl.getBoundingClientRect();
     const before = event.clientY < rect.top + rect.height / 2;
     const sig = `col:${colEl.dataset.id}:${before}`;
     if (sig === lastTargetSig) return;
-    clearIndicators();
     lastTargetSig = sig;
-    colEl.classList.add(before ? 'col-drop-before' : 'col-drop-after');
     dropTarget = { kind: 'collection', colId: colEl.dataset.id, before };
+    const source = [...area.children].find(el => el.dataset.id === drag.collectionId);
+    if (source) previewCollection(source, colEl, before);
     return;
   }
 
@@ -1224,12 +1279,18 @@ export function initCollections() {
 
   /* delegated DnD */
   const area = q('#collections-area');
+  area.addEventListener('dragenter', event => {
+    if (!searchQuery && getDrag()?.type === 'collection') event.preventDefault();
+  });
   area.addEventListener('dragover', onAreaDragOver);
   area.addEventListener('drop', onAreaDrop);
   area.addEventListener('dragleave', (event) => {
-    if (event.target === area) clearIndicators();
+    const rect = area.getBoundingClientRect();
+    if (!area.contains(event.relatedTarget) && (event.clientX < rect.left || event.clientX >= rect.right || event.clientY < rect.top || event.clientY >= rect.bottom)) clearIndicators();
   });
   // Safety net: drags that start elsewhere (open-tab rows) end outside this
   // area, and would otherwise leave the preview ghost standing.
   document.addEventListener('dragend', clearIndicators);
+  document.addEventListener('drop', clearIndicators);
+  window.addEventListener('blur', clearIndicators);
 }

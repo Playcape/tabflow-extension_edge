@@ -51,6 +51,8 @@ export function setNav(view) {
 function renderLayout() {
   const doc = getDoc();
   const app = q('#app');
+  q('#toolbar .toolbar-left').classList.toggle('visually-hidden', activeNav === 'collections');
+  q('#workspace-overview').hidden = activeNav !== 'collections';
   const sidebarOpen = narrow.matches ? mobileSidebar : doc.ui.sidebarOpen;
   const tabsOpen = drawer.matches ? mobileTabs : doc.ui.rightPanelOpen;
   app.classList.toggle('sidebar-collapsed', !sidebarOpen);

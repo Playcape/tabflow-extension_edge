@@ -9,6 +9,7 @@ npm test
 npx playwright install chromium
 npm run test:ui
 npm run test:extension
+npm run test:collections
 powershell -ExecutionPolicy Bypass -File scripts/package.ps1
 ```
 
@@ -27,7 +28,11 @@ Windows, Node 24.19, Playwright 1.62.1, Edge 153.0.4234.32:
 
 Screenshots use synthetic demonstration data. Theme screenshots wait for color transitions to settle. No page exceptions occurred in the passing browser suites.
 
-## Remaining release checks
+## Collection layout follow-up — 29 September 2026
+
+`tests/collections.mjs` verifies unequal-height packing, native Collection drag previews and committed positions in Normal/Tonal/Aurora, cancellation with Escape, switching between single and multiple columns, collapsing Collections, and full-width search summaries. The preview must leave stored order unchanged and match final geometry after drop animations settle. It uses synthetic data on a separate HTTP preview port (4174). The existing UI suite also covers saved-card/live-tab drops and 140+ cards.
+
+## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.
 

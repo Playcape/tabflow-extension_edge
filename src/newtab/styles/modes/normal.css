@@ -1,7 +1,6 @@
 /* NORMAL — an editorial workbench. Horizontal collection bands, quiet chrome. */
 body[data-design="normal"] #sidebar { background: var(--sidebar-bg); }
 body[data-design="normal"] .nav-item.active { box-shadow: inset 2px 0 var(--accent); border-radius: 4px 8px 8px 4px; }
-body[data-design="normal"] .workspace-overview { padding-bottom: 18px; border-bottom: 1px solid var(--divider); margin-bottom: 8px; }
 body[data-design="normal"] .collection { display: grid; grid-template-columns: minmax(125px, 18%) minmax(0, 1fr); gap: 18px; border-bottom: 1px solid var(--divider); padding: 18px 0 26px; }
 body[data-design="normal"] .collection-header { position: relative; display: grid; grid-template-columns: 18px 1fr; gap: 5px; align-content: start; align-items: start; margin: 0; }
 body[data-design="normal"] .col-drag-handle { position: absolute; left: -16px; top: 7px; opacity: 0; }
