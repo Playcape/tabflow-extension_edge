@@ -17,6 +17,7 @@ import { confirmDialog, promptDialog } from './modals.js';
 import { toast } from './toast.js';
 import { themeVars, applyCustomCss } from './appearance.js';
 import { DEFAULT_SETTINGS, buildExport, parseImport, makeCollection, makeTab } from '../migrations.js';
+import { hydratePageSpaces, preparePageSpaces } from '../pageStorage.js';
 
 /* ============================================================
    Render entry
@@ -106,9 +107,9 @@ function bindToggle(sel, key, extraRender = []) {
 /* ---------- design-mode picker (top of Appearance) ---------- */
 
 const DESIGN_MODES = [
-  { id: 'normal', name: 'Normal', desc: 'Opaque & fastest — works on any theme.' },
-  { id: 'liquid', name: 'Aurora', desc: 'Translucent glass with drag physics.' },
-  { id: 'material', name: 'Tonal', desc: 'Accent-tinted surfaces, rounded & bold.' },
+  { id: 'normal', name: 'Normal', desc: 'An ordered workbench. Quiet, precise, focused.' },
+  { id: 'liquid', name: 'Aurora', desc: 'A spatial cockpit. Luminous glass, alive with light.' },
+  { id: 'material', name: 'Tonal', desc: 'A tactile board. Expressive shapes, room to play.' },
 ];
 
 function currentDesignMode() {
@@ -145,7 +146,14 @@ function renderDesignPicker() {
 
 /** Switch the visible settings sub-tab programmatically. */
 function activateStab(name) {
-  qa('.stab').forEach((b) => b.classList.toggle('active', b.dataset.stab === name));
+  qa('.stab').forEach((b) => {
+    const active = b.dataset.stab === name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+    b.tabIndex = active ? 0 : -1;
+    b.id = `tab-${b.dataset.stab}`;
+    b.setAttribute('aria-controls', `stab-${b.dataset.stab}`);
+  });
   qa('.stab-panel').forEach((p) => p.classList.toggle('active', p.id === `stab-${name}`));
 }
 
@@ -218,7 +226,7 @@ function renderToggles() {
 
 function buildThemeCard(key, name, preview, selected, onClick) {
   const p = preview ?? { sidebar: '#333', main: '#222', card: '#444', card2: '#555' };
-  return h('div', { class: 'theme-card' + (selected ? ' selected' : ''), onclick: onClick },
+  return h('div', { class: 'theme-card' + (selected ? ' selected' : ''), role: 'button', tabindex: '0', 'aria-pressed': String(selected), onkeydown: e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }, onclick: onClick },
     h('div', { class: 'theme-preview', style: `background:${p.main}` },
       h('div', { class: 'tp-sidebar', style: `background:${p.sidebar}` }),
       h('div', { class: 'tp-main' },
@@ -392,8 +400,9 @@ function renderFontGrid() {
   const grid = q('#font-grid');
   grid.replaceChildren(
     ...FONT_STACKS.map((font) =>
-      h('div', {
+      h('button', {
         class: 'font-card' + (settings().font === font.key ? ' selected' : ''),
+        'aria-pressed': String(settings().font === font.key),
         onclick: () => {
           setSetting('font', font.key);
           renderFontGrid();
@@ -441,12 +450,26 @@ async function renderSnapshots() {
             onclick: async () => {
               const ok = await confirmDialog({
                 title: `Restore “${snap.name}”?`,
-                message: 'Your current spaces and collections will be replaced. Settings are kept.',
+                  message: snap.pageSpaces ? 'Collection Spaces and Page Spaces will be replaced. Settings, Links and Tasks are kept.' : 'Collection Spaces will be replaced. Pages, settings, Links and Tasks are kept.',
                 confirmLabel: 'Restore',
                 danger: true,
               });
               if (!ok) return;
-              replaceDoc({ ...getDoc(), spaces: snap.spaces, activeSpaceId: snap.spaces[0]?.id });
+              let pageSpaces;
+              try {
+                pageSpaces = snap.pageSpaces ? await preparePageSpaces(snap.pageSpaces) : getDoc().pageSpaces;
+              } catch (error) {
+                toast(error.message || 'Snapshot page content could not be restored.');
+                return;
+              }
+              const saved = await replaceDoc({
+                ...getDoc(),
+                spaces: snap.spaces,
+                activeSpaceId: snap.spaces[0]?.id,
+                pageSpaces,
+                activePageSpaceId: snap.activePageSpaceId ?? pageSpaces[0]?.id,
+              });
+              if (!saved) { toast('Snapshot changes could not be saved.'); return; }
               renderAll();
               toast(`Restored “${snap.name}”.`);
             },
@@ -456,7 +479,8 @@ async function renderSnapshots() {
             text: '✕',
             'aria-label': `Delete snapshot ${snap.name}`,
             onclick: async () => {
-              await deleteSnapshot(snap.id);
+                try { await deleteSnapshot(snap.id); }
+                catch { toast('Snapshot could not be deleted.'); return; }
               renderSnapshots();
             },
           })
@@ -473,8 +497,16 @@ async function onSaveSnapshot() {
     value: `Snapshot ${new Date().toLocaleDateString()}`,
   });
   if (!name) return;
-  flush();
-  await saveSnapshot(name);
+  if (!(await flush())) {
+    toast('Snapshot could not be saved.');
+    return;
+  }
+  try {
+    await saveSnapshot(name);
+  } catch (error) {
+    toast(error.message || 'Snapshot could not be saved.');
+    return;
+  }
   renderSnapshots();
   toast(`Snapshot “${name}” saved.`);
 }
@@ -534,9 +566,19 @@ async function browseBookmarks() {
 
 /* ---------- export / import ---------- */
 
-function exportData() {
-  flush();
-  const payload = buildExport(getDoc());
+async function exportData() {
+  if (!(await flush())) {
+    toast('Backup could not be saved.');
+    return;
+  }
+  let pageSpaces;
+  try {
+    pageSpaces = await hydratePageSpaces(getDoc().pageSpaces);
+  } catch {
+    toast('Backup could not include page content.');
+    return;
+  }
+  const payload = buildExport({ ...getDoc(), pageSpaces });
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = h('a', {
@@ -565,7 +607,13 @@ async function importData(file) {
     danger: true,
   });
   if (!ok) return;
-  replaceDoc(imported);
+  try {
+    imported.pageSpaces = await preparePageSpaces(imported.pageSpaces);
+  } catch (error) {
+    toast(error.message || 'Backup page content could not be stored.');
+    return;
+  }
+  if (!(await replaceDoc(imported))) { toast('Imported data could not be saved.'); return; }
   renderAll();
   toast('Backup imported.');
 }
@@ -592,12 +640,12 @@ async function onResetSettings() {
 async function onClearAll() {
   const ok = await confirmDialog({
     title: 'Delete all TabFlow data?',
-    message: 'Every space, collection, saved tab, link, task and snapshot is permanently deleted.',
+    message: 'Every space, collection, saved tab, Page, link, task and snapshot is permanently deleted.',
     confirmLabel: 'Delete everything',
     danger: true,
   });
   if (!ok) return;
-  await clearAllData();
+  try { await clearAllData(); } catch (error) { toast(error.message || 'Could not clear local data.'); return; }
   renderAll();
   toast('All data cleared.');
 }
@@ -608,6 +656,18 @@ async function onClearAll() {
 
 export function initSettings() {
   registerRenderer('settings', renderSettings);
+  activateStab('appearance');
+  qa('.stab-panel').forEach(panel => { panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', panel.id.replace('stab-', 'tab-')); });
+  q('#settings-tabbar').addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    const tabs = qa('.stab').filter(tab => tab.style.display !== 'none');
+    const index = tabs.indexOf(document.activeElement);
+    if (index < 0) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 1) + tabs.length) % tabs.length;
+    activateStab(tabs[next].dataset.stab); tabs[next].focus();
+  });
+  qa('.switch input').forEach(input => { const label = input.closest('.settings-row')?.querySelector('.settings-row-label'); if (label) input.setAttribute('aria-label', label.textContent.trim()); });
 
   /* settings sub-tabs */
   qa('.stab[data-stab]').forEach((btn) =>

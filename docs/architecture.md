@@ -1,226 +1,280 @@
-# TabFlow Architecture (developer documentation)
+# TabFlow architecture
 
-Vanilla-JS WebExtension, Manifest V3, ES modules, **no build step, no
-dependencies**. One `src/` folder loads unchanged in Edge, Chrome, Firefox,
-and Zen.
+This is developer documentation. For product behavior, see the [user guide](user-guide.md); for browser setup and distribution, see [installation](installation.md).
+
+TabFlow is a Manifest V3 extension made from native ES modules, DOM builders, and modular CSS. There is no frontend framework, runtime package dependency, cloud backend, or application bundler. Browser-specific behavior is isolated behind the platform layer and packaging.
 
 ## Module map
 
-```
+```text
 src/
-  manifest.json            single cross-browser MV3 manifest
-  background.js            event-driven background (hotkeys, omnibox, action)
-  common/                  shared between background and page
-    ext.js                 ← the ONLY browser-aware module (see below)
-    util.js                DOM builder h(), q/qa, uid, URL/favicon helpers,
-                           debounce, deepClone, safe <mark> highlighter
-    icons.js               inline SVG icon map (no icon font, no CDN)
-    themes.js              pure data: themes, accents, font stacks, palettes
+  manifest.json               Chromium source manifest
+  background.js               New-tab lifecycle, toolbar, hotkeys, omnibox
+  icons/
+    tabflow.svg               Canonical Flowfold identity
+    icon{16,32,48,128,256}.png Generated raster assets
+  common/
+    ext.js                    API adapter, capabilities, URL classification, dev shim
+    util.js                   DOM helpers, URLs, favicons, IDs, timing, text
+    icons.js                  UI icon constants
+    themes.js                 Theme tokens, accents, system fonts, editor slots
   newtab/
-    newtab.html / .css     the page; CSS is themed via custom properties
-    main.js                boot: initStore → init modules → renderAll
-    store.js               state document, persistence, cross-instance sync
-    migrations.js          schema v3, defaults, v2→v3 migration, sanitizing
+    newtab.html               Accessible shell, view roots, static dialogs
+    newtab.css                Ordered style imports
+    styles/
+      base.css                Tokens, reset, original shell primitives
+      components.css          Collections, cards, live tabs, links, tasks
+      settings.css            Settings controls and theme editor
+      overlays.css            Menus, dialogs, toast, command palette
+      pages.css               Page grid, editor, viewer
+      utilities.css           Density, patterns, optional effects, Zen
+      physics.css             Temporary drag layers
+      workspace.css           Shared workspace composition and components
+      modes/normal.css        Editorial collection rows
+      modes/tonal.css         Top navigation and tiled collection board
+      modes/aurora.css        Floating shell, atmosphere, optical depth
+      responsive.css          Viewport-specific composition
+      accessibility.css       Focus, motion, transparency, contrast fallbacks
+    main.js                   Initialization and cross-window render subscriptions
+    store.js                  Live document, queued persistence, snapshots, reset
+    merge.js                  Three-way merge for independent window edits
+    migrations.js             Defaults, schema 3 normalization, legacy import/export
+    pageStorage.js            IndexedDB payloads and portable Page hydration
+    pageViewer.js             Shared sandbox mounting for both viewer surfaces
+    sandbox.html / sandbox.js Chromium isolated document renderer
+    page-host.html / .js / .css Standalone Page wrapper with an opaque iframe
     ui/
-      bus.js               render registry (name → function)
-      layout.js            panels, nav, clock, global keys
-      appearance.js        settings → CSS custom properties / body classes
-      spaces.js            sidebar spaces + customize modal
-      collections.js       collections grid, cards, search, DnD, modals
-      opentabs.js          right panel: live tabs, recently closed, capture
-      links.js / tasks.js  the two small views
-      settings.js          the settings screens
-      palette.js           command palette (Ctrl/⌘+K) over tabs/collections/…
-      liquid.js            Liquid Glass drag physics (droplet, goo merge, splash)
-      modals.js            overlay stack + confirmDialog/promptDialog
-      contextmenu.js       declarative context menu
-      toast.js             snackbar with undo
-      dnd.js               shared drag payload (one drag at a time)
-      inline.js            contenteditable rename helper
-scripts/package.ps1        store packaging (see Packaging)
+      bus.js                  Named render registry
+      layout.js               Navigation, panels, shell state, clock, global keys
+      appearance.js           Theme/settings to tokens, classes, design identity
+      design.js               Mode composition and adaptive enhancement policy
+      spaces.js               Collection Spaces and Page Spaces
+      collections.js          Saved tabs, search, collection actions, delegated DnD
+      collectionLayout.js     Resize-aware packing of unequal Collection heights
+      opentabs.js              Browser tabs, session/window capture, recently closed
+      pages.js                Page editing, storage coordination, sandbox viewer
+      links.js / tasks.js     Aliases and task queue
+      settings.js             Preference controls, imports, backups, snapshots
+      palette.js              Local command index and keyboard launcher
+      liquid.js               Optional Aurora pointer/drag enhancements
+      dnd.js                  Shared drag payload
+      modals.js               Overlay lifecycle and confirmation/prompt dialogs
+      contextmenu.js          Declarative contextual actions
+      inline.js               Inline rename lifecycle
+      toast.js                Transient messages and single-slot Undo
+scripts/
+  package.ps1                 Browser manifests and zip archives
+  generate-icons.mjs          SVG-to-PNG generation (development-only Sharp)
+  preview.mjs                 Local HTTP preview with the development adapter
+tests/                        Node regressions, UI and real-extension checks
 ```
 
-## Cross-browser strategy
+The Page viewer's document is isolated from the extension shell. Keep any viewer wrappers or sandbox helpers in this boundary; do not insert imported HTML into an extension-owned DOM container.
 
-All of it lives in [`common/ext.js`](../src/common/ext.js):
+## Runtime flow
 
-- **`ext`** — `browser ?? chrome`, but detected via `runtime.getURL` presence
-  (Chromium exposes a bare useless `chrome` object on ordinary web pages).
-  Firefox's `browser` and Chromium's MV3 `chrome` are both promise-based, so
-  one alias gives one async API. No polyfill.
-- **`caps`** — capability flags (`tabGroups`, `sessions`, `bookmarks`,
-  `localFavicons`) checked at runtime. Features gate on capabilities, never
-  on browser names.
-- **Dev shim** — when no extension API exists (page opened over plain HTTP),
-  a mock backed by `localStorage` + demo tabs activates. This is how the UI
-  is developed and tested without loading an extension.
-- **Manifest** — `src/manifest.json` is Chromium-native so it loads unpacked
-  in Edge/Chrome without warnings (Chromium rejects the MV2-style
-  `background.scripts` key):
+```mermaid
+flowchart LR
+  Browser[Browser events] --> Background[background.js]
+  Background --> API[common/ext.js]
+  API --> Tabs[Tabs, windows, sessions, bookmarks]
+  Boot[main.js] --> Store[store.js]
+  Store --> Normalize[migrations.js]
+  Store <--> JSON[storage.local / tabflow_v3]
+  Store --> Merge[merge.js]
+  JSON --> Change[storage.onChanged]
+  Change --> Render[ui/bus.js]
+  Boot --> Render
+  Views[Feature UI modules] --> Store
+  Views --> Render
+  Pages[ui/pages.js] --> Payload[pageStorage.js]
+  Payload <--> IDB[IndexedDB / html_pages]
+  Pages --> Frame[Sandboxed Page frame]
+  Appearance[ui/appearance.js] --> Styles[Shared and mode CSS]
+```
 
-  ```json
-  "background": { "service_worker": "background.js", "type": "module" }
-  ```
+Boot loads and normalizes state, initializes feature modules, registers their renderers, then renders the workspace. The initial view is Collections. Background activation messages ask the page to focus its launcher when a new-tab duplicate is reused.
 
-  Firefox has no MV3 service worker, so [`package.ps1`](../scripts/package.ps1)
-  swaps in `"scripts": ["background.js"]` for the `dist/zen` build, and adds
-  `chrome_url_overrides` there too (Firefox can't redirect its new-tab page, so
-  it takes the new tab over declaratively — see below). The same step drops
-  `browser_specific_settings.gecko` for Chromium and the Chromium-only
-  `favicon` permission for Firefox — foreign keys handled per target.
-- **New tab takeover** is done by **redirect**, not `chrome_url_overrides`:
-  [`background.js`](../src/background.js) navigates a browser new tab to
-  TabFlow's own page URL, so it loads as an ordinary extension page. This is
-  deliberate — an ordinary page shows its favicon in the tab strip, whereas the
-  browser never paints one for its New Tab Page. The same handler keeps a
-  **single TabFlow tab per window** (a duplicate new tab is dropped and the user
-  is sent back to the existing one, which focuses its search box); a
-  `tabs.onUpdated` pass covers the manual-navigation and race cases. It is
-  per-window on purpose — never crossing windows, never closing the sole tab of
-  a freshly-opened window.
+Features mutate through `update(fn)` and request only the render regions they changed. Full render passes happen at boot, import/restore, and accepted external changes. Rendering is direct DOM replacement within feature roots; there is no virtual DOM.
 
-## State & persistence
+## Browser adapter and packaging
 
-One JSON document holds everything, stored under
-`storage.local["tabflow_v3"]`:
+`common/ext.js` selects a usable `browser` or `chrome` API by checking `runtime.getURL`, not merely the presence of a global named `chrome`. Both paths expose the promise-style calls used by the app.
+
+API capabilities (`tabGroups`, `sessions`, `bookmarks`, and `localFavicons`) control feature availability. Browser-origin checks distinguish Chromium from Firefox for manifest-related behavior and setup guidance. The Edge user-agent check is limited to the correct extension-shortcut URL; it is not the feature-detection strategy.
+
+| Target | Background | New-tab mechanism | Favicon permission |
+| --- | --- | --- | --- |
+| Source / Chromium package | `service_worker: background.js`, module | Event-driven recognized-URL redirect | Kept |
+| Firefox / Zen package | `scripts: [background.js]`, module event page | `chrome_url_overrides.newtab` | Removed |
+
+The source manifest is not an identical four-browser development manifest. `package.ps1` removes foreign keys and generates the appropriate target. Zip entries use forward slashes and manifests use UTF-8 without a BOM. The script rebuilds its generated `dist/` directory.
+
+### New-tab lifecycle
+
+The background recognizes explicit browser new-tab surfaces and the exact TabFlow workspace page. It redirects only on Chromium. Deduplication is scoped to a window and serialized so overlapping tab events do not independently delete each other's chosen keeper.
+
+The workspace classifier must distinguish `newtab/newtab.html` from other pages belonging to the same extension. Matching the whole extension origin would also close standalone Page viewers. Transient empty URLs, `about:blank`, and `about:home` must not be treated as proof that an unrelated tab is a new-tab request.
+
+The toolbar uses focus-or-open across windows. Hotkey commands read saved tabs from `tabflow_v3` and prefer an exact URL, then an approximate same-site match. Omnibox aliases read Links, provide prefix suggestions, and navigate the active tab. These event handlers are wakeup-driven; no keep-alive loop is required.
+
+## State schema and compatibility
+
+The current storage key remains `tabflow_v3`; the design redesign does not introduce a schema-version bump.
 
 ```js
 {
   schemaVersion: 3,
-  meta: { rev, writer, savedAt },     // cross-instance sync bookkeeping
-  spaces: [{ id, name, color?, icon?, viewMode,
-    collections: [{ id, name, color?, collapsed, sortMode,
-      tabs: [{ id, title, url, favicon?, pinned?, note?, tags?, hotkeySlot? }] }] }],
+  meta: { rev, writer, savedAt },
+  spaces: [{
+    id, name, color?, icon?, viewMode,
+    collections: [{
+      id, name, color?, collapsed, sortMode,
+      tabs: [{ id, title, url, favicon?, pinned?, note?, tags?, hotkeySlot? }]
+    }]
+  }],
   activeSpaceId,
-  links:  [{ id, name, url }],
-  tasks:  [{ id, title, url?, done }],
-  settings: { theme, accent, font, fontSize, borderRadius, density,
-              defaultView, sidebarWidth, bgStyle, customBgColor, bgPattern,
-              showClock, remoteFavicons, customThemes, customCss },
+  pageSpaces: [{
+    id, name, color?, icon?,
+    pages: [{
+      id, title, method, content, createdAt, updatedAt, tags,
+      contentStorage?, contentKey?
+    }]
+  }],
+  activePageSpaceId,
+  links: [{ id, name, url }],
+  tasks: [{ id, title, url?, done }],
+  settings: { /* DEFAULT_SETTINGS in migrations.js */ },
   ui: { sidebarOpen, rightPanelOpen, zenHintDismissed }
 }
 ```
 
-Rules enforced by [`store.js`](../src/newtab/store.js):
+Pages use `method: 'code' | 'upload' | 'embed'`. Collection Spaces and Page Spaces have separate active IDs and collections of children. Do not infer that similarly named Spaces are related.
 
-- **All mutations go through `update(fn)`** — it mutates the live doc,
-  marks it dirty, and saves after a 300 ms debounce. `flush()` forces the
-  write (used before export and on `pagehide`).
-- Every write bumps `meta.rev` and stamps `meta.writer` with this page
-  instance's id. A `storage.onChanged` listener adopts documents written by
-  *other* instances (and re-renders via `onExternalChange`); writes from the
-  own instance are ignored. If local unsaved edits exist, the pending local
-  write wins.
-- Snapshots live under a separate key `tabflow_snapshots`
-  (`[{ id, name, date, spaces }]`, capped at 20) — shape-compatible with v1.
+`normalizeDoc()` accepts existing schema-3 data, fills missing Page Spaces and settings, resolves active IDs, checks known settings, clamps numeric controls, and normalizes external URLs. It is a boundary for persisted structures, not a general HTML sanitizer.
 
-### Normalization & migration ([`migrations.js`](../src/newtab/migrations.js))
+The legacy key `tabflow_v2` represents the older application format. Migration maps per-space views, old `nextItems` to Tasks, old hotkey slots, and supported appearance settings. The source record stays intact during ordinary migration. `parseImport()` accepts the current export envelope, raw schema-3 documents, and supported older shapes. Preserve these formats when extending the model.
 
-`normalizeDoc()` runs on **every** loaded or imported document and
-guarantees: ids exist, `activeSpaceId` resolves, enums are valid, settings
-are type-checked against `DEFAULT_SETTINGS`, URLs are http(s)-only
-(`javascript:`/`data:` are stripped), favicons are https/data-image only.
-The rest of the app never defends against malformed data.
+### Persistence and concurrent windows
 
-`migrateV2()` converts the v1 document (`tabflow_v2`): `viewModes` map →
-per-space `viewMode`, `nextItems` → `tasks`, `hotkey.slot` → `hotkeySlot`,
-Google-font names → nearest system stack, dropped settings discarded. The
-v2 record is left in storage as a rollback.
+`update(fn)` mutates the live document, marks it dirty, and schedules a write after 300 ms. `flush()` returns the queued persistence result; callers that promise a saved backup or replacement must await it and handle failure.
 
-`parseImport()` accepts three shapes: the v3 export envelope
-(`{app:'tabflow', doc}`), a raw v3 doc, or v1 exports/docs.
+Each commit reads the latest stored document and performs a three-way merge using the instance's base, its local changes, and remote state. Identified arrays merge by ID. Independent fields/additions can survive concurrent edits; deletion wins over an edit to an item removed on either side, while a direct same-field conflict prefers the committing local value. Local reordering takes priority when changed.
 
-## Rendering model
+Where available, Web Locks serialize commits for the extension origin. Without that API, the merge still runs but the read-modify-write sequence is not atomic. This is not a CRDT, database transaction across windows, or collaborative-editing guarantee. Full import/reset is intentionally a document replacement, not a merge.
 
-No framework. Views build DOM with the `h()` helper and re-render their own
-region wholesale — state size makes diffing unnecessary.
+`storage.onChanged` adopts another writer's document when the current instance is not dirty or writing and triggers render listeners. Metadata records a revision, writer ID, and timestamp. A read failure at boot is surfaced rather than followed by a destructive defaults write; save failures leave unsaved changes in memory.
 
-- Every view registers named renderers on the **bus**
-  (`registerRenderer('collections', fn)`); anyone triggers them by name
-  (`render('collections', 'spaces')`). This is what keeps the modules free
-  of circular imports.
-- The renderer names: `appearance, layout, spaces, collections, viewmenu,
-  opentabs, recentlyClosed, links, tasks, settings`.
-- `renderAll()` runs them all (boot, import, external change).
+### Pages and IndexedDB
 
-### Drag & drop
+`pageStorage.js` owns database `tabflow_pages_db`, version 1, object store `html_pages`.
 
-One shared payload in `dnd.js` (`card` | `collection` | `open-tab`).
-`dragstart`/`dragend` are bound per element; the hot `dragover`/`drop` path
-is **delegated once** on `#collections-area`. Sidebar spaces and tasks use
-scoped custom MIME types (`application/x-tabflow-space`, `…-task`) so foreign
-drags are ignored. Collection/space drags only start from their grip handle
-(armed on `mousedown`).
+- Up to **256 KiB** of UTF-8 content stays inline. Larger payloads are written to IndexedDB before their metadata is updated.
+- A large Page has an empty inline body, `contentStorage: 'indexeddb'`, and a `contentKey`. New content uses a new key so a failed metadata commit cannot invalidate the previously saved version.
+- Inline content is authoritative when present. An old IndexedDB copy must not override imported or restored HTML with the same Page ID.
+- IndexedDB operations resolve on transaction completion and close the database connection. Request success alone does not prove a write committed.
+- `hydratePageSpaces()` creates a self-contained copy for export/snapshots, resolving referenced payloads and removing storage-location fields. Missing required payloads fail the operation rather than silently producing an incomplete backup.
+- `preparePageSpaces()` prepares imported/restored large content for local storage again.
 
-### Overlays
+This is size-based payload separation, not unlimited storage or automatic recovery from every quota error. Main JSON, snapshot history, and IndexedDB remain subject to browser/profile limits.
 
-`modals.js` keeps an overlay stack: Escape closes the topmost, backdrop
-click dismisses, `confirmDialog()`/`promptDialog()` build themed one-off
-dialogs returning promises. Feature-specific modals (tab edit, hotkey slots,
-space picker, …) are static HTML wired by their feature module.
+### Backups and snapshots
 
-## Background script
+The JSON export envelope contains `app`, `schemaVersion`, `exportedAt`, and the portable document. The UI must hydrate Page bodies before building the export. Live browser sessions, snapshot history, browser shortcut remappings, and viewer form state are outside that envelope.
 
-Small and event-driven ([`background.js`](../src/background.js)):
-`commands.onCommand` (hotkey slots → focus-or-open by site),
-`omnibox` (`to <alias>`), `action.onClicked` (focus-or-open the TabFlow
-page), `onInstalled` (first-run flag for light/dark auto-detection).
-It reads the same `tabflow_v3` document, read-only. No keep-alive tricks —
-event wakeups are the design.
+`tabflow_snapshots` is separate from the main document. New snapshots include collection Spaces and hydrated Page Spaces; up to 20 are retained. Restore keeps current settings, Links, and Tasks. For old snapshots without `pageSpaces`, preserve the current Pages. Because snapshots include content, they consume local storage too.
 
-## Security & privacy invariants
+Clear All commits a starter document before purging Page payloads, snapshot history, legacy records, and historical Page-form keys. A failed metadata write leaves the previous saved payloads intact. Reset Settings only resets the settings object while retaining custom-theme definitions and workspace content.
 
-- CSP: `script-src 'self'; object-src 'self'`; no remote code, fonts, or
-  analytics — keep it that way (also an AMO requirement).
-- Never assign user data to `innerHTML`. `h()` uses `textContent`; the only
-  `html:` inputs are the constant SVG strings from `icons.js`. Search
-  highlighting builds `<mark>` nodes from text, not regex-into-HTML.
-- All external input (imports, storage, bookmarks) passes `normalizeDoc`.
-- The favicon service call is the single optional network request, gated by
-  `settings.remoteFavicons`.
+Page bodies use versioned keys so a failed metadata commit cannot corrupt the last saved document. Unreferenced versions are retained until Clear All; reference-aware garbage collection is a follow-up. Individual Page deletion removes workspace metadata, without racing another window's payload reads.
 
-## Packaging ([`scripts/package.ps1`](../scripts/package.ps1))
+## Design architecture
 
-Produces `dist/chromium` (drops `background.scripts`,
-`browser_specific_settings`) and `dist/zen` (drops
-`background.service_worker`, the `favicon` permission), then zips both.
+Three concerns stay separate:
 
-Two hard-won rules encoded in the script:
+1. **Theme:** `themes.js` supplies colors; custom themes provide compatible CSS properties.
+2. **Preferences:** `appearance.js` applies accent, system font, density, size, backgrounds, and effects.
+3. **Composition:** `body[data-design]` and the mode modules select the visual system and layout.
 
-1. **Zip entries must use forward slashes.** `Compress-Archive` writes
-   backslashes; Firefox then 404s every nested file. The script zips via
-   `System.IO.Compression` with explicit `/` entry names.
-2. **Read/write the manifest as explicit UTF-8 (no BOM).** Windows
-   PowerShell's default ANSI decoding corrupts non-ASCII (the "—" in the
-   extension name).
+Existing `liquidGlass` and `materialYou` storage flags remain the compatibility source for Aurora and Tonal. Both false selects Normal; the modes are mutually exclusive. Legacy body classes and stable feature selectors remain available where practical for existing custom CSS.
 
-## How to…
+`ui/design.js` maps those persisted flags to `body[data-design]`, moves shared navigation for Tonal, updates the overview metrics, and applies the effect budget. The budget combines workspace size, reduced-motion/transparency/contrast/forced-color preferences, page visibility, and coarse device capability signals; it adds `effects-static` or `effects-opaque` fallbacks without disabling the underlying feature.
 
-**Add a setting** — add the key+default to `DEFAULT_SETTINGS`
-(migrations.js); add the control to the settings panel in `newtab.html`;
-wire it in `settings.js` (`renderPills`/`renderSlider`/custom); apply it in
-`appearance.js` if it affects presentation. Persistence, export, import, and
-sanitizing are automatic — that's the point of the single settings object.
+| Mode | Structural treatment |
+| --- | --- |
+| Normal | Collections form horizontal editorial bands: a compact identity/action column beside the saved-card area. Navigation remains a conventional sidebar. |
+| Tonal | Primary view navigation moves above the canvas, the sidebar emphasizes Spaces, and Collections tile into a rounded multi-column board. Larger typography and pill controls reinforce the composition. |
+| Aurora | A detached shell frames an atmospheric workspace. Floating Collection containers, optical card layers, illuminated edges, and interaction depth create a spatial composition. |
 
-**Add a theme** — one entry in `THEMES` (themes.js): 15 CSS variables plus a
-4-color preview. Nothing else.
+Changing mode must preserve document data, active view, card-view preference, and working feature hooks. Mode-specific navigation should move shared controls rather than duplicate competing event handlers. Settings, Pages, dialogs, menus, and live tabs must inherit the mode language too.
 
-**Add an icon** — add the SVG string to `icons.js` (24×24 viewBox,
-`stroke="currentColor"`).
+Multi-column boards place each Collection in the shortest available column, avoiding gaps caused by shared grid row heights. `collectionLayout.js` uses natural item heights, explicit grid cells and one animation-frame-bounded ResizeObserver; DOM order stays the saved order. Search summaries and setup notices span the board. Single-column layouts clear the packing cells.
 
-**Add a card/collection action** — extend the builders in `collections.js`;
-mutate only via `update()`; call `render('collections')`.
+Collection dragging inserts an inert, full-size preview and temporarily hides the source from layout. The same packing function places the preview and final Collection, so the surrounding arrangement is visible before drop. The document changes only on drop; Escape, leaving the board, and drag end remove the preview. Card dragging continues to use its existing insertion/swap behavior.
 
-**Bump the schema** — increment `SCHEMA_VERSION`, extend `normalizeDoc` to
-accept both shapes, and add a migration path in `initStore`. Never break
-`parseImport` for older export files.
+Collection views omit the repeated Space heading and use a compact, single-line statistics summary at the right of the action toolbar. The Space heading remains available to screen readers. Other views retain their contextual headings.
 
-## Testing
+The stylesheet entry point orders shared modules, workspace composition, mode styles, responsive adjustments, then accessibility. Custom CSS is appended afterwards. Keep future mode rules in their owning file rather than growing a second catch-all override block.
 
-No test framework (deliberate for a dependency-free repo). Three layers:
+### Aurora rendering budget
 
-1. **Dev preview** — serve `src/` over HTTP (`python -m http.server`); the
-   dev shim provides storage + demo tabs. Fastest loop for UI work.
-2. **Per-browser smoke** — the checklist in [README.md](../README.md#test-checklist-per-browser).
-3. **Migration check** — seed `tabflow_v2` in the dev shim's localStorage,
-   reload, verify the v3 doc.
+The atmospheric layers sit outside the scrolling feature DOM. Normal cards use optical gradients and solid-backed surfaces rather than one backdrop blur per card. Live blur is restricted to a small number of chrome surfaces and transient interactions. Avoid viewport-sized SVG blur/goo filters.
+
+Pointer work is delegated and animation-frame-bounded; update only the active target. Drag effects are temporary and must stop on drop, dragend, cancellation, lost focus, or visibility changes. Low-capability and large-item fallbacks reduce enhancement without changing feature behavior.
+
+Motion and transparency preferences affect JavaScript as well as CSS. No animated ghost should remain running simply because CSS made it invisible. Prefer transforms and opacity for movement, limit geometry reads, and clean up inline transforms when the mode changes.
+
+## Accessibility boundaries
+
+Shared controls need visible focus, accessible names, sensible hit areas, and a logical DOM focus order in each composition. Keyboard-only access must not depend on hover. Dialogs and the command palette need contained focus and return focus on dismissal. Context menus need keyboard navigation.
+
+Reduced motion suppresses transitions, animation, pointer tilt, and drag physics. Reduced transparency, increased contrast, and forced-color modes use readable solid surfaces and focus boundaries. Test each preference independently and in combination with light themes and custom themes. User CSS may override the supplied safeguards; do not represent arbitrary custom CSS as contrast-validated.
+
+Drag-and-drop is a pointer interaction over the shared payload `card | collection | open-tab`. Cards use delegated dragover/drop handling on the Collection area; Spaces and Tasks use their own custom MIME payloads. Keep non-drag actions available for capture, opening, and moving Collections.
+
+## Security and privacy boundaries
+
+The extension shell loads bundled scripts under its extension-page CSP. User titles, URLs, notes, tags, and names use text nodes; the DOM helper's `html` option is only for trusted constants.
+
+Page HTML is intentionally active user content and belongs in a sandboxed frame without `allow-same-origin`. Do not weaken that boundary to access viewer form state. Browser CSP still applies, so do not promise identical script execution across engines. Embedded websites can enforce their own framing restrictions.
+
+Chromium mounts the manifest-declared `sandbox.html`, then passes HTML from the parent to `sandbox.js`. The renderer accepts one message from its parent and writes into its own opaque document under the sandbox CSP. Inline scripts were verified in Edge without extension APIs. Firefox/Zen use a sandboxed `srcdoc` with the extension CSP; inline scripts may be blocked. The package removes Chromium-only sandbox manifest keys. Both embedded and standalone HTML viewers share `pageViewer.js`; `page-host.html` retrieves the saved Page by ID and retains the iframe boundary.
+
+Any message from a viewer must verify its source and validate the requested action/HTTP(S) URL before calling an extension API. A Page opened in a new browser tab must retain its sandbox wrapper rather than receive an unsandboxed extension-origin blob document.
+
+Saved favicon URLs may be remote. The Google fallback is separately controlled by `remoteFavicons`, enabled by default. Page resources, embeds, external navigation, and user CSS may request network resources. The app has no analytics or sync server; “local-first” does not mean all displayed content is network-isolated.
+
+## Development and verification
+
+For a quick UI preview, serve `src/` over HTTP and open `/newtab/newtab.html`. For example, with an existing Python installation:
+
+```powershell
+python -m http.server 4173 --directory src
+```
+
+The development shim uses localStorage and demo tabs when no extension API is present. It is useful for layout and ordinary UI flows, but **does not establish correctness of extension CSP, new-tab handling, shortcut commands, sessions, bookmarks, or real browser storage events**. Use a disposable browser profile for extension tests.
+
+A meaningful release pass covers:
+
+| Area | Verify |
+| --- | --- |
+| Loading / packaging | Both manifests parse; every referenced asset/module is present; extension and background consoles remain clear |
+| Browser lifecycle | New tab, rapid duplicate creation, new window, toolbar activation, unrelated blank/extension tabs, separate Page viewers |
+| Persistence | Existing schema-3 data, legacy migration, independent edits in two windows, same-field conflicts, failed storage reads/writes |
+| Core flows | All card views, search, card/Collection/Space drag-and-drop, session capture, recently closed, Links, Tasks, hotkey assignment |
+| Pages | Upload/code/embed, Page Spaces, large IndexedDB payload, edit/reopen, external viewer, export/import with matching IDs, old/new snapshots |
+| Design | Switch all three modes without reload; light/dark/custom themes; 100+ cards; visible keyboard focus; narrow laptop and ultrawide layouts |
+| Accessibility | Keyboard dialogs/palette/menus; reduced motion; reduced transparency; increased contrast; forced colors |
+| Data actions | Bookmark import, JSON backup, settings reset, full reset, accurate error reporting, no silent content loss |
+
+Keep automated regression tests focused on state transitions and browser contracts. Record actual browser/version and results when running the matrix; this checklist is not a claim that every browser has passed.
+
+See [testing and verified scope](testing.md) for executable checks, observed results, and the remaining browser release checks.
+
+### Extending the product
+
+- Add a setting to `DEFAULT_SETTINGS`, normalize it, wire its control in `settings.js`, and apply its effect in the owning module. Preserve existing defaults on migration.
+- Add a feature renderer to `bus.js` through `registerRenderer()`; mutate with `update()` and render the relevant regions.
+- Add theme tokens in `themes.js`; keep mode geometry out of theme presets.
+- Keep the SVG logo canonical and regenerate PNG sizes with `scripts/generate-icons.mjs`. Sharp is a development dependency only; no image-generation library ships in the extension.
+- Add a storage migration only when the data shape requires one. Test both older exports and in-place data before changing schema or payload location.

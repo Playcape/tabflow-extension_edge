@@ -31,6 +31,7 @@
 import { q } from '../../common/util.js';
 import { settings } from '../store.js';
 import { getDrag } from './dnd.js';
+import { richEffectsAllowed } from './design.js';
 
 /* Static markup (own constants only — safe for innerHTML).
    The goo filter: blur widens each shape's alpha, the color matrix
@@ -77,7 +78,7 @@ let dockRect = null;
 
 const active = () => {
   const s = settings();
-  return s.liquidGlass && s.lgPhysics && !s.reduceMotion;
+  return richEffectsAllowed() && s.lgPhysics;
 };
 
 function ensureLayer() {
@@ -170,6 +171,7 @@ function applyTransforms(stretch, angle) {
 
 function loop() {
   if (!dragging) return;
+  if (!active()) { finish(null); return; }
   // Watchdog: dragover fires continuously during a drag (~every 350 ms
   // even when holding still). Silence means the drag ended without us
   // getting a usable drop/dragend — fade out instead of sticking around.
@@ -304,5 +306,5 @@ export function initLiquid() {
   document.addEventListener('dragover', onDragOver, true);
   document.addEventListener('drop', onDrop, true);
   document.addEventListener('dragend', onDragEnd, true);
-  document.addEventListener('pointermove', onPointerMove, { passive: true });
+  // Pointer illumination is owned by design.js: one listener, one active card.
 }

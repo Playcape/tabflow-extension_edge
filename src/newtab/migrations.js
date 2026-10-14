@@ -241,6 +241,8 @@ function normalizePage(raw) {
     title: typeof raw?.title === 'string' && raw.title ? raw.title : 'Untitled Page',
     method,
     content: typeof raw?.content === 'string' ? raw.content : '',
+    ...(raw?.contentStorage === 'indexeddb' ? { contentStorage: 'indexeddb' } : {}),
+    ...(raw?.contentStorage === 'indexeddb' && typeof raw.contentKey === 'string' ? { contentKey: raw.contentKey } : {}),
     createdAt: typeof raw?.createdAt === 'number' ? raw.createdAt : Date.now(),
     updatedAt: typeof raw?.updatedAt === 'number' ? raw.updatedAt : Date.now(),
     tags: Array.isArray(raw?.tags) ? raw.tags.filter((t) => typeof t === 'string' && t).slice(0, 12) : [],

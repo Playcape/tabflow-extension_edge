@@ -1,107 +1,101 @@
-# Troubleshooting & FAQ
+# Troubleshooting TabFlow
 
-## New tabs don't show TabFlow
+Start by checking the installed browser build and reloading TabFlow after an extension update. Export a JSON backup before resetting, reinstalling, or changing browser profiles.
 
-**Zen Browser:** this is Zen's "URL bar replaces new tab" feature — it never
-creates a new-tab page, so TabFlow can't appear. Open `about:config`, set
-**`zen.urlbar.replace-newtab`** to **`false`**. (TabFlow also shows this hint
-in-app on Firefox-based browsers, with a copy button.)
+## A new tab does not open TabFlow
 
-**Firefox:** the first new tab after installing shows a "Keep changes?" bar —
-if you dismissed it with *Revert*, Firefox blocks the override. Reinstall the
-add-on and accept the prompt, or check `about:addons` → TabFlow → Options
-isn't disabled.
+**Chrome / Edge:** confirm TabFlow is enabled on the extensions page and inspect background/service-worker errors. The current Chromium implementation redirects recognized new-tab URLs; it does not register a declarative new-tab override. Another extension or browser policy may change the URL before TabFlow sees it. Temporarily disable a competing new-tab extension to isolate that interaction. Try the TabFlow toolbar action.
 
-**Edge/Chrome:** check `edge://extensions` / `chrome://extensions` — TabFlow
-must be enabled, and no *other* extension may also override the new tab page
-(the most recently installed one wins).
+**Firefox / Zen:** load the generated **`dist/zen/manifest.json`**. Raw `src/` has the wrong background configuration for this package. Check whether the browser accepted the extension's new-tab override.
 
-## The extension disappeared after restarting Firefox/Zen
+**Zen's floating URL bar:** if no new-tab page is created, TabFlow has no surface to replace. Set `zen.urlbar.replace-newtab` to `false` in `about:config`, or open TabFlow through the toolbar action. See [Zen setup](installation.md#zen).
 
-Temporary add-ons (loaded via `about:debugging`) unload on every restart —
-that's a browser rule, not a bug. Your data survives; reload the add-on and
-it's all there. For a permanent install, sign the package on
-addons.mozilla.org — see [installation.md](installation.md#permanent-installs-on-firefoxzen).
+## A new tab returns to an existing workspace
 
-## "Background script: Stopped" in about:debugging
+This is expected. TabFlow reuses its workspace within the same window and requests focus for its search launcher. A new window can have another workspace. The toolbar action can focus a workspace in another window.
 
-Normal. TabFlow's background is an event page that sleeps until something
-wakes it (a hotkey, an omnibox entry, the toolbar button). It is not an error.
+Separate Pages opened in a viewer tab are not workspace duplicates. If unrelated tabs are closed or redirected, report the exact URL, whether the tab was created by a link or Ctrl+T, and the browser/version.
 
-## Yellow manifest warning about the "favicon" permission
+## The tab-strip icon differs between browsers
 
-Appears only when loading the raw `src/` folder in Firefox/Zen: `favicon` is
-a Chromium-only permission and Firefox skips it with a warning. Harmless —
-and the packaged `dist/zen` build removes it entirely.
+Chromium loads an ordinary extension page after redirection. Firefox/Zen use a declarative new-tab override, and browser new-tab surfaces may display a generic icon. A missing favicon there does not mean the workspace failed to load. Reload the extension if the toolbar still shows an old icon.
 
-## Hotkeys (Alt+1…4) don't work
+## The Firefox / Zen add-on disappears after restart
 
-- The keys may collide with a browser or OS shortcut (on some Linux setups
-  Alt+numbers switches browser tabs). Remap them: Edge/Chrome →
-  `chrome://extensions/shortcuts`; Firefox/Zen → `about:addons` → gear icon →
-  *Manage Extension Shortcuts*.
-- A slot only fires if a saved tab is assigned to it (⌨ button on a card).
+An add-on loaded through `about:debugging` is temporary. Use a signed package for a lasting installation; see [permanent distribution](installation.md#permanent-firefox--zen-distribution). Export before changing installation method rather than assuming temporary-install storage will survive every browser lifecycle.
 
-## Omnibox "to" aliases don't trigger
+## “Background script: Stopped” or manifest warnings
 
-Type **`to`**, then a **space**, then the alias name, in the address bar.
-The alias must exist in the **Links** view. If another extension also claims
-the `to` keyword, the browser picks one.
+An idle event background can stop until an event wakes it. An inactive background alone is not an error; check whether the toolbar or assigned shortcut wakes it successfully.
 
-## Favicons are missing or show letter tiles
+A `favicon` permission warning in Firefox usually indicates the raw Chromium source manifest was loaded. Rebuild and use `dist/zen/`. Errors mentioning a missing background script, failed imports, or missing files are different: inspect the package, keep its directory structure intact, and rebuild with `scripts/package.ps1`.
 
-- Icons are stored when you save a tab from the Open Tabs panel; manually
-  added tabs have none at first.
-- On Edge/Chrome, icons resolve from the browser's local favicon cache.
-- On Firefox/Zen, tabs without a stored icon use Google's favicon service —
-  but only if **Settings → Advanced → Remote favicon fallback** is on.
-  With it off you get letter tiles by design (privacy).
+## A Page is blank or behaves differently from a website
 
-## I deleted something by accident
+- **Embedded website:** the site can block framing with its own security policy. Use **Open in new browser tab**. Authentication, cookies, popups, or embedded scripts may also behave differently in a sandbox.
+- **Uploaded HTML:** TabFlow copies the selected file's text, not its adjacent images, scripts, or stylesheets. Use self-contained HTML or explicit resource URLs.
+- **Scripts:** Chrome/Edge use a separate sandbox renderer, with inline script execution verified in Edge. Firefox/Zen use sandboxed `srcdoc`, where the extension CSP may block inline scripts. Neither approach promises that every standalone web app will run unchanged.
+- **Form changes disappeared:** editable viewer state is not guaranteed to persist. Save document changes through **Edit Page**.
+- **Missing content after copying storage:** large Page bodies live in IndexedDB. Use **Export JSON** rather than copying only the main storage key.
 
-Every tab/collection deletion shows an **Undo** toast for 4 seconds. Beyond
-that, restore from **Settings → Data → Snapshots** or an exported JSON backup.
-Space deletion asks for confirmation up front and cannot be undone afterwards.
+TabFlow's Page sandbox isolates a document from the parent workspace; it does not prevent every network request made by that document. See [Pages](user-guide.md#pages-and-page-spaces).
 
-## Import says "Not a valid TabFlow backup file"
+## Search or a drag does not do what I expected
 
-The file must be a TabFlow export (v1 or v2 format). If it was edited by
-hand, make sure it is valid JSON and still has a `spaces` array (v1) or the
-`app: "tabflow"` envelope (v2). Imports are sanitized: entries with unsafe
-URLs (e.g. `javascript:`) come through with the URL removed.
+Saved-tab search covers titles, URLs, and tags, not Page bodies or notes. The command palette also finds Page and Page Space metadata. Plain text entered in TabFlow's search field stays a local filter; Enter launches a recognizable URL or exact Links alias.
 
-## The new tab shows a blank / generic icon instead of the TabFlow logo
+Clear the search filter before rearranging cards. Use grips for Collection and Space reordering. Card edges insert; the middle swaps. In List view, these zones run vertically. Session capture saves web links and does not close the source tabs.
 
-Shouldn't happen: TabFlow loads as an ordinary extension page (the background
-redirects a new tab to TabFlow's own URL), and an ordinary page shows its
-favicon. If the icon is missing, reload the extension so the new background
-script takes effect. Note: the browser's *own* New Tab Page can never show a
-custom favicon — that's why TabFlow redirects to a normal page instead of using
-`chrome_url_overrides`.
+## Hotkeys or `to` aliases do not trigger
 
-## A second TabFlow tab keeps opening
+Make sure a saved tab owns the hotkey slot. Shortcuts can conflict with browser/OS bindings or another extension. Remap them at `edge://extensions/shortcuts` or `chrome://extensions/shortcuts`; in Firefox/Zen use the add-on manager's **Manage Extension Shortcuts** command.
 
-It shouldn't anymore: TabFlow keeps a single tab per window. Opening another
-new tab while one is already open sends you back to the existing tab and puts
-the cursor in the search box, which also works as a launcher — type a URL or a
-**Links** alias and press **Enter** to go straight there. Opening a new
-*window* still gives that window its own TabFlow tab. (If duplicates were open
-from before this update, close the extras once; new tabs won't pile up again.)
+For aliases, type `to`, a space, then the name in the **browser address bar**. Enable **Show Links in sidebar** under Advanced settings to create or edit aliases. A competing omnibox keyword can prevent TabFlow from receiving the command.
 
-## Two TabFlow tabs show different content
+## Favicons show letter tiles
 
-They shouldn't — instances sync via storage events. If one was open during
-an extension *reload*, it may be orphaned; close and reopen it.
+Letter tiles are the fallback when no usable icon loads. Saved HTTPS favicon URLs are tried first, then Chromium's local favicon endpoint, then Google's favicon service if allowed and no local endpoint is available.
 
-## Where exactly is my data? Is anything sent anywhere?
+**Remote favicon fallback** controls the Google service, not every remote image. A stored website icon can still request its own URL. Firewall, offline mode, a changed icon URL, or a cold browser cache can cause fallback tiles.
 
-Everything lives in `browser.storage.local` of the current browser profile —
-nothing is synced or uploaded by TabFlow. There is no analytics and no remote
-code. The single optional network call is the favicon fallback described
-above. Export regularly if the data matters to you.
+## Aurora is quieter than expected, or feels slow
 
-## Reporting a bug
+Reduced motion, reduced transparency, increased contrast, constrained capability, and large workspaces can reduce enhancements automatically. Those fallbacks protect the usable workspace. Your theme and custom CSS also affect the result.
 
-Open the TabFlow tab, press **F12** → Console, reproduce the issue, and
-include any red errors plus browser name/version in your report at
-<https://github.com/Playcape/tabflow-extension_edge/issues>.
+For additional tuning, lower Aurora's blur, disable drag physics or pointer sheen, turn off animated backgrounds, or select Normal. Avoid custom CSS that blurs or animates every card. Collapsing Collections or choosing Compact/List/Grid can make a large workspace easier to scan.
+
+## Controls are missing or hard to read
+
+Exit Zen mode with **Ctrl/⌘ + .** or Escape, and use panel controls to restore hidden navigation/live tabs. Links is hidden by default until enabled in Advanced settings.
+
+If custom CSS or a custom theme is involved, clear CSS and select a built-in light/dark theme first. **Reset Settings** restores settings and toggles while keeping workspace contents and custom-theme definitions. It is different from **Clear All**.
+
+## I deleted something, or imported the wrong backup
+
+Saved-card and Collection deletion offers an Undo toast for a short time. Other destructive actions use their own confirmation/recovery behavior. Use a snapshot or exported JSON backup after Undo is no longer available.
+
+Import replaces the current workspace; it is not a merge. A snapshot restores saved workspaces and Pages but keeps current settings, Links, and Tasks. Older collection-only snapshots leave Pages unchanged. Snapshot history itself is not included in JSON exports. See [backup scope](user-guide.md#backups-snapshots-and-moving-data).
+
+## Import rejects a file
+
+Use a JSON backup exported by TabFlow. Current envelopes identify `app: "tabflow"` and contain a document; recognized legacy formats are also supported. A renamed HTML file, browser bookmark export, or arbitrary JSON file is not a TabFlow backup.
+
+Imported structures and navigation URLs are normalized. Imported HTML is isolated by the viewer rather than sanitized as ordinary text. If a valid file fails, keep the original file and report the error without posting private data publicly.
+
+## Changes differ between windows or will not save
+
+Cross-window updates use the browser profile's local storage events and merge independent edits where possible. They do not synchronize across profiles or browsers. Competing changes to the same field, deletion, or a whole-workspace replacement can still override another edit. Finish related edits in one window before changing the same items elsewhere.
+
+A TabFlow page left open during extension reload may have an invalid extension context. Reopen it. If the console reports a quota, IndexedDB, or storage-access error, export what you can and preserve the original browser profile before attempting recovery. The main-document storage badge is an estimate and excludes IndexedDB bodies and other browser storage.
+
+## Report a reproducible issue
+
+Use the repository's [issue tracker](https://github.com/Playcape/tabflow-extension_edge/issues). Include:
+
+- Browser and version, operating system, installation method, and TabFlow version.
+- Design mode, theme, relevant accessibility preferences, and whether custom CSS is active.
+- Exact steps, expected result, and actual result.
+- Errors from the TabFlow page console and, for new-tab/shortcut issues, the extension background console.
+- An anonymized example if a particular import or Page triggers the problem.
+
+Do not post a full backup containing private URLs, tasks, aliases, or document content.

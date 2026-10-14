@@ -35,7 +35,7 @@ function devShim() {
   return {
     runtime: {
       id: 'tabflow-dev',
-      getURL: (path) => new URL(path, location.href).href,
+      getURL: (path) => new URL(path, new URL('../', import.meta.url)).href,
       getManifest: () => ({ permissions: [] }),
       onInstalled: noopEvent(),
       onMessage: noopEvent(),
@@ -119,15 +119,16 @@ export function isBrowserNewTabUrl(url) {
   return NEW_TAB_URLS.has(url ?? '');
 }
 
+/** Only the workspace document; other extension pages are independent tabs. */
+export function isTabFlowPageUrl(url) {
+  if (typeof url !== 'string') return false;
+  return url.split(/[?#]/, 1)[0] === NEWTAB_PAGE;
+}
+
 /** True if a tab is TabFlow's own page (or about to become it). */
 export function isTabFlowTab(tab) {
-  const url = tab?.url ?? '';
-  const pending = tab?.pendingUrl ?? '';
-  return (
-    url.startsWith(EXT_ORIGIN) ||
-    pending.startsWith(EXT_ORIGIN) ||
-    isBrowserNewTabUrl(url)
-  );
+  // A pending navigation away takes precedence over the old loaded URL.
+  return isTabFlowPageUrl(tab?.pendingUrl || tab?.url || '');
 }
 
 /**

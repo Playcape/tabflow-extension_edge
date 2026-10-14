@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TabFlow — Tab Manager",
   "version": "2.0.0",
-  "description": "A beautiful new tab manager with spaces, collections, drag & drop, session saving, and hotkeys. Works in Chrome, Edge, Firefox, and Zen.",
+  "description": "Your local browser workspace. Organize tabs, save sessions, keep Pages and focus with three distinctive designs.",
   "permissions": ["tabs", "storage", "sessions", "bookmarks", "favicon"],
   "background": {
     "service_worker": "background.js",
@@ -12,6 +12,7 @@
     "default_title": "Open TabFlow",
     "default_icon": {
       "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
@@ -25,6 +26,7 @@
   },
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },

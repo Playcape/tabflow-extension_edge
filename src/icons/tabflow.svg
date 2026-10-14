@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <title>TabFlow — Flowfold</title>
+  <defs>
+    <linearGradient id="tile" x1="16" y1="8" x2="108" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A253F"/>
+      <stop offset="1" stop-color="#0A1020"/>
+    </linearGradient>
+    <linearGradient id="flow" x1="29" y1="91" x2="97" y2="30" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3BB7F5"/>
+      <stop offset="1" stop-color="#8CF9D7"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="55" y1="78" x2="91" y2="59" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B95FF"/>
+      <stop offset="1" stop-color="#CCB8FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="124" height="124" rx="30" fill="url(#tile)"/>
+  <rect x="2.5" y="2.5" width="123" height="123" rx="29.5" stroke="#FFFFFF" stroke-opacity=".14"/>
+  <path d="M30 98V43C30 35.82 35.82 30 43 30H99L81 48H49V79L30 98Z" fill="url(#flow)"/>
+  <path d="M57 60H93L75 78H57V60Z" fill="url(#fold)"/>
+</svg>

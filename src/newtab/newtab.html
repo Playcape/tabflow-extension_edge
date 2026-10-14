@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Tab</title>
+  <title>TabFlow · Your browser workspace</title>
   <link rel="stylesheet" href="newtab.css" />
   <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon16.png" />
   <link rel="icon" type="image/png" sizes="48x48" href="/icons/icon48.png" />
   <link rel="icon" type="image/png" sizes="128x128" href="/icons/icon128.png" />
 </head>
-<body>
+<body data-design="normal" data-view="collections">
+<a class="skip-link" href="#main-content">Skip to workspace</a>
+<div class="atmosphere" aria-hidden="true"><div class="aurora-field field-one"></div><div class="aurora-field field-two"></div><div class="aurora-orbit"></div></div>
 
 <div id="app">
 
@@ -17,19 +19,12 @@
   <aside id="sidebar" aria-label="Navigation">
     <div class="sidebar-header">
       <div class="logo">
-        <span class="logo-icon" aria-hidden="true">⬡</span>
+        <img class="logo-icon" src="../icons/tabflow.svg" width="32" height="32" alt="" />
         <span class="logo-text">TabFlow</span>
       </div>
       <div class="sidebar-header-actions">
         <button id="btn-sidebar-toggle" class="icon-btn" title="Hide sidebar" aria-label="Hide sidebar"></button>
       </div>
-    </div>
-
-    <div class="sidebar-search">
-      <span class="search-icon-wrap" aria-hidden="true"></span>
-      <input type="search" id="search-input" placeholder="Search saved tabs…  ( / )"
-             autocomplete="off" spellcheck="false" aria-label="Search saved tabs" />
-      <button id="search-clear" class="icon-btn search-clear" style="display:none;" aria-label="Clear search"></button>
     </div>
 
     <nav class="sidebar-nav" aria-label="Views">
@@ -56,6 +51,7 @@
     </div>
 
     <div class="sidebar-footer">
+      <div class="workspace-status"><span class="status-dot" aria-hidden="true"></span> Your local workspace <span id="design-status">Normal</span></div>
       <button class="nav-item" data-view="settings">
         <span class="nav-icon" data-icon="settings" aria-hidden="true"></span><span>Settings</span>
       </button>
@@ -63,10 +59,24 @@
   </aside>
 
   <!-- MAIN -->
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
+    <header class="workspace-bar">
+      <button id="workspace-sidebar-toggle" class="icon-btn" title="Toggle navigation" aria-label="Toggle navigation" aria-controls="sidebar"></button>
+      <div class="sidebar-search workspace-search">
+        <span class="search-icon-wrap" aria-hidden="true"></span>
+        <input type="search" id="search-input" placeholder="Search tabs, or enter a URL…" autocomplete="off" spellcheck="false" aria-label="Search saved tabs or launch a URL" />
+        <kbd class="search-shortcut" aria-hidden="true">/</kbd>
+        <button id="search-clear" class="icon-btn search-clear" style="display:none;" aria-label="Clear search"></button>
+      </div>
+      <button id="btn-command-palette" class="command-trigger" title="Open command palette (Ctrl or Command + K)"><span>Quick jump</span><kbd>⌘ / Ctrl K</kbd></button>
+      <button id="workspace-tabs-toggle" class="icon-btn" title="Toggle open tabs" aria-label="Toggle open tabs" aria-controls="right-panel"></button>
+    </header>
+    <div id="mode-navigation" class="mode-navigation"></div>
     <div id="toolbar">
       <div class="toolbar-left">
+        <span id="workspace-eyebrow" class="eyebrow">Your workspace</span>
         <h1 id="space-breadcrumb"></h1>
+        <p id="workspace-description" class="workspace-description">A little less scattered. A lot more focused.</p>
       </div>
       <div class="toolbar-right">
         <button id="btn-expand-all" class="toolbar-btn" title="Expand all collections"></button>
@@ -78,6 +88,9 @@
         </div>
         <div class="toolbar-divider" aria-hidden="true"></div>
         <button id="btn-add-collection" class="toolbar-btn accent"></button>
+      </div>
+      <div id="workspace-overview" class="workspace-summary" aria-label="Workspace statistics">
+        <div class="workspace-metrics"><span><strong id="metric-collections">0</strong> collections</span><span><strong id="metric-tabs">0</strong> saved tabs</span><span><strong id="metric-pinned">0</strong> pinned</span></div>
       </div>
     </div>
 
@@ -114,7 +127,7 @@
           </div>
         </div>
         <div class="page-viewer-frame-container">
-          <iframe id="page-viewer-frame" class="page-viewer-frame" sandbox="allow-scripts allow-forms allow-popups"></iframe>
+          <iframe id="page-viewer-frame" class="page-viewer-frame" title="Page content" sandbox="allow-scripts allow-forms allow-popups"></iframe>
         </div>
       </div>
     </div>
@@ -741,7 +754,7 @@
   <!-- RIGHT PANEL -->
   <aside id="right-panel" aria-label="Open tabs">
     <div class="right-panel-header">
-      <span class="right-panel-title">Open Tabs</span>
+      <div class="live-panel-heading"><span class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Live browser</span><span class="right-panel-title">Open tabs <span id="open-tab-count">0</span></span></div>
       <div class="right-panel-actions">
         <button id="btn-add-current-tab" class="icon-btn" title="Save the current tab to a collection" aria-label="Save current tab to a collection"></button>
         <button id="btn-refresh-tabs" class="icon-btn" title="Refresh" aria-label="Refresh open tabs"></button>
@@ -749,6 +762,8 @@
         <button id="btn-right-toggle" class="icon-btn" title="Hide panel" aria-label="Hide open tabs panel"></button>
       </div>
     </div>
+    <div class="open-tabs-filter"><input id="open-tabs-filter" type="search" placeholder="Filter open tabs…" aria-label="Filter open tabs" /></div>
+    <p class="panel-tip">Drag a tab into a collection to keep it.</p>
     <div id="open-tabs-list"></div>
     <div id="recently-closed-section">
       <div class="recently-closed-hdr">

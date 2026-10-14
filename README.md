@@ -1,166 +1,91 @@
-# TabFlow 2.0 — Tab Manager
+<p align="center"><img src="src/icons/icon128.png" width="72" height="72" alt="TabFlow logo"></p>
 
-A new-tab page that organizes your browsing into **Spaces → Collections → Tabs**, with
-session saving, drag & drop, global hotkeys, omnibox aliases, and deep theming.
+# TabFlow 2.0
 
-Cross-browser by design: **Chrome, Edge, Firefox, and Zen Browser** all load the same
-`src/` folder.
+**A workspace for everything your browser has open—and everything you want to keep.**
 
-## Documentation
+Turn your new tab into a place to return to a project, capture a browsing session, read a saved document, and decide what comes next. TabFlow brings saved tabs, live tabs, HTML Pages, aliases, and Tasks together in a workspace that lives in your browser profile.
 
-| Document | For |
+Built for **Chrome, Edge, Firefox, and Zen**. No account. No application server. No frontend framework or build step.
+
+[Get started](docs/installation.md) · [User guide](docs/user-guide.md) · [Troubleshooting](docs/troubleshooting.md) · [Developer architecture](docs/architecture.md)
+
+![Aurora: the TabFlow glass workspace](docs/assets/aurora.png)
+
+## Keep the context, not just the link
+
+- **Spaces → Collections → saved tabs.** Separate work and personal projects, group related research, and keep notes, tags, pins, and shortcuts with each saved tab.
+- **Your live browser, alongside your saved work.** See tabs by window, jump to one, drag it into a collection, save a window or session, and restore recently closed tabs when the browser supports it.
+- **Pages with their own Page Spaces.** Keep an HTML study guide, reference sheet, or small custom document beside your browsing workspace. Upload an HTML file, paste HTML, or embed an HTTP(S) URL.
+- **Find and launch quickly.** Search saved tabs across Spaces, open the command palette with `Ctrl/⌘ + K`, assign four browser shortcuts, or type `to <alias>` in the address bar.
+- **Make room for the next step.** Keep Tasks with optional links, hide side panels, or enter Zen mode for a focused workspace.
+- **Make it yours.** Choose a design mode, light or dark theme, custom accent, system font, density, background, or your own theme and CSS.
+
+Saved collections are independent of live browser tabs: saving a session keeps its links without closing your current work. TabFlow Spaces are also independent of browser-native tab groups and Zen workspaces.
+
+## Three ways to work
+
+The design mode changes the composition and interaction treatment; the theme supplies the palette. Your data and tools stay available in every mode.
+
+| Mode | Experience |
 | --- | --- |
-| [docs/user-guide.md](docs/user-guide.md) | Every feature, settings reference, keyboard shortcuts |
-| [docs/installation.md](docs/installation.md) | Per-browser install (incl. Zen specifics), permanent installs, moving data between browsers |
-| [docs/troubleshooting.md](docs/troubleshooting.md) | Known issues, FAQ, bug reporting |
-| [docs/architecture.md](docs/architecture.md) | Developers: module map, data schema, cross-browser strategy, how to extend |
+| **Normal** | An editorial workbench: Collections form horizontal bands with an identity/action column beside their cards. Quiet navigation and compact controls make it the everyday default. |
+| **Tonal** | A tactile board: view navigation moves above the canvas, Spaces become a dedicated index, and rounded Collections tile into columns. Strong headings, pills, and accent-derived surfaces complete the composition. |
+| **Aurora** | A spatial glass workspace: floating panels, atmospheric color, illuminated edges, layered cards, reactive highlights, and a fluid drag treatment. The flagship visual mode. |
 
-## Layout
+All three support light and dark themes. Aurora's enhancements scale back for reduced motion, reduced transparency, increased contrast, and constrained rendering conditions. Custom CSS can override built-in styling, so start with the supplied controls when tuning accessibility or performance.
 
+[Preview Normal](docs/assets/normal.png) · [Preview Tonal](docs/assets/tonal.png) · [Aurora in a light theme](docs/assets/aurora-light.png)
+
+## Start with one collection
+
+1. [Install the build for your browser](docs/installation.md).
+2. Create a Space for a project and add a Collection.
+3. Drag a live tab into it, or use **Save session** to capture your current browser tabs.
+4. Open **Settings → Appearance** to choose Normal, Tonal, or Aurora.
+5. Export a backup from **Settings → Data** when you have made it your own.
+
+### Install from this repository
+
+For Chrome or Edge, enable Developer mode on the browser's extensions page, choose **Load unpacked**, and select `src/`.
+
+For Firefox or Zen, first create the browser-specific packages from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/package.ps1
 ```
-src/                      ← the extension; load this folder directly in any browser
-  manifest.json           ← single cross-browser MV3 manifest
-  background.js           ← event-driven background (hotkeys, omnibox, action button)
-  common/
-    ext.js                ← THE platform layer: browser API alias + capability flags
-    util.js               ← DOM builder, URL/favicon helpers, debounce, ids
-    icons.js              ← inline SVG icon set
-    themes.js             ← theme/accent/font data (pure data)
-  newtab/
-    newtab.html / .css    ← the new tab page
-    main.js               ← boot
-    store.js              ← single state document, debounced saves, cross-tab sync
-    migrations.js         ← schema v3, v2→v3 migration, import sanitizing
-    ui/                   ← one module per feature (spaces, collections, opentabs, …)
-scripts/package.ps1       ← builds clean per-browser zips for store submission
-```
 
-## Running it
+Then choose **Load Temporary Add-on** in `about:debugging#/runtime/this-firefox` and select `dist/zen/manifest.json`. Raw `src/` has a Chromium service-worker manifest; use the generated Firefox/Zen build. Temporary installation and permanent signing are covered in the [installation guide](docs/installation.md).
 
-No build step is required for development.
-
-| Browser | Steps |
+| Package | Browser |
 | --- | --- |
-| **Chrome** | `chrome://extensions` → enable Developer mode → *Load unpacked* → select `src/` |
-| **Edge** | `edge://extensions` → enable Developer mode → *Load unpacked* → select `src/` |
-| **Firefox** | `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on…* → select `src/manifest.json` |
-| **Zen** | Same as Firefox: `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on…* → `src/manifest.json` |
+| `dist/chromium/` and `dist/tabflow-2.0.0-chrome-edge.zip` | Chrome and Edge |
+| `dist/zen/` and `dist/tabflow-2.0.0-zen-firefox.zip` | Firefox and Zen |
 
-Open a new tab — TabFlow takes over via the standard `chrome_url_overrides` mechanism.
-Firefox/Zen show a one-time "Keep changes?" prompt the first time; accept it.
+Archive names use the version in `src/manifest.json`.
 
-Prefer the packaged builds for anything beyond quick dev testing — run
-`scripts/package.ps1` to produce:
+**New-tab behavior differs by engine.** On Chromium, the background redirects recognized browser new-tab URLs to the TabFlow extension page. The Firefox/Zen package uses `chrome_url_overrides`. TabFlow deduplicates its workspace tabs within a window; each window can retain its own workspace. The toolbar action can bring an existing workspace in another window forward. See [how new tabs work](docs/installation.md#how-new-tabs-work).
 
-- `dist/chromium` + `tabflow-<v>-chrome-edge.zip` — for Edge/Chrome
-- `dist/zen` + `tabflow-<v>-zen-firefox.zip` — for Zen/Firefox (clean manifest,
-  no "favicon permission" warning)
+## Local data, portable backups
 
-## Zen Browser setup (read this if new tabs don't show TabFlow)
+Workspace state is saved in the current browser profile. Large Page bodies use IndexedDB; exported JSON includes their content so Pages travel with the rest of your workspace. Open TabFlow windows receive storage changes within that profile. This is **not cloud sync or collaborative editing**: simultaneous edits to the same workspace can still conflict.
 
-Zen ships with **"URL bar replaces new tab"** enabled: pressing Ctrl+T or the new-tab
-button opens a floating search popup and *no new-tab page is created at all* — so no
-extension's new-tab page (TabFlow included) can ever appear.
+JSON backups carry Spaces, Collections, saved tabs, Page Spaces, Pages, Links, Tasks, settings, custom themes, and custom CSS. The separate snapshot history, live browser tabs, and browser shortcut remappings are not part of that export. Older TabFlow data and backups are normalized on load/import. See the [data guide](docs/user-guide.md#backups-snapshots-and-moving-data) for scope and recovery.
 
-Fix: open `about:config`, search `zen.urlbar.replace-newtab`, set it to **false**.
-New tabs then open the real new-tab page, which is TabFlow. (TabFlow also shows this
-hint inside the app on Firefox-based browsers, with a copy button.)
+## Privacy by design, with explicit boundaries
 
-Other Zen notes:
+TabFlow has no analytics or account service and bundles its own application code and system-font choices. Your workspace is not uploaded by TabFlow.
 
-- **"Background script: Stopped"** in `about:debugging` is normal — event pages sleep
-  until a hotkey/omnibox/toolbar event wakes them. It is not a bug.
-- The manifest warning about the `favicon` permission only appears when loading `src/`
-  directly; the `dist/zen` package strips that Chromium-only permission.
-- **Permanent install:** Zen (like release Firefox) enforces extension signing, and
-  the `xpinstall.signatures.required` switch does not work there. Sign the
-  `tabflow-<v>-zen-firefox.zip` on addons.mozilla.org (a free *unlisted/self-hosted*
-  submission returns a signed `.xpi` you can install permanently). Temporary add-ons
-  unload on every restart.
+Some features can make network requests: saved remote favicon URLs, the optional Google favicon fallback, URLs you open or embed, resources referenced by HTML Pages, and resources in custom CSS. The favicon fallback is enabled by default and can be disabled in **Settings → Advanced**; it sends a site's domain to Google's favicon service. That switch is not a general network blocker.
 
-### Moving your data from Edge to Zen
+HTML Pages run inside a sandboxed frame without access to the parent workspace or extension APIs. They are user-supplied documents, not sanitized static text. Their scripts, resources, forms, and external websites remain subject to browser security policies. [Pages and privacy details](docs/user-guide.md#pages-and-page-spaces).
 
-1. In **Edge** TabFlow: `Settings → Data → Export JSON` — downloads a backup file.
-2. In **Zen** TabFlow: `Settings → Data → Import JSON` — pick that file, confirm.
+## For contributors
 
-Everything moves: spaces, collections, saved tabs, hotkey slots, links, tasks, and
-appearance settings. Backups from TabFlow v1 are converted automatically too.
+The extension is built from browser-native ES modules and CSS. Shared state and feature modules stay independent of the visual modes; mode styles and enhancement behavior are separated from the base layout. The [architecture guide](docs/architecture.md) documents storage, Pages, the render bus, browser packaging, design boundaries, and verification.
 
-## Cross-browser strategy
+The original **Flowfold** mark turns layered tab planes into a forward-moving F. Its [identity guide](docs/brand.md) includes the canonical SVG, small-size previews, and asset-generation instructions.
 
-- **One API alias.** `common/ext.js` exports `ext = browser ?? chrome`. Firefox's
-  `browser` is promise-based; Chromium's `chrome` is promise-based in MV3 — so a plain
-  alias gives one async API everywhere. No polyfill dependency.
-- **One manifest.** `background` declares both `service_worker` (Chromium) and
-  `scripts` (Firefox event page); each browser uses its key and ignores the other
-  (supported in Chrome 121+/Firefox 106+). `browser_specific_settings.gecko` is
-  ignored by Chromium with a harmless install-time note; the `favicon` permission is
-  Chromium-only and skipped by Firefox. `scripts/package.ps1` strips the foreign keys
-  for store uploads.
-- **Capability flags, not UA sniffing.** `caps.tabGroups`, `caps.sessions`,
-  `caps.bookmarks`, `caps.localFavicons` gate features at runtime; e.g. "Open as tab
-  group" simply doesn't appear on browsers without the API.
-- **New-tab takeover is declarative.** v1 removed `chrome_url_overrides` and fought
-  duplicate-tab race conditions in the background script across six bugfix PRs. v2
-  restores the standard override, which works identically on all four browsers, and
-  deletes all of that code.
+Run `npm install`, then `npm test` for data/lifecycle regressions. [Testing](docs/testing.md) explains browser setup, UI checks, real-extension tests, and the verified release scope.
 
-### Known browser-specific limitations
-
-- **Firefox/Zen shortcuts:** there is no linkable shortcuts page; the hotkey dialog
-  shows instructions instead (Add-ons Manager → gear → Manage Extension Shortcuts).
-  On some Linux setups Alt+1–4 collide with the browser's own tab switching.
-- **Favicons:** Chromium resolves icons locally through the `favicon` permission.
-  Firefox has no equivalent, so saved tabs without a stored icon fall back to Google's
-  favicon service *only if* "Remote favicon fallback" (Settings → Advanced) is on;
-  otherwise letter tiles are shown.
-- **Tab groups:** "Open as tab group" appears on Chromium (and Firefox ≥139 once
-  `tabs.group` ships there); elsewhere collections open as plain tabs.
-- **Zen:** Zen has its own workspaces feature; TabFlow's Spaces are internal to the
-  page and coexist fine. If Zen's start page setting overrides new tabs, choose the
-  extension page when prompted, or set the TabFlow URL (Settings → Data → Homepage).
-
-## Data & migration
-
-State is one document under `storage.local["tabflow_v3"]`, written debounced and
-stamped per page instance; other open TabFlow pages adopt external writes via
-`storage.onChanged` (v1 lost data here — last writer clobbered silently).
-
-On first run, v1 data (`tabflow_v2`) is migrated automatically — spaces, collections,
-tabs, hotkey slots, links, "Next" items (now *Tasks*), snapshots, and the settings
-that still exist. The v2 record is left untouched as a rollback. Import accepts both
-v2 and v3 backup files; all imported URLs and structures are sanitized.
-
-## Test checklist (per browser)
-
-**Smoke**
-1. Load the extension; open a new tab → TabFlow renders, no console errors.
-2. First run on a light-mode OS → Light theme auto-selected.
-
-**Core flows**
-3. Create a space, rename (double-click), assign color/emoji, reorder via handle, delete (confirm dialog).
-4. Add a collection; add a tab via the + card; edit title/URL/note/tags; pin one.
-5. Drag an open tab from the right panel into a collection; drag cards within/between collections; reorder collections by handle.
-6. Click a card → opens in current tab. Ctrl+click / middle-click → background tab.
-7. "Open all", "Window", and (Chromium) "Open as tab group" from a collection.
-8. Save Session and per-window save; row click focuses that tab; Recently Closed restores.
-9. Search with `/`, matches highlight, Esc clears; searches across all spaces.
-10. Delete a tab and a collection → toast Undo restores them.
-
-**Background features**
-11. Assign hotkey slot 1 to a tab; press Alt+1 from another tab → focuses/opens the target.
-12. Add a Link alias; type `to <alias>` in the address bar → navigates.
-13. Click the toolbar icon from any page → jumps to the TabFlow tab.
-
-**Settings & data**
-14. Switch themes/accent/font/density/radius; reload → persisted.
-15. Create a custom theme with live preview; delete it.
-16. Snapshot save/restore; bookmarks import; export JSON; re-import it; import a v1 backup.
-17. Open two TabFlow tabs in two windows; edit in one → the other updates.
-18. Reset settings (keeps collections/custom themes); Clear all data (confirm dialog).
-
-## Privacy
-
-- No analytics, no remote code, no remote fonts.
-- The only optional network call is the favicon fallback (Google s2), off-switchable
-  in Settings → Advanced and unnecessary on Chromium.
+Please include the browser/version, reproduction steps, active design mode, and relevant console errors when [reporting an issue](https://github.com/Playcape/tabflow-extension_edge/issues). Avoid attaching backups containing private URLs or Page content.

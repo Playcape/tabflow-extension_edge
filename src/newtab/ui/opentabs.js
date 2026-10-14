@@ -18,6 +18,8 @@ import { setDrag, clearDrag } from './dnd.js';
 import { makeCollection, makeTab } from '../migrations.js';
 
 let openTabs = [];
+let filter = '';
+const collapsedWindows = new Set();
 
 /* ---------- data ---------- */
 
@@ -60,11 +62,13 @@ function saveTabsAsCollection(tabs, namePrefix) {
 
 function renderOpenTabs() {
   const list = q('#open-tabs-list');
-  const visible = openTabs.filter((tab) => !isTabFlowTab(tab));
+  const available = openTabs.filter((tab) => !isTabFlowTab(tab));
+  q('#open-tab-count').textContent = String(available.length);
+  const visible = available.filter(tab => `${tab.title} ${tab.url}`.toLowerCase().includes(filter));
 
   if (!visible.length) {
     list.replaceChildren(
-      h('div', { class: 'panel-empty', text: 'No other tabs are open.' })
+      h('div', { class: 'panel-empty', text: filter ? 'No open tabs match your filter.' : 'No other tabs are open.' })
     );
     return;
   }
@@ -78,8 +82,14 @@ function renderOpenTabs() {
   let windowIndex = 1;
   list.replaceChildren(
     ...[...byWindow.values()].map((tabs) => {
-      const group = h('div', { class: 'win-group' });
-      const header = h('div', { class: 'win-group-hdr', onclick: () => group.classList.toggle('collapsed') },
+      const windowId = tabs[0].windowId;
+      const group = h('div', { class: 'win-group' + (collapsedWindows.has(windowId) ? ' collapsed' : '') });
+      const toggle = () => {
+        const collapsed = group.classList.toggle('collapsed');
+        collapsed ? collapsedWindows.add(windowId) : collapsedWindows.delete(windowId);
+        header.setAttribute('aria-expanded', String(!collapsed));
+      };
+      const header = h('div', { class: 'win-group-hdr', role: 'button', tabindex: '0', 'aria-expanded': String(!collapsedWindows.has(windowId)), onclick: toggle, onkeydown: e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(); } } },
         h('span', { class: 'win-chevron', html: icon('chevron-down', 12) }),
         h('span', { html: icon('monitor', 12) }),
         h('span', { text: `Window ${windowIndex++} (${tabs.length})` }),
@@ -107,12 +117,17 @@ function buildTabRow(tab) {
 
   const row = h('div',
     {
-      class: 'tab-row',
+      class: 'tab-row' + (tab.active ? ' active' : ''),
+      tabindex: '0', role: 'button',
       title: tab.url,
       onclick: () => focusTab(tab).catch(() => {}),
+      onkeydown: event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); focusTab(tab).catch(() => {}); } },
     },
     fav,
-    h('span', { class: 'tab-row-title', text: tab.title || tab.url })
+    h('span', { class: 'tab-row-copy' },
+      h('span', { class: 'tab-row-title', text: tab.title || tab.url }),
+      h('span', { class: 'tab-row-domain', text: domainOf(tab.url ?? '') })
+    )
   );
 
   row.draggable = true;
@@ -167,7 +182,7 @@ async function renderRecentlyClosed() {
           if (tab.url) ext.tabs.create({ url: tab.url }).catch(() => {});
         }
       };
-      return h('div', { class: 'tab-row', title: tab.url ?? '', onclick: restore },
+      return h('button', { class: 'tab-row', style: 'width:100%;text-align:left', title: tab.url ?? '', onclick: restore },
         faviconEl(tab.url ?? '', tab.favIconUrl, settings().remoteFavicons, 'tab-fav-img', 'tab-fav-fallback'),
         h('span', { class: 'tab-row-title', text: tab.title || tab.url || '(unknown)' })
       );
@@ -232,6 +247,7 @@ async function openAddCurrentTab() {
 /* ---------- init ---------- */
 
 export function initOpenTabs() {
+  q('#open-tabs-filter').addEventListener('input', event => { filter = event.target.value.trim().toLowerCase(); renderOpenTabs(); });
   registerRenderer('opentabs', renderOpenTabs);
   registerRenderer('recentlyClosed', renderRecentlyClosed);
 

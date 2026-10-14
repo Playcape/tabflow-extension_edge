@@ -1,0 +1,69 @@
+/* TONAL — a tactile collection board. Navigation moves above the canvas;
+ * spaces become a dedicated left index, collections tile in equal columns. */
+body[data-design="tonal"] {
+  --m3-state: color-mix(in srgb, var(--accent) 14%, transparent);
+  --m3-surf: color-mix(in srgb, var(--accent) calc(4% * var(--m3-tint)), var(--bg));
+  --m3-surf-low: color-mix(in srgb, var(--accent) calc(8% * var(--m3-tint)), var(--sidebar-bg));
+  --m3-surf-1: color-mix(in srgb, var(--accent) calc(14% * var(--m3-tint)), var(--card-bg));
+  --m3-surf-2: color-mix(in srgb, var(--accent) calc(22% * var(--m3-tint)), var(--card-hover));
+  --m3-prim-cont: color-mix(in srgb, var(--accent) calc(38% * var(--m3-tint)), var(--card-bg));
+  --m3-on-prim-cont: var(--text);
+  --board-radius: max(20px, var(--m3-radius));
+  --card-min-w: 145px;
+}
+body[data-design="tonal"] #app { background: var(--m3-surf); gap: 12px; padding: 12px; }
+body[data-design="tonal"] #sidebar { background: transparent; border: 0; padding: 0; }
+body[data-design="tonal"] .sidebar-header { padding: 14px 10px 20px; }
+body[data-design="tonal"] .spaces-section { padding-top: 18px; }
+body[data-design="tonal"] .spaces-label { font-size: 10px; }
+body[data-design="tonal"] .space-item { border-radius: 999px; min-height: 48px; padding: 10px; }
+body[data-design="tonal"] .space-item.active { background: var(--m3-prim-cont); font-weight: 700; }
+body[data-design="tonal"] #main-content { background: var(--m3-surf-low); border-radius: var(--board-radius); }
+body[data-design="tonal"] .workspace-bar { border: 0; padding-bottom: 8px; }
+body[data-design="tonal"] #search-input { border-radius: 999px; border-color: transparent; background: var(--m3-surf-1); }
+body[data-design="tonal"] .mode-navigation { display: block; padding: 0 var(--space-inset); }
+body[data-design="tonal"] .mode-navigation .sidebar-nav { display: flex; flex-direction: row; gap: 7px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+body[data-design="tonal"] .mode-navigation .nav-item { width: auto; border-radius: 999px; min-height: 38px; padding: 8px 17px; }
+body[data-design="tonal"] .nav-item.active { background: var(--m3-prim-cont); color: var(--text); }
+body[data-design="tonal"] #toolbar { padding-top: 22px; }
+body[data-design="tonal"] #space-breadcrumb { font-size: clamp(28px, 3.1vw, 44px); letter-spacing: -1.8px; }
+body[data-design="tonal"].m3-bold #space-breadcrumb { font-weight: 820; }
+body[data-design="tonal"] #workspace-eyebrow { display: none; }
+body[data-design="tonal"] .workspace-description { max-width: 380px; line-height: 1.6; }
+body[data-design="tonal"] #collections-area { --collection-gap: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr)); align-content: start; align-items: start; column-gap: var(--collection-gap); }
+body[data-design="tonal"] .collection { padding: 20px 16px 16px; border: 0; border-radius: var(--board-radius); background: var(--m3-surf-1); }
+body[data-design="tonal"] .collection-header { flex-wrap: wrap; gap: 5px; }
+body[data-design="tonal"] .col-name-wrap { flex-wrap: wrap; min-width: 70px; }
+body[data-design="tonal"] .col-name { font-size: 17px; font-weight: 720; letter-spacing: -.5px; max-width: 100%; }
+body[data-design="tonal"] .col-count { border-radius: 99px; background: var(--m3-prim-cont); padding: 3px 8px; }
+body[data-design="tonal"] .col-restore-btn { display: none; } /* Available as the first collection-menu action. */
+body[data-design="tonal"] .col-drag-handle { width: 10px; }
+body[data-design="tonal"] .col-actions .icon-btn { width: 26px; height: 26px; }
+body[data-design="tonal"] .tab-card { border: 0; border-radius: max(14px, calc(var(--m3-radius) - 5px)); background: var(--m3-surf-low); padding: 16px; min-height: calc(var(--card-h) + 15px); }
+body[data-design="tonal"] .tab-card:hover { background: var(--m3-surf-2); }
+body[data-design="tonal"] .card-fav-row .fav-fallback { width: 29px; height: 29px; background: var(--m3-prim-cont); border-radius: 50%; font-size: 13px; }
+body[data-design="tonal"] .card-title { font-size: 13px; font-weight: 620; }
+body[data-design="tonal"] .add-tab-card { border: 0; border-radius: max(14px, calc(var(--m3-radius) - 5px)); background: var(--m3-prim-cont); }
+body[data-design="tonal"] .toolbar-btn, body[data-design="tonal"] .accent-btn, body[data-design="tonal"] .settings-btn, body[data-design="tonal"] .icon-btn { border-radius: 999px; }
+body[data-design="tonal"] .toolbar-btn:not(.accent) { border-color: transparent; background: var(--m3-surf-1); }
+body[data-design="tonal"] #right-panel { border: 0; border-radius: var(--board-radius); background: var(--m3-surf-1); }
+body[data-design="tonal"] .tab-row { border-radius: 16px; background: var(--m3-surf-low); margin-bottom: 6px; }
+body[data-design="tonal"] .tab-row:hover { background: var(--m3-prim-cont); }
+body[data-design="tonal"] .win-group { padding: 0 3px; }
+body[data-design="tonal"] .right-panel-actions .icon-btn { background: var(--m3-prim-cont); border: 0; }
+body[data-design="tonal"] .open-tabs-filter input { border-radius: 999px; background: var(--m3-surf-low); border: 0; }
+body[data-design="tonal"] .drop-ghost { background: var(--m3-prim-cont); border: 2px dashed var(--accent); border-radius: 18px; }
+body[data-design="tonal"] .drop-zone.drop-active { background: var(--m3-state); border-radius: 20px; }
+body[data-design="tonal"] .hotkey-modal, body[data-design="tonal"] .cmdk-modal { background: var(--m3-surf-1); border-radius: 30px; }
+body[data-design="tonal"] .context-menu, body[data-design="tonal"] .dropdown-menu { background: var(--m3-surf-2); border-radius: 16px; padding: 6px; }
+body[data-design="tonal"] .context-item, body[data-design="tonal"] .cmdk-item { border-radius: 12px; }
+body[data-design="tonal"] .cmdk-item.selected { background: var(--m3-prim-cont); }
+body[data-design="tonal"] .settings-section { background: var(--m3-surf-1); padding: 22px; border-radius: var(--board-radius); }
+body[data-design="tonal"] .stab { border-radius: 999px; }
+body[data-design="tonal"] .stab.active { background: var(--m3-prim-cont); }
+body[data-design="tonal"] .link-item, body[data-design="tonal"] .next-item { padding: 16px; border: 0; border-radius: 20px; background: var(--m3-surf-1); }
+body[data-design="tonal"].m3-motion .tab-card { transition: transform 280ms cubic-bezier(.2, 1.5, .5, 1), background 150ms; }
+body[data-design="tonal"].m3-motion .tab-card:hover { transform: translateY(-3px); }
+body[data-design="tonal"].m3-motion .tab-card:active { transform: scale(.97); }
+body[data-design="tonal"] .view-list .tab-card { min-height: 48px; padding: 10px 14px; }
+body[data-design="tonal"] .view-grid .tab-card { min-height: 110px; }
