@@ -1,5 +1,6 @@
 dist/
 *.zip
+!downloads/tabflow-*.zip
 node_modules/
 test-results/
 .test-profile*/

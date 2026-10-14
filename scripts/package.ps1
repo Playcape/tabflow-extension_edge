@@ -29,6 +29,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root = Split-Path -Parent $PSScriptRoot
 $src  = Join-Path $root 'src'
 $dist = Join-Path $root 'dist'
+$downloads = Join-Path $root 'downloads'
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 if (Test-Path $dist) {
@@ -104,6 +105,9 @@ foreach ($target in $targets) {
     [System.IO.File]::WriteAllText((Join-Path $out 'manifest.json'), $json, $utf8NoBom)
 
     New-ExtensionZip -folder $out -zipPath (Join-Path $dist $target.zip)
+    # Publish the same installable archives with the source repository.
+    New-Item -ItemType Directory -Force $downloads | Out-Null
+    Copy-Item -LiteralPath (Join-Path $dist $target.zip) -Destination (Join-Path $downloads $target.zip) -Force
     Write-Host "Built dist/$($target.name) and dist/$($target.zip)"
 }
 

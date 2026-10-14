@@ -10,6 +10,9 @@ Built for **Chrome, Edge, Firefox, and Zen**. No account. No application server.
 
 [Get started](docs/installation.md) · [User guide](docs/user-guide.md) · [Troubleshooting](docs/troubleshooting.md) · [Developer architecture](docs/architecture.md)
 
+**Download the current build:** [Chrome / Edge](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-chrome-edge.zip) · [Firefox / Zen](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-zen-firefox.zip).
+These packages include the redesigned UI, compact statistics and Collection drag previews. Extract the matching archive before loading it in your browser. The older `V1.1` GitHub release predates this version.
+
 ![Aurora: the TabFlow glass workspace](docs/assets/aurora.png)
 
 ## Keep the context, not just the link

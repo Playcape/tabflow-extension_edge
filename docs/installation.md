@@ -1,5 +1,9 @@
 # Install and update TabFlow
 
+## Download the current build
+
+The current installable archives are in [downloads](../downloads/README.md): [Chrome / Edge](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-chrome-edge.zip) and [Firefox / Zen](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-zen-firefox.zip). Extract the matching archive and load the folder containing its `manifest.json` as described below. The older `V1.1` GitHub release does not contain the redesigned UI.
+
 TabFlow uses one source codebase with two browser-specific Manifest V3 packages. There is no application build step. Run the packaging script when you need the Firefox/Zen manifest or distribution archives.
 
 ## Build the browser packages
