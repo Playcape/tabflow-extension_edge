@@ -5,6 +5,7 @@
    ================================================================ */
 
 import { ext, caps, IS_FIREFOX } from '../../common/ext.js';
+import { remoteIconsAllowed, requestFaviconConsent, removeFaviconConsent } from '../../common/faviconConsent.js';
 import { q, qa, h, uid } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { THEMES, accentsFor, FONT_STACKS, THEME_SLOTS } from '../../common/themes.js';
@@ -188,7 +189,21 @@ function bindDesignToggle(sel, key, otherKey) {
 }
 
 function renderToggles() {
-  bindToggle('#remote-favicons-toggle', 'remoteFavicons', ['collections', 'opentabs']);
+  const remoteToggle = q('#remote-favicons-toggle');
+  if (remoteToggle) {
+    remoteToggle.checked = !!settings().remoteFavicons && remoteIconsAllowed();
+    remoteToggle.onchange = async () => {
+      const enabled = remoteToggle.checked;
+      const granted = enabled ? await requestFaviconConsent() : false;
+      if (!enabled) {
+        try { await removeFaviconConsent(); }
+        catch { toast('Could not revoke favicon permission. Check Firefox add-on settings.'); }
+      } else if (!granted) {
+        toast('Remote icons need Firefox 140+ and your permission to share site domains.');
+      }
+      setSetting('remoteFavicons', enabled && granted, { extraRender: ['collections', 'opentabs', 'settings'] });
+    };
+  }
 
   // Advanced feature toggles.
   bindToggle('#showlinks-toggle', 'showLinks', ['layout']);
@@ -269,7 +284,7 @@ function renderCustomThemeGrid() {
       card.append(
         h('button', {
           class: 'theme-del',
-          html: icon('x', 9),
+          children: icon('x', 9),
           title: 'Delete theme',
           'aria-label': `Delete theme ${theme.name}`,
           onclick: (event) => {

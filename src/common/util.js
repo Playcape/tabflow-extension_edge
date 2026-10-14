@@ -3,6 +3,7 @@
    ================================================================ */
 
 import { ext, caps } from './ext.js';
+import { remoteIconsAllowed } from './faviconConsent.js';
 
 /* ---------- ids ---------- */
 export function uid() {
@@ -16,7 +17,7 @@ export const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel
 
 /**
  * Tiny element builder. Props: class, dataset, style (cssText), text,
- * html (trusted markup only — our own icon constants), on<event> handlers;
+ * children (DOM nodes or text), on<event> handlers;
  * everything else becomes a property when possible, else an attribute.
  */
 export function h(tag, props = {}, ...children) {
@@ -27,7 +28,7 @@ export function h(tag, props = {}, ...children) {
     else if (key === 'dataset') Object.assign(el.dataset, val);
     else if (key === 'style') el.style.cssText = val;
     else if (key === 'text') el.textContent = val;
-    else if (key === 'html') el.innerHTML = val;
+    else if (key === 'children') el.append(...(Array.isArray(val) ? val : [val]));
     else if (key.startsWith('on') && typeof val === 'function')
       el.addEventListener(key.slice(2).toLowerCase(), val);
     else if (key in el) el[key] = val;
@@ -111,12 +112,13 @@ export function sameSite(a, b) {
  * ('' means: render a letter tile instead).
  */
 export function faviconSrc(url, savedIcon, allowRemote) {
-  if (savedIcon && /^(https:|data:image\/)/.test(savedIcon)) return savedIcon;
+  if (savedIcon && /^data:image\//.test(savedIcon)) return savedIcon;
+  if (savedIcon && /^https:/.test(savedIcon) && remoteIconsAllowed()) return savedIcon;
   if (!url) return '';
   if (caps.localFavicons) {
     return ext.runtime.getURL(`_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`);
   }
-  if (allowRemote) {
+  if (allowRemote && remoteIconsAllowed()) {
     const domain = domainOf(url);
     if (domain) return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
   }

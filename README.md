@@ -79,7 +79,7 @@ JSON backups carry Spaces, Collections, saved tabs, Page Spaces, Pages, Links, T
 
 TabFlow has no analytics or account service and bundles its own application code and system-font choices. Your workspace is not uploaded by TabFlow.
 
-Some features can make network requests: saved remote favicon URLs, the optional Google favicon fallback, URLs you open or embed, resources referenced by HTML Pages, and resources in custom CSS. The favicon fallback is enabled by default and can be disabled in **Settings → Advanced**; it sends a site's domain to Google's favicon service. That switch is not a general network blocker.
+Some features can make network requests: saved remote favicon URLs, the optional Google favicon fallback, URLs you open or embed, resources referenced by HTML Pages, and resources in custom CSS. The favicon fallback can be disabled in **Settings → Advanced**; it sends a site's domain to Google's favicon service. The Firefox package requires desktop Firefox 140+ and blocks remote icons until you grant its optional browsing-activity consent. Chromium's fallback setting is enabled by default. That switch is not a general network blocker.
 
 HTML Pages run inside a sandboxed frame without access to the parent workspace or extension APIs. They are user-supplied documents, not sanitized static text. Their scripts, resources, forms, and external websites remain subject to browser security policies. [Pages and privacy details](docs/user-guide.md#pages-and-page-spaces).
 

@@ -65,6 +65,23 @@ For your own build:
 
 Use the signed Firefox-compatible package for Zen as well, subject to that browser's current installation policy. Generating a zip does not sign or publish it. Do not depend on an unsigned-install preference as a permanent release distribution mechanism.
 
+The Firefox manifest declares no required data transmission and optional
+`browsingActivity` transmission for remote favicons. Firefox 140+ asks for that
+permission when you enable **Settings → Advanced → Remote favicon fallback**.
+Until granted, stored remote favicon URLs and Google's fallback are blocked;
+data-image icons and letter tiles still work. Revoking the permission in Firefox
+also blocks remote icons in open TabFlow tabs. The generated package requires
+Firefox desktop 140+; its Android manifest minimum is 142, where that consent
+API became available. Android compatibility is not covered by the desktop
+checks. Workspace imports cannot grant this permission.
+[Mozilla's data-consent documentation](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/).
+
+`update_url` is only needed to deliver automatic updates to an unlisted add-on.
+For personal use, omit it and install newly signed versions through **Install
+Add-on From File**. If you later enable automatic updates, host an HTTPS update
+manifest that links to signed XPI versions; a GitHub repository homepage is not
+an update manifest. [Mozilla's update guide](https://extensionworkshop.com/documentation/manage/updating-your-extension/).
+
 ## How new tabs work
 
 ### Chromium: redirect and reuse

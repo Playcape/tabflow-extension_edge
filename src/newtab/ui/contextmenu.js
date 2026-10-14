@@ -90,7 +90,7 @@ export function showMenu(x, y, items) {
           tabindex: '-1',
           class:
             'context-item' + (item.danger ? ' danger' : '') + (item.active ? ' active' : ''),
-          html: (item.icon ? icon(item.icon, 12) + ' ' : '') ,
+          children: item.icon ? [icon(item.icon, 12), ' '] : [],
           onclick: () => {
             hideMenu();
             item.onClick?.();

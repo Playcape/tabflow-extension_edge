@@ -152,7 +152,7 @@ function renderResults() {
         },
         onclick: () => run(i),
       },
-        h('span', { class: 'cmdk-item-ic', html: icon(it.ic || 'external-link', 15) }),
+        h('span', { class: 'cmdk-item-ic', children: icon(it.ic || 'external-link', 15) }),
         h('span', { class: 'cmdk-item-label', text: it.label }),
         it.sub ? h('span', { class: 'cmdk-item-sub', text: it.sub }) : null,
         h('span', { class: 'cmdk-item-group', text: it.group })
@@ -241,7 +241,7 @@ export function initPalette() {
   input.setAttribute('aria-autocomplete', 'list');
   q('#btn-command-palette').addEventListener('click', open);
 
-  q('.cmdk-input-icon').innerHTML = icon('search', 15);
+  q('.cmdk-input-icon').replaceChildren(icon('search', 15));
 
   input.addEventListener('input', () => {
     items = filterItems(input.value);

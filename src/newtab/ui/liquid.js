@@ -33,31 +33,7 @@ import { settings } from '../store.js';
 import { getDrag } from './dnd.js';
 import { richEffectsAllowed } from './design.js';
 
-/* Static markup (own constants only — safe for innerHTML).
-   The goo filter: blur widens each shape's alpha, the color matrix
-   sharpens it back at a threshold — overlapping shapes fuse into one
-   silhouette with a liquid bridge. */
-const LAYER_HTML = `
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <filter id="lg-goo">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11"/>
-    </filter>
-  </defs>
-</svg>
-<div id="lg-goo-layer">
-  <div id="lg-dock"></div>
-  <div id="lg-blob"></div>
-</div>
-<div id="lg-card">
-  <img id="lg-card-ic" alt="" />
-  <div id="lg-card-txt">
-    <span id="lg-card-title"></span>
-    <span id="lg-card-url"></span>
-  </div>
-</div>`;
+/* The bundled template keeps the goo filter and drag ghost out of HTML sinks. */
 
 let layer = null;
 let blob = null;      // goo silhouette (filtered layer)
@@ -85,7 +61,7 @@ function ensureLayer() {
   if (layer) return;
   layer = document.createElement('div');
   layer.id = 'liquid-layer';
-  layer.innerHTML = LAYER_HTML;
+  layer.append(q('#liquid-layer-template').content.cloneNode(true));
   document.body.append(layer);
   blob = q('#lg-blob', layer);
   dock = q('#lg-dock', layer);

@@ -90,12 +90,12 @@ function renderOpenTabs() {
         header.setAttribute('aria-expanded', String(!collapsed));
       };
       const header = h('div', { class: 'win-group-hdr', role: 'button', tabindex: '0', 'aria-expanded': String(!collapsedWindows.has(windowId)), onclick: toggle, onkeydown: e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggle(); } } },
-        h('span', { class: 'win-chevron', html: icon('chevron-down', 12) }),
-        h('span', { html: icon('monitor', 12) }),
+        h('span', { class: 'win-chevron', children: icon('chevron-down', 12) }),
+        h('span', { children: icon('monitor', 12) }),
         h('span', { text: `Window ${windowIndex++} (${tabs.length})` }),
         h('button', {
           class: 'save-win-btn',
-          html: icon('download', 11),
+          children: icon('download', 11),
           title: 'Save window as collection',
           'aria-label': 'Save window as collection',
           onclick: (event) => {

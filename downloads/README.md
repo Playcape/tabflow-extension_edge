@@ -2,6 +2,11 @@
 
 These archives are generated from the repository's `src/` by `scripts/package.ps1`. They contain the current Normal, Tonal and Aurora designs, compact workspace statistics, packed Collections and live Collection drop previews.
 
+The committed 2.0.0 archives predate the Firefox signing/consent fix. For that
+fix, pull the current GitHub source and run `scripts/package.ps1` locally before
+submitting the Firefox package to Mozilla. This source update does not rebuild
+the downloadable archives.
+
 - [Chrome / Edge package](tabflow-2.0.0-chrome-edge.zip): download and extract into a folder, then choose **Load unpacked** on the browser's extensions page and select the extracted folder containing `manifest.json`.
 - [Firefox / Zen package](tabflow-2.0.0-zen-firefox.zip): download and extract, then use **Load Temporary Add-on** in `about:debugging` and select its `manifest.json`. This is an unsigned temporary/development build.
 

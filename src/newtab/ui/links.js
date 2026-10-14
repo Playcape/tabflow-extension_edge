@@ -15,7 +15,7 @@ function renderLinks() {
   if (!links.length) {
     list.replaceChildren(
       h('div', { class: 'empty-state slim' },
-        h('div', { class: 'empty-state-icon', html: icon('link', 32) }),
+        h('div', { class: 'empty-state-icon', children: icon('link', 32) }),
         h('div', { class: 'empty-state-title', text: 'No aliases yet' }),
         h('div', {
           class: 'empty-state-desc',
@@ -39,14 +39,14 @@ function buildLinkRow(link) {
     h('span', { class: 'link-url', text: link.url }),
     h('button', {
       class: 'link-del',
-      html: icon('pencil', 11),
+      children: icon('pencil', 11),
       title: 'Edit',
       'aria-label': `Edit ${link.name}`,
       onclick: () => toggleEditForm(row, link),
     }),
     h('button', {
       class: 'link-del',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: 'Delete',
       'aria-label': `Delete ${link.name}`,
       onclick: () => {

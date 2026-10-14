@@ -242,7 +242,7 @@ Chromium mounts the manifest-declared `sandbox.html`, then passes HTML from the 
 
 Any message from a viewer must verify its source and validate the requested action/HTTP(S) URL before calling an extension API. A Page opened in a new browser tab must retain its sandbox wrapper rather than receive an unsandboxed extension-origin blob document.
 
-Saved favicon URLs may be remote. The Google fallback is separately controlled by `remoteFavicons`, enabled by default. Page resources, embeds, external navigation, and user CSS may request network resources. The app has no analytics or sync server; “local-first” does not mean all displayed content is network-isolated.
+Saved favicon URLs may be remote. The Google fallback is separately controlled by `remoteFavicons`, enabled by default on Chromium. Firefox additionally gates all remote favicon URLs on optional `browsingActivity` consent, checked before the first render and updated on permission changes. Workspace imports cannot grant consent. Page resources, embeds, external navigation, and user CSS may request network resources. The app has no analytics or sync server; “local-first” does not mean all displayed content is network-isolated.
 
 ## Development and verification
 

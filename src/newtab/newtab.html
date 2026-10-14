@@ -727,7 +727,9 @@
               <div class="settings-row-desc">
                 When a saved tab has no stored icon, fetch one from Google’s favicon service
                 (sends the site’s domain to Google). Off = letter tiles instead.
-                Chromium browsers resolve icons locally and rarely need this.
+                Firefox also requires your permission before loading remote icons,
+                including stored website icon URLs. Without permission, local images
+                and letter tiles still work. Chromium resolves icons locally and rarely needs this.
               </div>
             </div>
             <label class="switch">
@@ -920,6 +922,29 @@
 </div>
 
 <div id="snackbar" class="snackbar" style="display:none" role="status" aria-live="polite"></div>
+
+<template id="liquid-layer-template">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="lg-goo">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11"/>
+    </filter>
+  </defs>
+</svg>
+<div id="lg-goo-layer">
+  <div id="lg-dock"></div>
+  <div id="lg-blob"></div>
+</div>
+<div id="lg-card">
+  <img id="lg-card-ic" alt="" />
+  <div id="lg-card-txt">
+    <span id="lg-card-title"></span>
+    <span id="lg-card-url"></span>
+  </div>
+</div>
+</template>
 
 <script type="module" src="main.js"></script>
 </body>

@@ -122,7 +122,7 @@ export function toggleZen(force) {
 
 function setIcon(sel, name, size = 14) {
   const el = q(sel);
-  if (el) el.innerHTML = icon(name, size);
+  if (el) el.replaceChildren(icon(name, size));
 }
 
 function initStaticIcons() {
@@ -132,11 +132,11 @@ function initStaticIcons() {
   setIcon('#sidebar-show-btn', 'panel-left', 13);
   setIcon('#search-clear', 'x', 12);
   setIcon('.search-icon-wrap', 'search', 13);
-  qa('.nav-icon[data-icon]').forEach((el) => (el.innerHTML = icon(el.dataset.icon, 14)));
+  qa('.nav-icon[data-icon]').forEach((el) => el.replaceChildren(icon(el.dataset.icon, 14)));
   setIcon('#btn-add-space', 'plus', 12);
-  q('#btn-expand-all').innerHTML = icon('chevron-down', 12) + ' Expand all';
-  q('#btn-collapse-all').innerHTML = icon('chevron-up', 12) + ' Collapse all';
-  q('#btn-add-collection').innerHTML = icon('plus', 12) + ' Collection';
+  q('#btn-expand-all').replaceChildren(icon('chevron-down', 12), ' Expand all');
+  q('#btn-collapse-all').replaceChildren(icon('chevron-up', 12), ' Collapse all');
+  q('#btn-add-collection').replaceChildren(icon('plus', 12), ' Collection');
   setIcon('#btn-refresh-tabs', 'refresh');
   setIcon('#btn-save-session', 'download');
   setIcon('#btn-right-toggle', 'panel-right');

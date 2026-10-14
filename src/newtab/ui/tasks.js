@@ -16,7 +16,7 @@ function renderTasks() {
   if (!tasks.length) {
     list.replaceChildren(
       h('div', { class: 'empty-state slim' },
-        h('div', { class: 'empty-state-icon', html: icon('check-square', 32) }),
+        h('div', { class: 'empty-state-icon', children: icon('check-square', 32) }),
         h('div', { class: 'empty-state-title', text: 'Nothing queued' }),
         h('div', { class: 'empty-state-desc', text: 'Capture things to read or do next — optionally with a link.' })
       )
@@ -43,14 +43,14 @@ function buildTaskRow(task, index) {
     title.addEventListener('click', () => ext.tabs.create({ url: task.url }).catch(() => {}));
   }
 
-  const handle = h('span', { class: 'next-drag-handle', html: icon('grip-vertical', 11) });
+  const handle = h('span', { class: 'next-drag-handle', children: icon('grip-vertical', 11) });
   const row = h('div', { class: 'next-item' + (task.done ? ' done' : ''), dataset: { idx: String(index) } },
     handle,
     checkbox,
     title,
     h('button', {
       class: 'next-del',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: 'Delete',
       'aria-label': `Delete ${task.title}`,
       onclick: () => {

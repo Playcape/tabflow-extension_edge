@@ -54,7 +54,7 @@ export function renderPages() {
   if (!pages.length) {
     grid.replaceChildren(
       h('div', { class: 'empty-state' },
-        h('div', { class: 'empty-state-icon', html: icon('file-text', 40) }),
+        h('div', { class: 'empty-state-icon', children: icon('file-text', 40) }),
         h('div', { class: 'empty-state-title', text: 'No pages yet' }),
         h('div', {
           class: 'empty-state-desc',
@@ -62,7 +62,7 @@ export function renderPages() {
         }),
         h('button', {
           class: 'accent-btn',
-          html: icon('plus', 14) + ' Add Page',
+          children: [icon('plus', 14), ' Add Page'],
           onclick: () => openPageModal({ mode: 'add' }),
         })
       )
@@ -81,7 +81,7 @@ function buildPageCard(page, space) {
   const methodInfo = METHOD_LABELS[page.method] ?? METHOD_LABELS.code;
 
   const badge = h('div', { class: `page-card-badge method-${page.method}` },
-    h('span', { html: icon(methodInfo.icon, 11) }),
+    h('span', { children: icon(methodInfo.icon, 11) }),
     h('span', { text: methodInfo.label })
   );
 
@@ -103,7 +103,7 @@ function buildPageCard(page, space) {
   const pageActionBtn = (iconName, tip, onClick) =>
     h('button', {
       class: 'card-act-btn',
-      html: icon(iconName, 11),
+      children: icon(iconName, 11),
       title: tip,
       'aria-label': tip,
       onclick: (e) => {
@@ -134,7 +134,7 @@ function buildPageCard(page, space) {
     },
     h('button', {
       class: 'card-remove',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: 'Delete page',
       onclick: (e) => {
         e.stopPropagation();

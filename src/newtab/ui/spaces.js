@@ -58,7 +58,7 @@ function buildSpaceItem(space) {
 
   const handle = h('div', {
     class: 'space-drag-handle',
-    html: icon('grip-vertical', 10),
+    children: icon('grip-vertical', 10),
     title: 'Drag to reorder',
   });
 
@@ -88,7 +88,7 @@ function buildSpaceItem(space) {
     nameEl,
     h('button', {
       class: 'space-del-btn',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: `Delete space “${space.name}”`,
       'aria-label': `Delete space ${space.name}`,
       onclick: (event) => {
@@ -160,7 +160,7 @@ function buildPageSpaceItem(space) {
 
   const handle = h('div', {
     class: 'space-drag-handle',
-    html: icon('grip-vertical', 10),
+    children: icon('grip-vertical', 10),
     title: 'Drag to reorder',
   });
 
@@ -189,7 +189,7 @@ function buildPageSpaceItem(space) {
     nameEl,
     h('button', {
       class: 'space-del-btn',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: `Delete space “${space.name}”`,
       'aria-label': `Delete space ${space.name}`,
       onclick: (event) => {

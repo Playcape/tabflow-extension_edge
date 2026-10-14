@@ -93,6 +93,10 @@ foreach ($target in $targets) {
         # uses a sandboxed srcdoc frame there and retains the extension CSP.
         $m.PSObject.Properties.Remove('sandbox')
         $m.content_security_policy.PSObject.Properties.Remove('sandbox')
+        # These Chromium-only sandbox files are unused by Firefox's srcdoc
+        # viewer. Exclude them so AMO doesn't lint the unused document.write.
+        Remove-Item -LiteralPath (Join-Path $out 'newtab/sandbox.html')
+        Remove-Item -LiteralPath (Join-Path $out 'newtab/sandbox.js')
 
         # Firefox can't redirect its privileged new-tab page (that's the
         # Chromium-only approach in src), so it takes over the new tab the
@@ -114,4 +118,4 @@ foreach ($target in $targets) {
 Write-Host ""
 Write-Host "Edge/Chrome : load dist/chromium unpacked, or upload the chrome-edge zip."
 Write-Host "Zen/Firefox : about:debugging -> Load Temporary Add-on -> dist/zen/manifest.json"
-Write-Host "              (for a permanent Zen install, sign the zen-firefox zip on AMO)"
+Write-Host "              (for a permanent Firefox/Zen install, sign the zen-firefox zip on AMO)"

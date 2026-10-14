@@ -185,7 +185,7 @@ function zenSetupCallout() {
     }),
     h('button', {
       class: 'icon-btn small',
-      html: icon('x', 11),
+      children: icon('x', 11),
       'aria-label': 'Dismiss Zen setup hint',
       onclick: () => {
         update((doc) => (doc.ui.zenHintDismissed = true));
@@ -197,7 +197,7 @@ function zenSetupCallout() {
 
 function emptyState() {
   return h('div', { class: 'empty-state' },
-    h('div', { class: 'empty-state-icon', html: icon('inbox', 40) }),
+    h('div', { class: 'empty-state-icon', children: icon('inbox', 40) }),
     h('div', { class: 'empty-state-title', text: 'No collections yet' }),
     h('div', {
       class: 'empty-state-desc',
@@ -205,7 +205,7 @@ function emptyState() {
     }),
     h('button', {
       class: 'accent-btn',
-      html: icon('folder-plus', 14) + ' New collection',
+      children: [icon('folder-plus', 14), ' New collection'],
       onclick: addCollection,
     })
   );
@@ -281,7 +281,7 @@ function renderSearchResults(area, viewMode) {
     area.replaceChildren(
       header,
       h('div', { class: 'empty-state' },
-        h('div', { class: 'empty-state-icon', html: icon('search', 40) }),
+        h('div', { class: 'empty-state-icon', children: icon('search', 40) }),
         h('div', { class: 'empty-state-title', text: 'Nothing found' }),
         h('div', { class: 'empty-state-desc', text: 'Search covers titles, URLs, and tags across all spaces.' })
       )
@@ -335,7 +335,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
   const header = h('div', { class: 'collection-header' },
     h('button', {
       class: 'col-chevron icon-btn',
-      html: icon('chevron-down', 13),
+      children: icon('chevron-down', 13),
       'aria-label': collection.collapsed ? 'Expand collection' : 'Collapse collection',
       'aria-expanded': String(!collection.collapsed),
       onclick: () => {
@@ -351,7 +351,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       h('span', { class: 'col-count', text: String((tabs ?? collection.tabs).length) }),
       h('button', {
         class: 'col-restore-btn',
-        html: icon('external-link', 11) + ' Open all',
+        children: [icon('external-link', 11), ' Open all'],
         title: 'Open every tab in this collection',
         onclick: async (event) => {
           event.stopPropagation();
@@ -361,7 +361,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       }),
       h('button', {
         class: 'col-new-win-btn',
-        html: icon('monitor', 11) + ' Window',
+        children: [icon('monitor', 11), ' Window'],
         title: 'Open all tabs in a new window',
         onclick: (event) => {
           event.stopPropagation();
@@ -372,7 +372,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
     h('div', { class: 'col-actions' },
       h('button', {
         class: 'icon-btn',
-        html: icon('arrow-up-down', 11),
+        children: icon('arrow-up-down', 11),
         title: 'Sort tabs',
         'aria-label': 'Sort tabs',
         onclick: (event) => {
@@ -382,7 +382,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       }),
       h('button', {
         class: 'icon-btn',
-        html: icon('more-horizontal', 13),
+        children: icon('more-horizontal', 13),
         title: 'Collection menu',
         'aria-label': 'Collection menu',
         onclick: (event) => {
@@ -404,7 +404,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
   if (!searchContext) {
     const handle = h('span', {
       class: 'col-drag-handle',
-      html: icon('grip-vertical', 11),
+      children: icon('grip-vertical', 11),
       title: 'Drag to reorder',
     });
     let armed = false;
@@ -448,7 +448,7 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       cardsWrap.append(
         h('div', {
           class: 'add-tab-card',
-          html: icon('plus', 18) + '<span class="add-tab-label">Save a tab</span>',
+          children: [icon('plus', 18), h('span', { class: 'add-tab-label', text: 'Save a tab' })],
           title: 'Add a tab to this collection',
           role: 'button',
           tabindex: '0',
@@ -577,8 +577,8 @@ function buildCard(tab, collection, space) {
   const favRow = h('div', { class: 'card-fav-row' },
     faviconEl(tab.url, tab.favicon, remote, 'card-fav', 'fav-fallback')
   );
-  if (tab.pinned) favRow.append(h('span', { class: 'card-pin-indicator', html: icon('pin', 10), title: 'Pinned' }));
-  if (tab.note) favRow.append(h('span', { class: 'card-note-indicator', html: icon('file-text', 10), title: tab.note }));
+  if (tab.pinned) favRow.append(h('span', { class: 'card-pin-indicator', children: icon('pin', 10), title: 'Pinned' }));
+  if (tab.note) favRow.append(h('span', { class: 'card-note-indicator', children: icon('file-text', 10), title: tab.note }));
   if (tab.hotkeySlot) {
     favRow.append(
       h('button', {
@@ -612,7 +612,7 @@ function buildCard(tab, collection, space) {
   const actionBtn = (name, tip, onClick, extraClass = '') =>
     h('button', {
       class: 'card-act-btn' + extraClass,
-      html: icon(name, 11),
+      children: icon(name, 11),
       title: tip,
       'aria-label': tip,
       onclick: (event) => {
@@ -650,7 +650,7 @@ function buildCard(tab, collection, space) {
     },
     h('button', {
       class: 'card-remove',
-      html: icon('x', 11),
+      children: icon('x', 11),
       title: 'Remove from collection',
       'aria-label': `Remove ${tab.title}`,
       onclick: (event) => {
@@ -948,7 +948,7 @@ function renderViewMenu() {
     ...VIEW_MODES.map((mode) =>
       h('button', {
         class: 'dropdown-item' + (mode.key === current ? ' active' : ''),
-        html: icon(mode.icon, 13) + ' ' + mode.label,
+        children: [icon(mode.icon, 13), ' ', mode.label],
         onclick: () => {
           update(() => (space.viewMode = mode.key));
           menu.classList.remove('open');
@@ -958,7 +958,7 @@ function renderViewMenu() {
     )
   );
   const active = VIEW_MODES.find((mode) => mode.key === current) ?? VIEW_MODES[0];
-  q('#view-trigger').innerHTML = icon(active.icon, 12) + ' View ' + icon('chevron-down', 10);
+  q('#view-trigger').replaceChildren(icon(active.icon, 12), ' View ', icon('chevron-down', 10));
 }
 
 /* ============================================================
