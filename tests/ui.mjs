@@ -31,8 +31,8 @@ try {
     });
     await flush(); renderAll();
   });
-  for (const mode of ['normal','tonal','aurora']) {
-    await page.evaluate(async mode => { const {update}=await import('/newtab/store.js'); const {renderAll}=await import('/newtab/ui/bus.js'); update(d=>{d.settings.materialYou=mode==='tonal';d.settings.liquidGlass=mode==='aurora';});renderAll(); },mode);
+  for (const mode of ['normal','tonal','aurora','glass']) {
+    await page.evaluate(async mode => { const {update}=await import('/newtab/store.js'); const {renderAll}=await import('/newtab/ui/bus.js'); update(d=>{d.settings.materialYou=mode==='tonal';d.settings.liquidGlass=mode==='aurora';d.settings.glassmorphism=mode==='glass';});renderAll(); },mode);
     await page.waitForTimeout(180);
     assert.equal(await page.locator('body').getAttribute('data-design'), mode);
     await page.screenshot({path:resolve(output,`${mode}-dark.png`)});
@@ -43,10 +43,36 @@ try {
   }
   // Real controls: each mode must move navigation back and forth without reload.
   await page.click('[data-view="settings"]');
-  for (const [label,mode] of [['Normal','normal'],['Tonal','tonal'],['Aurora','aurora']]) {
+  const navHome = { normal:'sidebar', aurora:'sidebar', tonal:'mode-navigation', glass:'bar-navigation' };
+  for (const [label,mode] of [['Normal','normal'],['Tonal','tonal'],['Aurora','aurora'],['Glass','glass'],['Tonal','tonal'],['Glass','glass'],['Normal','normal']]) {
     await page.getByRole('button', {name:new RegExp('^'+label+' ')}).click();
     assert.equal(await page.locator('body').getAttribute('data-design'),mode);
+    assert.equal(await page.locator('.sidebar-nav').evaluate(el=>el.parentElement.id),navHome[mode]);
+    assert.equal(await page.locator('.sidebar-nav').count(),1);
   }
+  // Glass: design tab follows the mode, controls persist, and the rail keeps Space names reachable.
+  await page.getByRole('button', {name:/^Glass /}).click();
+  assert.ok(await page.locator('.stab[data-stab="glass"]').isVisible());
+  await page.click('.stab[data-stab="glass"]');
+  await page.click('#glassscene-pills [data-val="night"]');
+  assert.equal(await page.locator('body').getAttribute('data-scene'),'night');
+  await page.click('#glassscene-pills [data-val="auto"]');
+  assert.equal(await page.locator('body').getAttribute('data-scene'),'dusk');
+  assert.ok(await page.locator('body').evaluate(el=>el.classList.contains('glass-rail')));
+  assert.equal(Math.round(await page.locator('#sidebar').evaluate(el=>el.getBoundingClientRect().width)),60);
+  assert.equal(await page.locator('.space-item').nth(1).locator('.space-dot').getAttribute('data-initial'),'P');
+  await page.locator('.space-item').nth(1).hover();
+  assert.equal(await page.locator('.rail-tip.visible').textContent(),'Personal');
+  assert.match(await page.locator('#workspace-greeting').textContent(),/^Good (morning|afternoon|evening)/);
+  await page.locator('#glassrail-toggle').evaluate(el=>el.click());
+  assert.ok(!(await page.locator('body').evaluate(el=>el.classList.contains('glass-rail'))));
+  await page.locator('#glassrail-toggle').evaluate(el=>el.click());
+  await page.locator('#materialyou-toggle').evaluate(el=>el.click());
+  assert.equal(await page.locator('body').getAttribute('data-design'),'tonal');
+  assert.equal(await page.evaluate(async()=>{const {settings}=await import('/newtab/store.js');return settings().glassmorphism;}),false);
+  assert.ok(await page.locator('.stab[data-stab="glass"]').isHidden());
+  await page.click('.stab[data-stab="appearance"]');
+  await page.getByRole('button', {name:/^Aurora /}).click();
   await page.screenshot({path:resolve(output,'settings.png')});
   await page.click('[data-view="collections"]');
   // Custom theme/CSS survive every mode; partial themes have stable defaults.
@@ -54,8 +80,9 @@ try {
     const {update}=await import('/newtab/store.js'); const {renderAll}=await import('/newtab/ui/bus.js');
     update(d=>{d.settings.customThemes=[{name:'Regression',vars:{'--bg':'#17213a','--text':'#f1f5ff'}}];d.settings.theme='custom_0';d.settings.customCss='body[data-design] #space-breadcrumb { letter-spacing: 2px; }';});renderAll();
   });
-  for (const mode of ['normal','tonal','aurora']) {
-    await page.evaluate(async mode=>{const {update}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.materialYou=mode==='tonal';d.settings.liquidGlass=mode==='aurora';});renderAll();},mode);
+  // Aurora last: the remaining checks (drag, budget, media fallbacks) keep running in Aurora as before.
+  for (const mode of ['normal','tonal','glass','aurora']) {
+    await page.evaluate(async mode=>{const {update}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.materialYou=mode==='tonal';d.settings.liquidGlass=mode==='aurora';d.settings.glassmorphism=mode==='glass';});renderAll();},mode);
     assert.equal(await page.locator('html').evaluate(el=>el.style.getPropertyValue('--bg')),'#17213a');
     assert.equal(await page.locator('#space-breadcrumb').evaluate(el=>getComputedStyle(el).letterSpacing),'2px');
   }
@@ -164,7 +191,8 @@ try {
   assert.equal(await page.locator('#sidebar').evaluate(el=>getComputedStyle(el).backdropFilter),'none');
   await cdp.send('Emulation.setEmulatedMedia',{features:[]});
   await page.setViewportSize({width:390,height:844});
-  assert.equal(await page.locator('#sidebar').evaluate(el=>el.inert),true);
+  // The narrow layout applies on the media-query change event, which can land a frame after the resize.
+  await page.waitForFunction(()=>document.querySelector('#sidebar').inert===true,{},{timeout:2000});
   await page.click('#workspace-sidebar-toggle');
   assert.equal(await page.locator('#sidebar').evaluate(el=>el.inert),false);
   await page.click('#btn-sidebar-toggle');
@@ -173,7 +201,7 @@ try {
   await page.setViewportSize({width:1024,height:768});
   await page.screenshot({path:resolve(output,'laptop.png')});
   assert.deepEqual(errors, []);
-  await writeFile(resolve(output,'ui-results.json'),JSON.stringify({errors,browser:browser.version(),modes:3,render140CardsMs:renderMs,checks:['mode controls','custom theme/CSS','Pages','palette','focus return','native drag','open tabs','IDB round trip','export/import','140 cards','search','reduced motion/contrast/transparency','forced colors','responsive']},null,2));
+  await writeFile(resolve(output,'ui-results.json'),JSON.stringify({errors,browser:browser.version(),modes:4,render140CardsMs:renderMs,checks:['mode controls','custom theme/CSS','Pages','palette','focus return','native drag','open tabs','IDB round trip','export/import','140 cards','search','reduced motion/contrast/transparency','forced colors','responsive']},null,2));
   console.log('UI mode smoke passed; screenshots in test-results');
 } catch (error) { await page.screenshot({path:resolve(output,'failure.png')}); throw error; }
 finally { await browser.close(); await new Promise(resolve=>server.close(resolve)); }

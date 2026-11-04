@@ -131,6 +131,8 @@ body[data-design] .collection.collection-drop-preview { position: relative; poin
 .dp-material .dp-preview { align-items: flex-start; gap: 5px; }
 .dp-material .dp-preview span { height: 38px; border-radius: 13px 13px 13px 3px; }
 .dp-material .dp-preview span:nth-child(2) { margin-top: 12px; }
+.dp-glass .dp-preview { align-items: stretch; gap: 5px; padding: 8px; }
+.dp-glass .dp-preview span:first-child { flex: 0 0 12px; border-radius: 999px; }
 .dp-name { font-size: 15px; }
 .theme-card, .font-card { cursor: pointer; }
 .cmdk-modal { max-width: 680px; border-radius: 18px; }

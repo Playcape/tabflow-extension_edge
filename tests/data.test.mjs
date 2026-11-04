@@ -50,6 +50,20 @@ test('normalizes unsafe data and repairs settings, references, and page payload 
   assert.equal(doc.ui.rightPanelOpen, true);
 });
 
+test('normalizes Glass design settings and keeps design languages exclusive', () => {
+  const glass = normalizeDoc({ spaces: [], settings: { glassmorphism: true, glassScene: 'mars', glassBlur: 99, glassFrost: 2, glassRail: 'yes' } }).settings;
+  assert.equal(glass.glassmorphism, true);
+  assert.equal(glass.glassScene, 'auto');
+  assert.equal(glass.glassBlur, 40);
+  assert.equal(glass.glassFrost, 10);
+  assert.equal(glass.glassRail, true); // wrong type falls back to the default
+  assert.equal(normalizeDoc({ spaces: [], settings: { glassBlur: 0, glassScene: 'night' } }).settings.glassBlur, 0);
+  assert.equal(normalizeDoc({ spaces: [], settings: { glassScene: 'night' } }).settings.glassScene, 'night');
+  const both = normalizeDoc({ spaces: [], settings: { glassmorphism: true, liquidGlass: true } }).settings;
+  assert.equal(both.liquidGlass, true);
+  assert.equal(both.glassmorphism, false);
+});
+
 test('migrates legacy v2 view modes, tasks, fonts, and settings', () => {
   const doc = migrateV2({
     spaces: [{ id: 's', name: 'One', collections: [] }],

@@ -24,6 +24,7 @@ import { uid, normalizeUrl } from '../common/util.js';
 import { THEMES } from '../common/themes.js';
 
 export const SCHEMA_VERSION = 3;
+export const GLASS_SCENES = new Set(['auto', 'dusk', 'night', 'dawn', 'none']);
 
 export const DEFAULT_SETTINGS = {
   theme: 'dark',
@@ -61,6 +62,13 @@ export const DEFAULT_SETTINGS = {
   myRadius: 20,                // corner roundness, px (8–28)
   myMotion: true,              // springy Pixel-style motion
   myBold: true,                // bold expressive typography
+  // ---- Glass (glassmorphism dashboard) design language ----
+  glassmorphism: false,        // mutually exclusive with liquidGlass / materialYou
+  glassScene: 'auto',          // auto | dusk | night | dawn | none
+  glassBlur: 24,               // backdrop blur, px (0–40)
+  glassFrost: 40,              // frost/tint strength, % (10–90)
+  glassRail: true,             // compact icon rail for Spaces
+  glassCovers: true,           // tinted cover band on saved-tab cards
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
@@ -231,6 +239,10 @@ function normalizeSettings(raw) {
   settings.myTint = clamp0(settings.myTint, 60, 100);
   settings.myRadius = Math.min(28, Math.max(8, Number(settings.myRadius) || 20));
   if (settings.materialYou && settings.liquidGlass) settings.liquidGlass = false;
+  if (settings.glassmorphism && (settings.materialYou || settings.liquidGlass)) settings.glassmorphism = false;
+  if (!GLASS_SCENES.has(settings.glassScene)) settings.glassScene = DEFAULT_SETTINGS.glassScene;
+  settings.glassBlur = clamp0(settings.glassBlur, 24, 40);
+  settings.glassFrost = Math.min(90, Math.max(10, Number(settings.glassFrost) || 40));
   return settings;
 }
 

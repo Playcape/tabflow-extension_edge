@@ -49,6 +49,9 @@ function renderSettings() {
   renderSlider('#sl-lgdepth', '#sl-lgdepth-val', 'lgDepth', '%');
   renderSlider('#sl-mytint', '#sl-mytint-val', 'myTint', '%');
   renderSlider('#sl-myradius', '#sl-myradius-val', 'myRadius');
+  renderSlider('#sl-glassblur', '#sl-glassblur-val', 'glassBlur');
+  renderSlider('#sl-glassfrost', '#sl-glassfrost-val', 'glassFrost', '%');
+  renderPills('#glassscene-pills', 'glassScene');
   renderDesignPicker();
   renderDesignTabs();
   renderToggles();
@@ -111,17 +114,20 @@ const DESIGN_MODES = [
   { id: 'normal', name: 'Normal', desc: 'An ordered workbench. Quiet, precise, focused.' },
   { id: 'liquid', name: 'Aurora', desc: 'A spatial cockpit. Luminous glass, alive with light.' },
   { id: 'material', name: 'Tonal', desc: 'A tactile board. Expressive shapes, room to play.' },
+  { id: 'glass', name: 'Glass', desc: 'A frosted dashboard. Floating panels over a living scene.' },
 ];
+
+/* Picker/tab id → the stored boolean that turns that design language on. */
+const DESIGN_KEYS = { liquid: 'liquidGlass', material: 'materialYou', glass: 'glassmorphism' };
 
 function currentDesignMode() {
   const s = settings();
-  return s.materialYou ? 'material' : s.liquidGlass ? 'liquid' : 'normal';
+  return s.materialYou ? 'material' : s.liquidGlass ? 'liquid' : s.glassmorphism ? 'glass' : 'normal';
 }
 
 function setDesignMode(id) {
   update((doc) => {
-    doc.settings.liquidGlass = id === 'liquid';
-    doc.settings.materialYou = id === 'material';
+    for (const [mode, key] of Object.entries(DESIGN_KEYS)) doc.settings[key] = id === mode;
   });
   render('appearance', 'layout', 'settings');
 }
@@ -160,7 +166,7 @@ function activateStab(name) {
 
 /** Design-language tabs only exist while their feature is on. */
 function renderDesignTabs() {
-  for (const [stab, key] of [['liquid', 'liquidGlass'], ['material', 'materialYou']]) {
+  for (const [stab, key] of Object.entries(DESIGN_KEYS)) {
     const tab = q(`.stab[data-stab="${stab}"]`);
     if (!tab) continue;
     const on = !!settings()[key];
@@ -170,18 +176,18 @@ function renderDesignTabs() {
 }
 
 /**
- * Liquid Glass and Material You are competing design languages — turning
- * one on turns the other off. Both the Advanced toggles and the master
- * switches inside the design tabs go through here.
+ * Aurora, Tonal and Glass are competing design languages — turning one on
+ * turns the others off. Both the Advanced toggles and the master switches
+ * inside the design tabs go through here.
  */
-function bindDesignToggle(sel, key, otherKey) {
+function bindDesignToggle(sel, key) {
   const el = q(sel);
   if (!el) return;
   el.checked = !!settings()[key];
   el.onchange = () => {
     update((doc) => {
       doc.settings[key] = el.checked;
-      if (el.checked) doc.settings[otherKey] = false;
+      if (el.checked) for (const other of Object.values(DESIGN_KEYS)) if (other !== key) doc.settings[other] = false;
     });
     render('appearance', 'layout', 'settings');
     if (!el.checked) activateStab('appearance');
@@ -217,10 +223,14 @@ function renderToggles() {
   bindToggle('#clockseconds-toggle', 'clockSeconds');
 
   // Design languages (mutually exclusive; tabs follow the toggles).
-  bindDesignToggle('#liquidglass-toggle', 'liquidGlass', 'materialYou');
-  bindDesignToggle('#liquidglass-master', 'liquidGlass', 'materialYou');
-  bindDesignToggle('#materialyou-toggle', 'materialYou', 'liquidGlass');
-  bindDesignToggle('#materialyou-master', 'materialYou', 'liquidGlass');
+  bindDesignToggle('#liquidglass-toggle', 'liquidGlass');
+  bindDesignToggle('#liquidglass-master', 'liquidGlass');
+  bindDesignToggle('#materialyou-toggle', 'materialYou');
+  bindDesignToggle('#materialyou-master', 'materialYou');
+  bindDesignToggle('#glassmorphism-toggle', 'glassmorphism');
+  bindDesignToggle('#glassmorphism-master', 'glassmorphism');
+  bindToggle('#glassrail-toggle', 'glassRail');
+  bindToggle('#glasscovers-toggle', 'glassCovers');
   bindToggle('#lgunified-toggle', 'lgUnified');
   bindToggle('#lgphysics-toggle', 'lgPhysics');
   bindToggle('#lgsheen-toggle', 'lgSheen');
@@ -391,7 +401,9 @@ function renderAccentGrid() {
       ? 'Tonal seed colors — tuned to tint the Tonal interface.'
       : s.liquidGlass
         ? 'Luminous tones picked to glow through Aurora glass.'
-        : '';
+        : s.glassmorphism
+          ? 'Luminous tones picked to read clearly on frosted glass.'
+          : '';
     hint.style.display = hint.textContent ? '' : 'none';
   }
   grid.replaceChildren(

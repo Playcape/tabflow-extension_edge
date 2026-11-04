@@ -43,6 +43,11 @@ function renderBreadcrumb() {
   q('#workspace-description').textContent = {collections:'A little less scattered. A lot more focused.', pages:'Documents, references and small tools. Right here.', tasks:'Make room for what matters next.', links:'Your favorite destinations, one alias away.', settings:'One workspace. Your way of seeing it.'}[nav];
 }
 
+/** First visible character of a name, for compact (rail) presentations. */
+function initialOf(name = '') {
+  return (Array.from(String(name).trim())[0] ?? '•').toUpperCase();
+}
+
 function buildSpaceItem(space) {
   const doc = getDoc();
 
@@ -54,7 +59,7 @@ function buildSpaceItem(space) {
 
   const dot = space.icon
     ? h('div', { class: 'space-dot space-icon', text: space.icon })
-    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '' });
+    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '', dataset: { initial: initialOf(space.name) } });
 
   const handle = h('div', {
     class: 'space-drag-handle',
@@ -156,7 +161,7 @@ function buildPageSpaceItem(space) {
 
   const dot = space.icon
     ? h('div', { class: 'space-dot space-icon', text: space.icon })
-    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '' });
+    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '', dataset: { initial: initialOf(space.name) } });
 
   const handle = h('div', {
     class: 'space-drag-handle',

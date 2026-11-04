@@ -12,5 +12,6 @@
 @import url("styles/modes/normal.css");
 @import url("styles/modes/tonal.css");
 @import url("styles/modes/aurora.css");
+@import url("styles/modes/glass.css");
 @import url("styles/responsive.css");
 @import url("styles/accessibility.css");

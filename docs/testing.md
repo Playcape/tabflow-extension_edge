@@ -30,7 +30,16 @@ Screenshots use synthetic demonstration data. Theme screenshots wait for color t
 
 ## Collection layout follow-up — 29 September 2026
 
-`tests/collections.mjs` verifies unequal-height packing, native Collection drag previews and committed positions in Normal/Tonal/Aurora, cancellation with Escape, switching between single and multiple columns, collapsing Collections, and full-width search summaries. The preview must leave stored order unchanged and match final geometry after drop animations settle. It uses synthetic data on a separate HTTP preview port (4174). The existing UI suite also covers saved-card/live-tab drops and 140+ cards.
+`tests/collections.mjs` verifies unequal-height packing, native Collection drag previews and committed positions in Normal/Tonal/Aurora/Glass, cancellation with Escape, switching between single and multiple columns, collapsing Collections, and full-width search summaries. The preview must leave stored order unchanged and match final geometry after drop animations settle. It uses synthetic data on a separate HTTP preview port (4174). The existing UI suite also covers saved-card/live-tab drops and 140+ cards.
+
+## Glass design mode — 4 November 2026
+
+Linux, Node 22, Playwright Chromium (headless):
+
+- **17 Node regressions passed**, including Glass settings normalization (scene enum, blur/frost clamps, exclusivity with Aurora/Tonal).
+- **UI suite passed** with Glass added to the dark/light mode loop and custom theme/CSS checks, plus switching Normal ↔ Tonal ↔ Aurora ↔ Glass through Settings while the single navigation element moves between its homes, the Glass settings tab, scene pills, the icon rail width and hover label, and Tonal switching Glass off.
+- **Collection suite passed** in four modes. The mode loop waits for `#app` column transitions to finish, because the Glass rail resizes the sidebar column.
+- `tests/extension.mjs` could not start the extension service worker in this headless container; it fails the same way on the previous commit, so it remains a release check on a desktop browser.
 
 ## Remaining browser release checks
 

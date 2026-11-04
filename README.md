@@ -11,7 +11,7 @@ Built for **Chrome, Edge, Firefox, and Zen**. No account. No application server.
 [Get started](docs/installation.md) · [User guide](docs/user-guide.md) · [Troubleshooting](docs/troubleshooting.md) · [Developer architecture](docs/architecture.md)
 
 **Download the current build:** [Chrome / Edge](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-chrome-edge.zip) · [Firefox / Zen](https://github.com/Playcape/tabflow-extension_edge/raw/refs/heads/main/downloads/tabflow-2.0.0-zen-firefox.zip).
-These packages include the redesigned UI, compact statistics and Collection drag previews. Extract the matching archive before loading it in your browser. The older `V1.1` GitHub release predates this version.
+These packages include the redesigned UI, compact statistics and Collection drag previews. Extract the matching archive before loading it in your browser. These archives have not been rebuilt since the **Glass** design mode was added; load `src/` (or run `scripts/package.ps1`) to try Glass. The older `V1.1` GitHub release predates this version.
 
 ![Aurora: the TabFlow glass workspace](docs/assets/aurora.png)
 
@@ -26,7 +26,7 @@ These packages include the redesigned UI, compact statistics and Collection drag
 
 Saved collections are independent of live browser tabs: saving a session keeps its links without closing your current work. TabFlow Spaces are also independent of browser-native tab groups and Zen workspaces.
 
-## Three ways to work
+## Four ways to work
 
 The design mode changes the composition and interaction treatment; the theme supplies the palette. Your data and tools stay available in every mode.
 
@@ -35,17 +35,18 @@ The design mode changes the composition and interaction treatment; the theme sup
 | **Normal** | An editorial workbench: Collections form horizontal bands with an identity/action column beside their cards. Quiet navigation and compact controls make it the everyday default. |
 | **Tonal** | A tactile board: view navigation moves above the canvas, Spaces become a dedicated index, and rounded Collections tile into columns. Strong headings, pills, and accent-derived surfaces complete the composition. |
 | **Aurora** | A spatial glass workspace: floating panels, atmospheric color, illuminated edges, layered cards, reactive highlights, and a fluid drag treatment. The flagship visual mode. |
+| **Glass** | A glassmorphism dashboard: frosted panels float over a bundled landscape scene (Dusk, Night, Dawn, or your theme), with pill navigation in the top bar, a slim icon rail for Spaces, a greeting with statistic tiles, and site-tinted card covers. |
 
-All three support light and dark themes. Aurora's enhancements scale back for reduced motion, reduced transparency, increased contrast, and constrained rendering conditions. Custom CSS can override built-in styling, so start with the supplied controls when tuning accessibility or performance.
+All four support light and dark themes. Aurora's and Glass's enhancements scale back for reduced motion, reduced transparency, increased contrast, and constrained rendering conditions. Custom CSS can override built-in styling, so start with the supplied controls when tuning accessibility or performance.
 
-[Preview Normal](docs/assets/normal.png) · [Preview Tonal](docs/assets/tonal.png) · [Aurora in a light theme](docs/assets/aurora-light.png)
+[Preview Normal](docs/assets/normal.png) · [Preview Tonal](docs/assets/tonal.png) · [Aurora in a light theme](docs/assets/aurora-light.png) · [Preview Glass](docs/assets/glass.png) · [Glass in a light theme](docs/assets/glass-light.png)
 
 ## Start with one collection
 
 1. [Install the build for your browser](docs/installation.md).
 2. Create a Space for a project and add a Collection.
 3. Drag a live tab into it, or use **Save session** to capture your current browser tabs.
-4. Open **Settings → Appearance** to choose Normal, Tonal, or Aurora.
+4. Open **Settings → Appearance** to choose Normal, Tonal, Aurora, or Glass.
 5. Export a backup from **Settings → Data** when you have made it your own.
 
 ### Install from this repository

@@ -16,7 +16,7 @@ Space                         Page Space
 
 **Collections** is your saved browsing workspace. **Pages** holds documents. **Tasks** is a shared queue, and **Links** contains address-bar aliases. Links is hidden initially; enable **Settings → Advanced → Show Links in sidebar** to manage it.
 
-The navigation area switches views and Spaces. The main area shows your current work, while **Open Tabs** shows the live browser. Hide or reopen side panels with their panel controls. Pages hides Open Tabs to give the document more room. Normal, Tonal, and Aurora arrange and style these tools differently without changing their contents.
+The navigation area switches views and Spaces. The main area shows your current work, while **Open Tabs** shows the live browser. Hide or reopen side panels with their panel controls. Pages hides Open Tabs to give the document more room. Normal, Tonal, Aurora, and Glass arrange and style these tools differently without changing their contents.
 
 ## Spaces and Collections
 
@@ -129,9 +129,10 @@ Settings applies changes immediately and saves automatically. Design, theme, and
 
 | Settings area | Options |
 | --- | --- |
-| **Appearance** | Normal / Aurora / Tonal; 20 built-in themes including Prism Dark and Prism Light; custom themes with live color preview; accent presets and custom accent; solid, gradient, or custom background; dots, grid, noise, or no pattern |
+| **Appearance** | Normal / Aurora / Tonal / Glass; 20 built-in themes including Prism Dark and Prism Light; custom themes with live color preview; accent presets and custom accent; solid, gradient, or custom background; dots, grid, noise, or no pattern |
 | **Aurora** | Surface opacity, blur, edge highlight, depth, unified glass treatment, drag physics, pointer sheen, ambient glow; appears when Aurora is selected |
 | **Tonal** | Accent tint strength, corner roundness, expressive typography, and motion; appears when Tonal is selected |
+| **Glass** | Scene (Auto, Dusk, Night, Dawn, or None), blur, frost, icon rail for Spaces, and card covers; appears when Glass is selected. The scene replaces the Background and Pattern choices while Glass is active; the greeting uses the Advanced greeting name |
 | **Typography** | System, Humanist, Geometric, Rounded, or Monospace system-font stacks; Small, Normal, or Large text |
 | **Layout** | Corner radius, Comfortable / Cozy / Compact density, sidebar width, clock visibility, and default saved-tab view |
 | **Advanced** | Links visibility, palette, existing-tab focusing, Zen mode, optional frosted glass and animated background, Reduce motion, greeting name, 24-hour time, seconds, favicon fallback, and custom CSS |
