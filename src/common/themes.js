@@ -293,7 +293,7 @@ export const MATERIAL_ACCENTS = [
 /** The accent palette tuned for the active design language. */
 export function accentsFor(settings = {}) {
   if (settings.materialYou) return MATERIAL_ACCENTS;
-  if (settings.liquidGlass) return GLASS_ACCENTS;
+  if (settings.liquidGlass || settings.glassmorphism) return GLASS_ACCENTS;
   return ACCENT_COLORS;
 }
 

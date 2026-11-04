@@ -571,6 +571,13 @@ function showCardMenu(x, y, tab, collection) {
 
 /* ---------- card ---------- */
 
+/** A stable 0–5 tint index per site, used by design modes that color cards. */
+export function toneFor(text = '') {
+  let hash = 2166136261; // FNV-1a: spreads similar domains across tints.
+  for (const char of String(text)) hash = Math.imul(hash ^ char.codePointAt(0), 16777619) >>> 0;
+  return String(hash % 6);
+}
+
 function buildCard(tab, collection, space) {
   const remote = settings().remoteFavicons;
 
@@ -643,7 +650,7 @@ function buildCard(tab, collection, space) {
   const card = h('div',
     {
       class: 'tab-card' + (tab.pinned ? ' pinned' : ''),
-      dataset: { tabId: tab.id, colId: collection.id, spId: space.id },
+      dataset: { tabId: tab.id, colId: collection.id, spId: space.id, tone: toneFor(urlText) },
       tabindex: '0',
       role: 'link',
       'aria-label': `${tab.title} — ${urlText}`,

@@ -40,9 +40,11 @@ try {
       d.spaces=[{id:'packing',name:'Packing fixture',viewMode:'card',collections:[1,12,3,2,5,0].map((count,i)=>({id:`c${i}`,name:`Collection ${i+1}`,tabs:Array.from({length:count},(_,j)=>({id:`t${i}-${j}`,title:`Reference ${j+1}`,url:`https://example.com/${i}/${j}`}))}))}];d.activeSpaceId='packing';});
     await replaceDoc(getDoc());renderAll();
   });
-  for (const mode of ['aurora','tonal','normal']) {
-    await page.evaluate(async mode=>{const {update,flush}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.liquidGlass=mode==='aurora';d.settings.materialYou=mode==='tonal';});await flush();renderAll();},mode);
+  for (const mode of ['aurora','tonal','normal','glass']) {
+    await page.evaluate(async mode=>{const {update,flush}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.liquidGlass=mode==='aurora';d.settings.materialYou=mode==='tonal';d.settings.glassmorphism=mode==='glass';});await flush();renderAll();},mode);
     await page.waitForTimeout(150);
+    // Glass's icon rail resizes the sidebar column; let #app finish its width transition before grabbing handles.
+    await page.locator('#app').evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished.catch(()=>{}))));
     const initial=await order();
     const positions=await geometry();
     if(mode==='aurora') {
@@ -72,7 +74,7 @@ try {
     assert.deepEqual(await order(),saved);
     assert.equal(await page.locator('.collection-drop-preview,.collection-drag-source').count(),0);
   }
-  await page.evaluate(async()=>{const {update}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.liquidGlass=true;d.settings.materialYou=false;});renderAll();});
+  await page.evaluate(async()=>{const {update}=await import('/newtab/store.js');const {renderAll}=await import('/newtab/ui/bus.js');update(d=>{d.settings.liquidGlass=true;d.settings.materialYou=false;d.settings.glassmorphism=false;});renderAll();});
   await page.setViewportSize({width:1000,height:800});
   await page.waitForFunction(()=>!document.querySelector('#collections-area').hasAttribute('data-masonry'),{},{timeout:5000});
   assert.equal(await page.locator('#collections-area').getAttribute('data-masonry'),null,'Narrow layout clears packing cells');
@@ -88,6 +90,6 @@ try {
   const heading=await page.locator('.search-results-hd').boundingBox();
   assert.ok((await geometry()).every(p=>p.y>=heading.y+heading.height),'Search heading spans every column');
   assert.deepEqual(errors,[]);
-  console.log('Collection packing, native drag preview/drop/cancel in three modes, resize, collapse and search passed.');
+  console.log('Collection packing, native drag preview/drop/cancel in four modes, resize, collapse and search passed.');
 } catch(error) {await page.screenshot({path:'test-results/collection-failure.png'});throw error;}
 finally {await browser.close();await new Promise(resolve=>server.close(resolve));}

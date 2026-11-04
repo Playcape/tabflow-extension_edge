@@ -68,12 +68,14 @@
         <kbd class="search-shortcut" aria-hidden="true">/</kbd>
         <button id="search-clear" class="icon-btn search-clear" style="display:none;" aria-label="Clear search"></button>
       </div>
+      <div id="bar-navigation" class="bar-navigation"></div>
       <button id="btn-command-palette" class="command-trigger" title="Open command palette (Ctrl or Command + K)"><span>Quick jump</span><kbd>⌘ / Ctrl K</kbd></button>
       <button id="workspace-tabs-toggle" class="icon-btn" title="Toggle open tabs" aria-label="Toggle open tabs" aria-controls="right-panel"></button>
     </header>
     <div id="mode-navigation" class="mode-navigation"></div>
     <div id="toolbar">
       <div class="toolbar-left">
+        <p id="workspace-greeting" class="workspace-greeting"></p>
         <span id="workspace-eyebrow" class="eyebrow">Your workspace</span>
         <h1 id="space-breadcrumb"></h1>
         <p id="workspace-description" class="workspace-description">A little less scattered. A lot more focused.</p>
@@ -163,6 +165,7 @@
         <button class="stab active" data-stab="appearance" role="tab">Appearance</button>
         <button class="stab" data-stab="liquid" role="tab" style="display:none">Aurora</button>
         <button class="stab" data-stab="material" role="tab" style="display:none">Tonal</button>
+        <button class="stab" data-stab="glass" role="tab" style="display:none">Glass</button>
         <button class="stab" data-stab="typography" role="tab">Typography</button>
         <button class="stab" data-stab="layout" role="tab">Layout</button>
         <button class="stab" data-stab="data" role="tab">Data</button>
@@ -173,7 +176,7 @@
       <div class="stab-panel active" id="stab-appearance">
         <div class="settings-section">
           <div class="settings-section-title">Design</div>
-          <div class="settings-row-desc" style="margin-bottom:12px">Pick the overall look. Normal is fastest and works everywhere; Aurora and Tonal are richer, opt-in styles.</div>
+          <div class="settings-row-desc" style="margin-bottom:12px">Pick the overall look. Normal is fastest and works everywhere; Aurora, Tonal and Glass are richer, opt-in styles.</div>
           <div id="design-picker" class="design-picker"></div>
         </div>
 
@@ -343,6 +346,87 @@
             </div>
             <label class="switch">
               <input type="checkbox" id="lgglow-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLASS (glassmorphism) — tab is only visible while the feature is on -->
+      <div class="stab-panel" id="stab-glass">
+        <div class="settings-section">
+          <div class="settings-section-title">Glass</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Enabled</div>
+              <div class="settings-row-desc">A frosted glass dashboard floating over a landscape scene: pill navigation, an icon rail and tinted card covers. Turning this off hides this tab; re-enable it under Advanced.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glassmorphism-master" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Scene</div>
+          <div class="settings-row-desc" style="margin-bottom:10px">The view behind the glass. Auto picks Dusk for dark themes and Dawn for light ones; None uses your theme background.</div>
+          <div class="pill-row" id="glassscene-pills">
+            <button class="pill" data-val="auto">Auto</button>
+            <button class="pill" data-val="dusk">Dusk</button>
+            <button class="pill" data-val="night">Night</button>
+            <button class="pill" data-val="dawn">Dawn</button>
+            <button class="pill" data-val="none">None</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Material</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Blur</div>
+              <div class="settings-row-desc">How strongly panels frost the scene behind them. 0 is clear glass.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-glassblur" min="0" max="40" step="1" class="sl" aria-label="Glass blur" />
+            <span class="slider-label">40px</span>
+            <span class="slider-val" id="sl-glassblur-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Frost</div>
+              <div class="settings-row-desc">How much tint the glass carries. Raise it for easier reading over a bright scene.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">10%</span>
+            <input type="range" id="sl-glassfrost" min="10" max="90" step="1" class="sl" aria-label="Glass frost" />
+            <span class="slider-label">90%</span>
+            <span class="slider-val" id="sl-glassfrost-val"></span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Layout</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Icon rail</div>
+              <div class="settings-row-desc">Shrink the sidebar to a floating rail of Space icons. Names appear on hover and keyboard focus.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glassrail-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Card covers</div>
+              <div class="settings-row-desc">Give each saved tab a tinted cover. Each site keeps the same tint.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glasscovers-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
           </div>
@@ -649,10 +733,20 @@
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Tonal <span class="settings-hint-inline">(tonal surfaces)</span></div>
-              <div class="settings-row-desc">Opaque tonal surfaces tinted from your accent: big rounded corners, pill buttons, bold type and springy motion. Enabling this switches Aurora off — a dedicated <b>Tonal</b> tab appears with all options.</div>
+              <div class="settings-row-desc">Opaque tonal surfaces tinted from your accent: big rounded corners, pill buttons, bold type and springy motion. Enabling this switches Aurora and Glass off — a dedicated <b>Tonal</b> tab appears with all options.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="materialyou-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Glass <span class="settings-hint-inline">(glassmorphism)</span></div>
+              <div class="settings-row-desc">A frosted glass dashboard over a landscape scene, with pill navigation and an icon rail. Enabling this switches Aurora and Tonal off — a dedicated <b>Glass</b> tab appears with all options.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glassmorphism-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
           </div>

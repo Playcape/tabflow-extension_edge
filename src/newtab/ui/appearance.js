@@ -102,6 +102,13 @@ export function applyAppearance() {
   document.body.classList.toggle('m3-bold', !!s.materialYou && !!s.myBold);
   root.style.setProperty('--m3-tint', String(s.myTint / 100));
   root.style.setProperty('--m3-radius', `${s.myRadius}px`);
+  // Glass (glassmorphism dashboard) — mutually exclusive with the others.
+  const lightTheme = document.body.classList.contains('theme-light');
+  document.body.dataset.scene = s.glassScene === 'auto' ? (lightTheme ? 'dawn' : 'dusk') : s.glassScene;
+  document.body.classList.toggle('glass-rail', !!s.glassmorphism && !!s.glassRail);
+  document.body.classList.toggle('glass-covers', !!s.glassmorphism && !!s.glassCovers);
+  root.style.setProperty('--gl-blur', `${s.glassBlur}px`);
+  root.style.setProperty('--gl-frost', String(s.glassFrost / 100));
   document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
   document.body.classList.toggle('fx-reduce-motion', !!s.reduceMotion);
   document.body.classList.toggle('zen', !!s.zenMode);
