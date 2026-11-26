@@ -41,6 +41,17 @@ Linux, Node 22, Playwright Chromium (headless):
 - **Collection suite passed** in four modes. The mode loop waits for `#app` column transitions to finish, because the Glass rail resizes the sidebar column.
 - `tests/extension.mjs` could not start the extension service worker in this headless container; it fails the same way on the previous commit, so it remains a release check on a desktop browser.
 
+## Live scene — 26 November 2026
+
+Linux, Node 22, Playwright Chromium (headless):
+
+- **31 Node regressions passed**, including Live scene settings normalization (legacy `auto` → `live`, location validation and rounding, motion and unit enums) and `tests/scene.test.mjs`: solar elevation and azimuth against published values, Berlin solstice sunrise/sunset within 4 minutes, Svalbard polar night, moon phase, hemisphere seasons and foliage, tropics, weather effects on light and particles, sun direction in each hemisphere, WMO code mapping, °C/°F, forecast URL rounding, caching, expiry and rejection of bad responses, and city search.
+- **UI suite passed** with the Live scene added: no Open-Meteo request before opt-in, the in-scene clock, the toolbar chip opening the details card from the keyboard, season and weather preview, Back to live, Escape returning focus to the chip, and switching to a fixed scene stopping the Live scene.
+- **Collection suite passed** in four modes.
+- A separate scripted check with mocked Open-Meteo responses verified the whole opt-in path (Settings → Live weather → city search → forecast), exactly one geocoding and one forecast request, the five-day card, and opening the card by clicking the clock. Real Open-Meteo traffic was not exercised: this container's network policy blocks the host.
+- Reduced motion and **Still** ran no animation-frame loop; the seconds clock ticked; a 390 px phone layout had no horizontal overflow.
+- `tests/extension.mjs` still cannot start the extension service worker in this headless container (also on the previous commit).
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

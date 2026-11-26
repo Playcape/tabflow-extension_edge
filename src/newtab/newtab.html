@@ -76,6 +76,7 @@
     <div id="toolbar">
       <div class="toolbar-left">
         <p id="workspace-greeting" class="workspace-greeting"></p>
+        <button id="scene-chip" class="scene-chip" type="button" aria-haspopup="dialog" aria-expanded="false" hidden></button>
         <span id="workspace-eyebrow" class="eyebrow">Your workspace</span>
         <h1 id="space-breadcrumb"></h1>
         <p id="workspace-description" class="workspace-description">A little less scattered. A lot more focused.</p>
@@ -252,6 +253,188 @@
               <input type="checkbox" id="liquidglass-master" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Material</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Surface opacity</div>
+              <div class="settings-row-desc">How solid glass surfaces are — lower shows more of the background through them.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">20%</span>
+            <input type="range" id="sl-lgopacity" min="20" max="90" step="1" class="sl" aria-label="Glass opacity" />
+            <span class="slider-label">90%</span>
+            <span class="slider-val" id="sl-lgopacity-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Blur</div>
+              <div class="settings-row-desc">Frosting strength. Low keeps what's behind recognizable; 0 is clear glass.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0px</span>
+            <input type="range" id="sl-lgblur" min="0" max="40" step="1" class="sl" aria-label="Glass blur" />
+            <span class="slider-label">40px</span>
+            <span class="slider-val" id="sl-lgblur-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Edge highlight</div>
+              <div class="settings-row-desc">Strength of the specular light on borders and top edges — the “glass catches the light” look.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0%</span>
+            <input type="range" id="sl-lgspec" min="0" max="100" step="1" class="sl" aria-label="Edge highlight" />
+            <span class="slider-label">100%</span>
+            <span class="slider-val" id="sl-lgspec-val"></span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Depth</div>
+              <div class="settings-row-desc">Shadow and inner-rim intensity — how far cards lift off the page.</div>
+            </div>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">0%</span>
+            <input type="range" id="sl-lgdepth" min="0" max="100" step="1" class="sl" aria-label="Depth" />
+            <span class="slider-label">100%</span>
+            <span class="slider-val" id="sl-lgdepth-val"></span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Effects</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Unified interface</div>
+              <div class="settings-row-desc">Pull the glass language through the whole interface — sidebar, panels, toolbar, search, buttons — so everything matches the cards.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgunified-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Drag physics</div>
+              <div class="settings-row-desc">The glass copy of a card that follows the pointer and melts into its drop target.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgphysics-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Pointer sheen</div>
+              <div class="settings-row-desc">A specular highlight that follows the mouse across cards.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgsheen-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Ambient glow</div>
+              <div class="settings-row-desc">A soft accent-tinted glow behind your collections that gives the glass something to refract.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="lgglow-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLASS (glassmorphism) — tab is only visible while the feature is on -->
+      <div class="stab-panel" id="stab-glass">
+        <div class="settings-section">
+          <div class="settings-section-title">Glass</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Enabled</div>
+              <div class="settings-row-desc">A frosted glass dashboard floating over a landscape scene: pill navigation, an icon rail and tinted card covers. Turning this off hides this tab; re-enable it under Advanced.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="glassmorphism-master" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section" id="scene-section">
+          <div class="settings-section-title">Scene</div>
+          <div class="settings-row-desc" style="margin-bottom:10px">The view behind the glass. Live follows your clock, the season and (if you turn it on) the weather. Dusk, Night and Dawn are fixed pictures; None uses your theme background.</div>
+          <div class="pill-row" id="glassscene-pills">
+            <button class="pill" data-val="live">Live</button>
+            <button class="pill" data-val="dusk">Dusk</button>
+            <button class="pill" data-val="night">Night</button>
+            <button class="pill" data-val="dawn">Dawn</button>
+            <button class="pill" data-val="none">None</button>
+          </div>
+        </div>
+
+        <div class="settings-section" id="live-scene-settings">
+          <div class="settings-section-title">Live scene</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Clock in the scene</div>
+              <div class="settings-row-desc">A large digital clock above the lake, mirrored in the water. Click it, or the chip under the greeting, for sunrise, sunset, the forecast and a time-travel preview. Follows the 24-hour and seconds settings below.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sceneclock-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Live weather</div>
+              <div class="settings-row-desc">Rain, snow, storms, fog and clouds from the real forecast for the city you choose. Uses Open-Meteo (free, no account): your city search and its coordinates, rounded to about 1&nbsp;km, are sent to open-meteo.com about every 30 minutes while a TabFlow tab is open. Off by default; nothing is sent while it is off.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sceneweather-toggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+          <div class="settings-row" style="display:block">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Location</div>
+              <div class="settings-row-desc" id="scene-place-desc">Without a city, the sun is placed from your time zone and no weather is shown.</div>
+            </div>
+            <form class="scene-place-row" id="scene-place-form" autocomplete="off">
+              <input type="search" id="scene-place-input" class="settings-text-input" placeholder="Search for a city…" maxlength="80" aria-label="Search for a city" />
+              <button type="submit" class="settings-btn" id="scene-place-search">Search</button>
+              <button type="button" class="settings-btn" id="scene-place-clear">Clear</button>
+            </form>
+            <div class="scene-place-results" id="scene-place-results" role="list" aria-live="polite"></div>
+          </div>
+          <div class="settings-row" style="display:block">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Temperature</div>
+            </div>
+            <div class="pill-row" id="tempunit-pills" style="margin-top:8px">
+              <button class="pill" data-val="auto">Auto</button>
+              <button class="pill" data-val="c">°C</button>
+              <button class="pill" data-val="f">°F</button>
+            </div>
+          </div>
+          <div class="settings-row" style="display:block">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Scene motion</div>
+              <div class="settings-row-desc">Full: falling weather, drifting clouds and depth that follows your pointer. Calm: lighter weather, no pointer depth. Still: a single frame. Reduce motion and your system's reduced-motion setting always keep the scene still.</div>
+            </div>
+            <div class="pill-row" id="scenemotion-pills" style="margin-top:8px">
+              <button class="pill" data-val="full">Full</button>
+              <button class="pill" data-val="calm">Calm</button>
+              <button class="pill" data-val="still">Still</button>
+            </div>
           </div>
         </div>
 
@@ -804,7 +987,7 @@
           <div class="settings-row">
             <div class="settings-row-info">
               <div class="settings-row-label">Show seconds</div>
-              <div class="settings-row-desc">Include seconds in the clock. Needs the clock enabled (Layout → Clock).</div>
+              <div class="settings-row-desc">Include seconds in the Layout clock and the Live scene clock.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="clockseconds-toggle" />

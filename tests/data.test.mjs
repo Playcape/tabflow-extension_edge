@@ -53,7 +53,7 @@ test('normalizes unsafe data and repairs settings, references, and page payload 
 test('normalizes Glass design settings and keeps design languages exclusive', () => {
   const glass = normalizeDoc({ spaces: [], settings: { glassmorphism: true, glassScene: 'mars', glassBlur: 99, glassFrost: 2, glassRail: 'yes' } }).settings;
   assert.equal(glass.glassmorphism, true);
-  assert.equal(glass.glassScene, 'auto');
+  assert.equal(glass.glassScene, 'live');
   assert.equal(glass.glassBlur, 40);
   assert.equal(glass.glassFrost, 10);
   assert.equal(glass.glassRail, true); // wrong type falls back to the default
@@ -62,6 +62,28 @@ test('normalizes Glass design settings and keeps design languages exclusive', ()
   const both = normalizeDoc({ spaces: [], settings: { glassmorphism: true, liquidGlass: true } }).settings;
   assert.equal(both.liquidGlass, true);
   assert.equal(both.glassmorphism, false);
+});
+
+test('normalizes Live scene settings', () => {
+  const defaults = normalizeDoc({ spaces: [], settings: {} }).settings;
+  assert.equal(defaults.glassScene, 'live');
+  assert.equal(defaults.sceneWeather, false); // weather is opt-in
+  assert.equal(defaults.sceneLocation, null);
+  assert.equal(defaults.sceneClock, true);
+  // The old light/dark-picked 'auto' scene becomes Live.
+  assert.equal(normalizeDoc({ spaces: [], settings: { glassScene: 'auto' } }).settings.glassScene, 'live');
+  const odd = normalizeDoc({ spaces: [], settings: { sceneMotion: 'wild', tempUnit: 'k', sceneWeather: 'yes', sceneClock: 0 } }).settings;
+  assert.equal(odd.sceneMotion, 'full');
+  assert.equal(odd.tempUnit, 'auto');
+  assert.equal(odd.sceneWeather, false);
+  assert.equal(odd.sceneClock, true);
+  const place = (sceneLocation) => normalizeDoc({ spaces: [], settings: { sceneLocation } }).settings.sceneLocation;
+  assert.deepEqual(place({ name: ' Berlin, Germany ', lat: 52.52437, lon: 13.41053 }), { name: 'Berlin, Germany', lat: 52.52, lon: 13.41 });
+  assert.equal(place({ name: 'Nowhere', lat: 120, lon: 0 }), null);
+  assert.equal(place({ name: 'Nowhere', lat: 'x', lon: 0 }), null);
+  assert.equal(place(['Berlin']), null);
+  assert.equal(place('Berlin'), null);
+  assert.equal(place({ lat: -33.87, lon: 151.21 }).name, 'Chosen place');
 });
 
 test('migrates legacy v2 view modes, tasks, fonts, and settings', () => {

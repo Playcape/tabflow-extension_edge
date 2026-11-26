@@ -17,9 +17,11 @@ import { initSettings } from './ui/settings.js';
 import { initPalette } from './ui/palette.js';
 import { initLiquid } from './ui/liquid.js';
 import { initFaviconConsent } from '../common/faviconConsent.js';
+import { initLocationConsent } from '../common/locationConsent.js';
 
 async function boot() {
   await initFaviconConsent(() => renderAll());
+  await initLocationConsent(() => renderAll());
   await initStore();
 
   initAppearance();
