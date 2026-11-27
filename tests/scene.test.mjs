@@ -192,6 +192,27 @@ test('stained glass reads a brand colour from a site icon', async () => {
   near(youtube.h, rgbToOklch(255, 0, 0).h, 12, 'red brand hue');
   assert.deepEqual(dominantTone(icon([...fill(300, [20, 20, 20]), ...fill(200, [250, 250, 250])])), { h: 0, c: 0 }, 'black/white icon is mono');
   assert.equal(dominantTone(icon(fill(50, [255, 0, 0, 0]))), null, 'fully transparent icon');
+  // Google's G: four strong, distinct hues → multi-colour clear glass, no single pick.
+  const google = dominantTone(icon([...fill(120, [234, 67, 53]), ...fill(110, [66, 133, 244]), ...fill(80, [251, 188, 5]), ...fill(90, [52, 168, 83]), ...fill(100, [255, 255, 255])]));
+  assert.equal(google.c, 0);
+  assert.ok(google.multi.length >= 3 && google.multi.length <= 4, `multi hues: ${google.multi}`);
+  // Two-colour logos keep their dominant colour.
+  assert.ok(dominantTone(icon([...fill(300, [255, 85, 0]), ...fill(150, [255, 255, 255])])).c > 0);
+  // A logo on a baked-in white square: the frame goes, white inside the logo stays.
+  const { knockOutWhite } = await import('../src/newtab/ui/iconTone.js');
+  const w = 8, px = new Uint8ClampedArray(w * w * 4);
+  for (let i = 0; i < w * w; i++) {
+    const x = i % w, y = (i / w) | 0;
+    const logo = x >= 2 && x <= 5 && y >= 2 && y <= 5, hole = x >= 3 && x <= 4 && y >= 3 && y <= 4;
+    px.set(logo && !hole ? [88, 101, 242, 255] : [255, 255, 255, 255], i * 4);
+  }
+  assert.equal(knockOutWhite(px, w, w), true);
+  assert.equal(px[3], 0, 'corner made transparent');
+  assert.equal(px[(3 * w + 3) * 4 + 3], 255, 'white inside the logo kept');
+  assert.equal(px[(2 * w + 2) * 4 + 3], 255, 'logo kept');
+  const solid = new Uint8ClampedArray(w * w * 4).fill(255);
+  for (let i = 0; i < w * w; i++) solid.set([200, 30, 30, 255], i * 4);
+  assert.equal(knockOutWhite(solid, w, w), false, 'no white background, nothing removed');
   // A small coloured accent on a mostly grey icon still counts as mono.
   assert.equal(dominantTone(icon([...fill(480, [120, 120, 120]), ...fill(20, [0, 120, 255])])).c, 0);
 });

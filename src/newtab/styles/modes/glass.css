@@ -138,6 +138,7 @@ body[data-design="glass"] .space-item { border-radius: calc(var(--r-outer) - var
 body[data-design="glass"] .space-item:hover { background: var(--fill-1); }
 body[data-design="glass"] .space-item.active { background: var(--fill-2); box-shadow: none; color: var(--text); }
 body[data-design="glass"] .sidebar-footer { border: 0; padding-inline: var(--r-pad); }
+body[data-design="glass"] .workspace-status { font-size: 11.5px; }
 body[data-design="glass"] .sidebar-footer .nav-item { border-radius: calc(var(--r-outer) - var(--r-pad)); }
 body[data-design="glass"] .sidebar-footer .nav-item:hover { background: var(--fill-1); }
 body[data-design="glass"] .sidebar-footer .nav-item.active { background: var(--fill-2); color: var(--text); }
@@ -293,17 +294,17 @@ body[data-design="glass"] .toolbar-left { order: 1; }
 body[data-design="glass"] .workspace-summary { order: 2; flex: 0 0 auto; margin: 0; align-self: flex-end; }
 body[data-design="glass"] .toolbar-right { order: 3; }
 body[data-design="glass"] .workspace-metrics {
-  display: flex; align-items: center; gap: 16px; padding: 0 4px; white-space: nowrap;
-  font-size: 12px; line-height: 1; color: var(--readable-muted); text-shadow: 0 1px 10px rgba(0,0,0,.25);
+  display: flex; align-items: center; gap: 14px; padding: 0 4px; white-space: nowrap;
+  font-size: 11.5px; line-height: 1; color: var(--readable-faint); text-shadow: 0 1px 10px rgba(0,0,0,.25);
 }
 body[data-design="glass"].theme-light .workspace-metrics { text-shadow: none; }
-body[data-design="glass"] .workspace-metrics > span { display: inline-flex; align-items: center; gap: 7px; }
+body[data-design="glass"] .workspace-metrics > span { display: inline-flex; align-items: center; gap: 6px; opacity: .9; }
 body[data-design="glass"] .workspace-metrics > span::before {
-  content: ''; flex: none; width: 22px; height: 22px; border-radius: 50%;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 10px -6px rgba(0,0,0,.5);
-  background: var(--gl-metric-icon) center / 13px no-repeat, var(--gl-metric-tone);
+  content: ''; flex: none; width: 16px; height: 16px; border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 8px -5px rgba(0,0,0,.5);
+  background: var(--gl-metric-icon) center / 9px no-repeat, var(--gl-metric-tone);
 }
-body[data-design="glass"] .workspace-metrics strong { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -.2px; color: var(--text); }
+body[data-design="glass"] .workspace-metrics strong { margin: 0; font-size: 13px; font-weight: 620; letter-spacing: -.2px; color: var(--readable-muted); }
 body[data-design="glass"][data-view="collections"] .workspace-greeting:not(:empty) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Narrower workspaces: icons and numbers only. The words stay in the
    accessibility tree (font-size 0 keeps them readable to screen readers)
@@ -318,7 +319,8 @@ body[data-design="glass"] .workspace-metrics > span:nth-child(3) { --gl-metric-t
 /* ---------- collections: content layer on a full-width dashboard grid ---------- */
 body[data-design="glass"] #collections-area {
   --collection-gap: var(--gap); max-width: none; padding: 4px 4px 32px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 600px), 1fr)); align-content: start; align-items: start; column-gap: var(--collection-gap);
+  /* auto-fit: with fewer Collections than lanes, they share the full width. */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr)); align-content: start; align-items: start; column-gap: var(--collection-gap);
   /* No scroll-edge mask here: a mask makes this element the backdrop root and
      the Collections' material would stop blurring the scene. */
 }
@@ -365,7 +367,16 @@ body[data-design="glass"] .tab-card.pinned::before { display: none; }
 body[data-design="glass"] .card-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
 body[data-design="glass"] .view-card .card-title { min-height: calc(1.3em * 2); }
 body[data-design="glass"] .card-fav, body[data-design="glass"] .fav-fallback { border-radius: 7px; }
-body[data-design="glass"] .fav-fallback { background: var(--fill-3); color: var(--text); }
+/* Sites without an icon yet: a small tile of clear glass with the letter. */
+body[data-design="glass"] .fav-fallback,
+body[data-design="glass"] .tab-fav-fallback:not(.tab-fav-browser) {
+  background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.08)); color: var(--text); font-weight: 650;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 1px rgba(255,255,255,.12), 0 2px 6px -2px rgba(0,0,0,.35);
+  backdrop-filter: none;
+}
+body[data-design="glass"].theme-light .fav-fallback,
+body[data-design="glass"].theme-light .tab-fav-fallback:not(.tab-fav-browser) { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.6)); box-shadow: inset 0 0 0 1px rgba(60,60,90,.12), 0 2px 6px -3px rgba(40,40,80,.3); }
+body[data-design="glass"] .view-card .fav-fallback { width: 22px; height: 22px; border-radius: 7px; font-size: 11px; }
 body[data-design="glass"] .card-pin-indicator { color: var(--accent); }
 body[data-design="glass"] .tag-pill { border-radius: 999px; border: 0; background: var(--fill-2); color: var(--text); padding: 1px 8px; }
 body[data-design="glass"] .card-remove { border-radius: 999px; }
@@ -425,8 +436,12 @@ body[data-design="glass"] .tab-row {
 body[data-design="glass"] .tab-row:hover { background: var(--fill-1); }
 body[data-design="glass"] .tab-row.active { background: var(--fill-2); box-shadow: none; }
 body[data-design="glass"] .tab-row img, body[data-design="glass"] .tab-fav-img, body[data-design="glass"] .tab-fav-fallback { width: 16px; height: 16px; border-radius: 4px; }
-body[data-design="glass"] .tab-fav-fallback { background: var(--fill-3); color: var(--text); }
-body[data-design="glass"] #recently-closed-section { border-top: 0; margin: 4px var(--r-pad) 0; padding-top: 10px; }
+body[data-design="glass"] .tab-fav-fallback { font-size: 9px; }
+body[data-design="glass"] .tab-fav-browser { background: transparent; box-shadow: none; color: var(--readable-muted); }
+/* Recently Closed follows the list directly instead of sitting at the panel's foot. */
+body[data-design="glass"] #open-tabs-list { flex: 0 1 auto; min-height: 0; }
+body[data-design="glass"] #recently-closed-section { border-top: 0; margin: 2px var(--r-pad) 0; padding: 8px 0 0; max-height: none; flex: 0 1 auto; min-height: 0; }
+body[data-design="glass"] #recently-closed-section .recently-closed-list { max-height: 42vh; }
 body[data-design="glass"] .recently-closed-hdr { padding: 4px 8px 6px; }
 
 /* ---------- other views: content layer ---------- */
