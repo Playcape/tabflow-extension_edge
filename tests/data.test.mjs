@@ -78,6 +78,16 @@ test('new workspaces pick 12- or 24-hour time from the browser language', () => 
   assert.equal(normalizeDoc({ spaces: [], settings: { clock24h: false } }).settings.clock24h, false, 'a stored choice wins');
 });
 
+test('Glass style defaults to clear and validates stained-glass options', () => {
+  const s = normalizeDoc({ spaces: [], settings: {} }).settings;
+  assert.equal(s.glassStyle, 'clear');
+  assert.equal(s.stainedIntensity, 'subtle');
+  const on = normalizeDoc({ spaces: [], settings: { glassStyle: 'stained', stainedIntensity: 'rich' } }).settings;
+  assert.deepEqual([on.glassStyle, on.stainedIntensity], ['stained', 'rich']);
+  const bad = normalizeDoc({ spaces: [], settings: { glassStyle: 'mosaic', stainedIntensity: 'neon' } }).settings;
+  assert.deepEqual([bad.glassStyle, bad.stainedIntensity], ['clear', 'subtle']);
+});
+
 test('normalizes Live scene settings', () => {
   const defaults = normalizeDoc({ spaces: [], settings: {} }).settings;
   assert.equal(defaults.glassScene, 'live');

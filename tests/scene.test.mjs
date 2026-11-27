@@ -180,3 +180,17 @@ test('generated landscape geometry is complete', () => {
   assert.equal(LANDSCAPE.banks.length, 2);
   assert.ok(LANDSCAPE.broadleaves.every((t) => t.canopy.length === 5));
 });
+
+test('stained glass gives each website one stable jewel hue', async () => {
+  globalThis.browser ??= { runtime: { getURL: (p) => `chrome-extension://t/${p}`, getManifest: () => ({ permissions: [] }) }, tabs: {} };
+  const { paneHue, frameHue, spillHues, hueOfHex, STAINED_HUES } = await import('../src/newtab/ui/stained.js');
+  assert.equal(paneHue('https://learn.microsoft.com/a'), paneHue('https://learn.microsoft.com/b/c'));
+  assert.ok(STAINED_HUES.includes(paneHue('https://github.com')));
+  assert.equal(frameHue({ name: 'x', color: 'green' }), 150);
+  assert.equal(frameHue({ name: 'Tools' }), frameHue({ name: 'Tools' }));
+  assert.equal(hueOfHex('#ff0000'), 0);
+  assert.equal(hueOfHex('nope'), null);
+  const [a, b] = spillHues([{ url: 'https://a.example' }, { url: 'https://a.example/2' }, { url: 'https://b.example' }]);
+  assert.equal(a, paneHue('https://a.example'));
+  assert.ok(STAINED_HUES.includes(b));
+});

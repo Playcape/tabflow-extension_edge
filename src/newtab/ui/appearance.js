@@ -12,6 +12,7 @@ import { registerRenderer } from './bus.js';
 import { applyDesign, initDesign } from './design.js';
 import { syncLiveScene, initLiveScene } from '../scene/live.js';
 import { renderHeroClock } from './heroClock.js';
+import { initStainedLight } from './stained.js';
 
 const FONT_SIZES = { small: '12px', normal: '13px', large: '14px' };
 const BG_STYLES = ['gradient-diag', 'gradient-radial', 'gradient-sunset'];
@@ -107,7 +108,11 @@ export function applyAppearance() {
   // Glass (glassmorphism dashboard) — mutually exclusive with the others.
   document.body.dataset.scene = s.glassScene;
   document.body.classList.toggle('glass-rail', !!s.glassmorphism && !!s.glassRail);
-  document.body.classList.toggle('glass-covers', !!s.glassmorphism && !!s.glassCovers);
+  const stained = !!s.glassmorphism && s.glassStyle === 'stained';
+  document.body.classList.toggle('glass-stained', stained);
+  document.body.classList.toggle('stained-rich', stained && s.stainedIntensity === 'rich');
+  // Stained panes replace the cover band.
+  document.body.classList.toggle('glass-covers', !!s.glassmorphism && !!s.glassCovers && !stained);
   root.style.setProperty('--gl-blur', `${s.glassBlur}px`);
   root.style.setProperty('--gl-frost', String(s.glassFrost / 100));
   document.body.classList.toggle('fx-animated-bg', !!s.animatedBg);
@@ -133,5 +138,6 @@ export function applyCustomCss(css) {
 export function initAppearance() {
   initDesign();
   initLiveScene();
+  initStainedLight();
   registerRenderer('appearance', applyAppearance);
 }

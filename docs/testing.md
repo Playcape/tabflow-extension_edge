@@ -71,6 +71,10 @@ Linux, Node 22, Playwright Chromium (headless):
 - Water reflections (Live scene and the fixed Dusk/Night/Dawn SVGs) were checked by screenshot at night (moonlight) and with a low sun. The header stats strip was checked at 2560 px (with labels) and 1440 px (icons and numbers). UI and Collection suites passed.
 - The Firefox icon permission prompt (**Allow icons**) needs a manual check in Firefox/Zen; this container has no Firefox.
 
+## Stained glass style — 27 November 2026
+
+- **38 Node regressions passed**, including Glass style normalization and stable per-site/Collection hues. The UI suite toggles Stained on and off and checks the per-site pane hue. UI and Collection suites passed. The look was checked by screenshot at 2048×1152: night (Subtle and Rich), day, the hover glow and the rose-window rail.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

@@ -13,6 +13,7 @@ import { showMenu } from './contextmenu.js';
 import { confirmDialog, openOverlay, closeOverlay, bindBackdropClose } from './modals.js';
 import { editInline } from './inline.js';
 import { toast } from './toast.js';
+import { spaceHue } from './stained.js';
 import { clearSearch } from './collections.js';
 
 /* ---------- render ---------- */
@@ -59,7 +60,7 @@ function buildSpaceItem(space) {
 
   const dot = space.icon
     ? h('div', { class: 'space-dot space-icon', text: space.icon })
-    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '', dataset: { initial: initialOf(space.name) } });
+    : h('div', { class: 'space-dot', style: `${space.color ? `background:${space.color};` : ''}--space-h:${spaceHue(space)}`, dataset: { initial: initialOf(space.name) } });
 
   const handle = h('div', {
     class: 'space-drag-handle',
@@ -161,7 +162,7 @@ function buildPageSpaceItem(space) {
 
   const dot = space.icon
     ? h('div', { class: 'space-dot space-icon', text: space.icon })
-    : h('div', { class: 'space-dot', style: space.color ? `background:${space.color}` : '', dataset: { initial: initialOf(space.name) } });
+    : h('div', { class: 'space-dot', style: `${space.color ? `background:${space.color};` : ''}--space-h:${spaceHue(space)}`, dataset: { initial: initialOf(space.name) } });
 
   const handle = h('div', {
     class: 'space-drag-handle',

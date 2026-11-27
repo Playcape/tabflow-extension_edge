@@ -319,6 +319,10 @@ function applyState(st, s) {
   // The header clock glows with the scene's light (see styles/modes/scene.css).
   document.body.style.setProperty('--scene-glow', st.colors['--sc-glow']);
   document.body.style.setProperty('--scene-glow-alpha', Math.max(.25, st.glowAlpha).toFixed(3));
+  // Stained glass is lit by the scene: how much light, and where it comes from.
+  document.body.style.setProperty('--scene-light', Math.max(.08, st.light).toFixed(3));
+  const lightX = (sun.alpha > .05 ? sun.x : moon.x) / 1600;
+  document.body.style.setProperty('--sun-x', Math.min(1, Math.max(0, lightX)).toFixed(3));
   root.classList.toggle('is-preview', preview.minutes != null || !!preview.season || !!preview.kind);
 
   const lakeY = layout();
@@ -560,6 +564,8 @@ function stopScene() {
   if (root) { root.hidden = true; particles.destroy(); }
   document.body.style.removeProperty('--scene-glow');
   document.body.style.removeProperty('--scene-glow-alpha');
+  document.body.style.removeProperty('--scene-light');
+  document.body.style.removeProperty('--sun-x');
   renderChip();
   lastKey = '';
   weatherKey = '';
