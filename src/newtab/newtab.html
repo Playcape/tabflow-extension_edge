@@ -502,8 +502,8 @@
           <div class="settings-section-title">Layout</div>
           <div class="settings-row">
             <div class="settings-row-info">
-              <div class="settings-row-label">Icon rail</div>
-              <div class="settings-row-desc">Shrink the sidebar to a floating rail of Space icons. Names appear on hover and keyboard focus.</div>
+              <div class="settings-row-label">Compact sidebar (icon rail)</div>
+              <div class="settings-row-desc">Shrink the sidebar to a slim floating rail of Space icons — handy when you have only a few Spaces. Names appear on hover and keyboard focus. Off shows the full sidebar with names.</div>
             </div>
             <label class="switch">
               <input type="checkbox" id="glassrail-toggle" />
@@ -963,7 +963,7 @@
     <div id="open-tabs-list"></div>
     <div id="recently-closed-section">
       <div class="recently-closed-hdr">
-        <span>Recently Closed</span>
+        <button id="btn-rc-toggle" class="rc-toggle" type="button" aria-expanded="true" aria-controls="recently-closed-list"><span class="rc-chevron" aria-hidden="true"></span>Recently Closed</button>
         <button id="btn-rc-refresh" class="icon-btn small" title="Refresh" aria-label="Refresh recently closed"></button>
       </div>
       <div class="recently-closed-list" id="recently-closed-list"></div>

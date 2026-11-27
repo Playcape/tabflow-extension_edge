@@ -14,17 +14,22 @@ export function scheduleCollectionLayout() {
 
 export function layoutCollections() {
   if (!area || !area.clientWidth) return;
-  const style = getComputedStyle(area);
-  const columns = style.display === 'grid' ? style.gridTemplateColumns.split(' ').length : 1;
   const items = [...area.children];
-  const packed = columns > 1;
-  area.toggleAttribute('data-masonry', packed);
+  // Clear the previous packing first, so auto-fit grids report the tracks
+  // the current Collections actually need (empty auto-fit tracks collapse to
+  // 0px and must not become lanes; with few Collections they share the width).
   for (const item of items) {
     item.style.removeProperty('grid-column');
     item.style.removeProperty('grid-row');
-    // Notices and search summaries span the board, rather than taking a lane.
-    if (packed && !item.classList.contains('collection')) item.style.gridColumn = '1 / -1';
   }
+  const style = getComputedStyle(area);
+  const columns = style.display === 'grid'
+    ? Math.max(1, style.gridTemplateColumns.split(' ').filter((track) => parseFloat(track) > 0).length)
+    : 1;
+  const packed = columns > 1;
+  area.toggleAttribute('data-masonry', packed);
+  // Notices and search summaries span the board, rather than taking a lane.
+  if (packed) for (const item of items) if (!item.classList.contains('collection')) item.style.gridColumn = '1 / -1';
   if (!packed) return;
 
   const gap = parseFloat(style.getPropertyValue('--collection-gap')) || 18;

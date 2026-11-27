@@ -106,6 +106,7 @@ export const DEFAULT_UI = {
   rightPanelOpen: true,
   zenHintDismissed: false,
   faviconHintDismissed: false,
+  recentlyClosedCollapsed: false,
 };
 
 /* ---------- constructors ---------- */
@@ -365,6 +366,7 @@ export function normalizeDoc(raw) {
       rightPanelOpen: raw.ui?.rightPanelOpen !== false,
       zenHintDismissed: !!raw.ui?.zenHintDismissed,
       faviconHintDismissed: !!raw.ui?.faviconHintDismissed,
+      recentlyClosedCollapsed: !!raw.ui?.recentlyClosedCollapsed,
     },
   };
 }

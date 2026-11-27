@@ -7,7 +7,7 @@
    real icons offline.
    ================================================================ */
 
-import { ext, caps, isTabFlowTab, focusTab } from '../../common/ext.js';
+import { ext, caps, isTabFlowTab, isTabFlowPageUrl, focusTab } from '../../common/ext.js';
 import { q, h, debounce, faviconEl, letterTile, timestampLabel, domainOf, storableFavicon } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { getDoc, activeSpace, settings, update } from '../store.js';
@@ -143,10 +143,26 @@ function renderOpenTabs() {
   );
 }
 
+/* Browser pages (about:, chrome://, extension pages) have no domain for a
+   letter tile; show what kind of page they are instead of a "?". */
+const BROWSER_PAGE = /^(about|chrome|edge|brave|opera|vivaldi|view-source|moz-extension|chrome-extension|extension):/i;
+function browserPageIcon(url = '') {
+  const name = /addons|extensions|-extension:/i.test(url) ? 'puzzle'
+    : /preferences|settings|options|config/i.test(url) ? 'settings'
+      : /debugging|devtools|inspect|profiling|processes/i.test(url) ? 'code'
+        : 'globe';
+  return h('span', { class: 'tab-fav-fallback tab-fav-browser', 'aria-hidden': 'true' }, icon(name, 11));
+}
+
+function tabIcon(tab) {
+  if (tab.favIconUrl && !/^chrome:\/\/(theme|favicon)/i.test(tab.favIconUrl)) {
+    return faviconEl(tab.url ?? '', tab.favIconUrl, settings().remoteFavicons, 'tab-fav-img', 'tab-fav-fallback');
+  }
+  return BROWSER_PAGE.test(tab.url ?? '') ? browserPageIcon(tab.url) : letterTile(tab.url ?? '', 'tab-fav-fallback');
+}
+
 function buildTabRow(tab) {
-  const fav = tab.favIconUrl
-    ? faviconEl(tab.url, tab.favIconUrl, settings().remoteFavicons, 'tab-fav-img', 'tab-fav-fallback')
-    : letterTile(tab.url ?? '', 'tab-fav-fallback');
+  const fav = tabIcon(tab);
 
   const row = h('div',
     {
@@ -195,12 +211,15 @@ async function renderRecentlyClosed() {
   }
   let sessions = [];
   try {
-    sessions = (await ext.sessions.getRecentlyClosed({ maxResults: 10 })) ?? [];
+    sessions = (await ext.sessions.getRecentlyClosed({ maxResults: 25 })) ?? [];
   } catch {
     section.style.display = 'none';
     return;
   }
-  const tabs = sessions.flatMap((session) => (session.tab ? [session.tab] : []));
+  // TabFlow itself (its page or a new tab showing it) isn't worth reopening.
+  const tabs = sessions.flatMap((session) => (session.tab ? [session.tab] : []))
+    .filter((tab) => !isTabFlowPageUrl(tab.url) && !NEWTAB_SURFACE.test(tab.url ?? ''))
+    .slice(0, 10);
   if (!tabs.length) {
     list.replaceChildren(h('div', { class: 'panel-empty', text: 'Nothing recently closed.' }));
     return;
@@ -216,7 +235,7 @@ async function renderRecentlyClosed() {
         }
       };
       return h('button', { class: 'tab-row', style: 'width:100%;text-align:left', title: tab.url ?? '', onclick: restore },
-        faviconEl(tab.url ?? '', tab.favIconUrl, settings().remoteFavicons, 'tab-fav-img', 'tab-fav-fallback'),
+        tabIcon(tab),
         h('span', { class: 'tab-row-title', text: tab.title || tab.url || '(unknown)' })
       );
     })
@@ -288,6 +307,19 @@ export function initOpenTabs() {
   q('#btn-save-session').addEventListener('click', () => saveTabsAsCollection(openTabs, 'Session'));
   q('#btn-add-current-tab').addEventListener('click', openAddCurrentTab);
   q('#btn-rc-refresh').addEventListener('click', renderRecentlyClosed);
+  // Recently Closed folds away; the choice is remembered with the workspace UI state.
+  const rcToggle = q('#btn-rc-toggle');
+  const applyRcState = () => {
+    const collapsed = !!getDoc().ui.recentlyClosedCollapsed;
+    q('#recently-closed-section').classList.toggle('collapsed', collapsed);
+    rcToggle.setAttribute('aria-expanded', String(!collapsed));
+  };
+  q('.rc-chevron', rcToggle).replaceChildren(icon('chevron-down', 12));
+  rcToggle.addEventListener('click', () => {
+    update((doc) => (doc.ui.recentlyClosedCollapsed = !doc.ui.recentlyClosedCollapsed));
+    applyRcState();
+  });
+  applyRcState();
   q('#add-to-col-cancel').addEventListener('click', () => closeOverlay('#add-to-col-overlay'));
   bindBackdropClose(q('#add-to-col-overlay'));
 

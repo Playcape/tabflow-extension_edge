@@ -242,6 +242,7 @@ Motion and transparency preferences affect JavaScript as well as CSS. No animate
 `glassStyle: 'stained'` is a self-contained module: `ui/stained.js`, `ui/iconTone.js` and `styles/modes/stained.css`. The module owns its body classes (`glass-stained`, `stained-rich`) and its settings controls, and tints cards through a MutationObserver. No other module calls into it.
 
 - **Card colour from the site icon.** `iconTone.js` draws the card's icon on a 32×32 canvas and takes the dominant OKLCH hue and chroma of its coloured pixels. Mostly black/white/grey icons give `c = 0` (smoky glass). Cross-origin icons are retried once with CORS; unreadable icons leave the card neutral. Tones are cached per site in `localStorage` (`tabflow_icon_tones_v1`, cleared by Clear All).
+- **Multi-colour logos and white backgrounds.** Icons with three or more strong, distinct hues return `multi` hues instead of one arbitrary pick; their panes are smoky glass with a masked conic rim in those hues. `knockOutWhite` flood-fills a baked-in white background from the edges (white inside the logo is kept), and the cleaned icon replaces the card's and the Open tabs row's image. Cleaned icons are kept in memory only.
 - **Collection windows only on request.** Only Collections with a chosen colour (`data-color`) become tinted windows.
 - **No textures.** The look is colour and light: a two-tone tint, light from the sun/moon side (`--sun-x`), a rim, inner light, a fine translucent came and a coloured cast, scaled by `--scene-light`. There is no per-card backdrop blur.
 

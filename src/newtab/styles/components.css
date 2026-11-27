@@ -321,6 +321,13 @@ body.density-compact .card-url { display: none; }
   display: flex; align-items: center; justify-content: space-between;
 }
 .recently-closed-list { overflow: hidden; max-height: 240px; overflow-y: auto; }
+.rc-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.rc-toggle:hover { color: var(--text); }
+.rc-chevron { display: inline-flex; }
+.rc-chevron svg { transition: transform 200ms ease; }
+#recently-closed-section.collapsed .rc-chevron svg { transform: rotate(-90deg); }
+#recently-closed-section.collapsed .recently-closed-list { display: none; }
+.tab-fav-browser { display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); background: transparent; }
 
 /* ===== SHOW-PANEL BUTTONS ===== */
 .right-show-btn, .sidebar-show-btn {

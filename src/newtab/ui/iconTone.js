@@ -24,7 +24,10 @@ const BINS = 18; // 20° hue buckets
 
 /**
  * Dominant tone of RGBA pixel data (e.g. a 32×32 canvas read).
- * @returns {{h:number, c:number}} with c = 0 for mono icons, or null if empty.
+ * @returns {{h:number, c:number, multi?:number[]}} — c = 0 for mono icons;
+ *   multi-colour logos (three or more strong, distinct hues, like Google's
+ *   G) return c = 0 plus their hues in `multi`, so no single colour is
+ *   picked arbitrarily. null if the icon is empty.
  */
 export function dominantTone(data) {
   const weight = new Float64Array(BINS), sx = new Float64Array(BINS), sy = new Float64Array(BINS), sc = new Float64Array(BINS);
@@ -45,6 +48,8 @@ export function dominantTone(data) {
   }
   if (!opaque) return null;
   if (colored < opaque * 0.12) return { h: 0, c: 0 };
+  const multi = distinctHues(weight, sx, sy);
+  if (multi.length >= 3) return { h: 0, c: 0, multi };
   // Pick the strongest hue region (a bucket plus its neighbours), then average inside it.
   let best = 0, bestW = -1;
   for (let b = 0; b < BINS; b++) {
@@ -55,4 +60,53 @@ export function dominantTone(data) {
   for (const b of [best - 1, best, best + 1].map((n) => (n + BINS) % BINS)) { x += sx[b]; y += sy[b]; cw += sc[b]; ww += weight[b]; }
   const h = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
   return { h: Math.round(h), c: Math.round(Math.min(0.16, Math.max(0.07, cw / ww)) * 1000) / 1000 };
+}
+
+/* Strong hue regions at least 60° apart, strongest first (max four). */
+function distinctHues(weight, sx, sy) {
+  const total = weight.reduce((a, b) => a + b, 0);
+  const peaks = [];
+  for (let b = 0; b < BINS; b++) {
+    const w = weight[b] + weight[(b + 1) % BINS];
+    if (w < total * 0.14) continue;
+    const x = sx[b] + sx[(b + 1) % BINS], y = sy[b] + sy[(b + 1) % BINS];
+    peaks.push({ w, h: ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360 });
+  }
+  peaks.sort((a, b) => b.w - a.w);
+  const picked = [];
+  for (const peak of peaks) {
+    if (picked.every((h) => Math.min(Math.abs(h - peak.h), 360 - Math.abs(h - peak.h)) >= 60)) picked.push(peak.h);
+    if (picked.length === 4) break;
+  }
+  return picked.map(Math.round);
+}
+
+/**
+ * Make an icon's baked-in white background transparent: flood-fill from the
+ * edges through near-white pixels and clear them. White inside the logo
+ * (not connected to the edge) is kept. Mutates `data`; returns whether any
+ * background was removed.
+ */
+export function knockOutWhite(data, width, height) {
+  const near = (i) => data[i + 3] > 200 && data[i] > 232 && data[i + 1] > 232 && data[i + 2] > 232;
+  const seen = new Uint8Array(width * height);
+  const stack = [];
+  for (let x = 0; x < width; x++) stack.push(x, (height - 1) * width + x);
+  for (let y = 0; y < height; y++) stack.push(y * width, y * width + width - 1);
+  let cleared = 0;
+  while (stack.length) {
+    const p = stack.pop();
+    if (seen[p]) continue;
+    seen[p] = 1;
+    if (!near(p * 4)) continue;
+    data[p * 4 + 3] = 0;
+    cleared++;
+    const x = p % width, y = (p - x) / width;
+    if (x > 0) stack.push(p - 1);
+    if (x < width - 1) stack.push(p + 1);
+    if (y > 0) stack.push(p - width);
+    if (y < height - 1) stack.push(p + width);
+  }
+  // Only call it a background if it frames the icon (a decent share of the edge).
+  return cleared >= width * 2;
 }

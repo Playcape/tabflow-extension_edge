@@ -36,12 +36,26 @@ body[data-design="glass"].glass-stained .tab-card[data-tone-ic] {
 }
 /* Mono icons (GitHub, Notion…): smoky clear glass rather than an invented colour. */
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic="mono"] { --st-a: .5; }
+/* Multi-colour logos (Google, Microsoft, Slack…): clear glass with the logo's
+   own colours running around a fine rim, instead of one arbitrary colour. */
+body[data-design="glass"].glass-stained .tab-card[data-tone-ic="multi"] { --st-a: .5; }
+/* The rim is its own ring (masked to the border), so the colours stay on the edge. */
+body[data-design="glass"].glass-stained .tab-card[data-tone-ic="multi"]::after,
+body[data-design="glass"].glass-stained.glass-covers .view-card .tab-card[data-tone-ic="multi"]::after {
+  content: ''; display: block; position: absolute; inset: -1.5px; height: auto; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from 210deg,
+    oklch(.74 .16 var(--ic-m1)), oklch(.74 .16 var(--ic-m2)), oklch(.74 .16 var(--ic-m3)), oklch(.74 .16 var(--ic-m4)), oklch(.74 .16 var(--ic-m1)));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  box-shadow: none;
+}
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic] .card-title { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic] .card-url { color: rgba(255,255,255,.78); }
-/* The site icon sits on a small clear disc so it stays recognisable on its own colour. */
+/* The site icon sits straight on the glass (transparent, no tile); a soft
+   shadow keeps it readable on its own colour. */
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic] .card-fav {
-  width: 22px; height: 22px; padding: 3px; border-radius: 7px; background: rgba(255,255,255,.94);
-  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  width: 20px; height: 20px; padding: 0; border-radius: 0; background: transparent; box-shadow: none;
+  filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.45)) drop-shadow(0 0 6px rgba(255,255,255,.18));
 }
 
 /* Lit from within under the pointer (--lx/--ly). */

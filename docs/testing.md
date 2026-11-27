@@ -83,6 +83,12 @@ Linux, Node 22, Playwright Chromium (headless):
 - Checked visually at 2560×1440 with brand-coloured test icons, night and day, plus a hover close-up. 38 Node regressions, UI and Collection suites passed.
 - Remote icons in Firefox (Google's favicon service) may not be readable by canvas; those cards stay neutral. Verify in Firefox/Zen with real icons.
 
+## Review round — 27 November 2026
+
+- New unit tests: multi-colour logos (Google's G) give clear glass with three to four rim hues while two-colour logos keep their colour; the white-background knock-out clears the frame but keeps white inside the logo and leaves solid icons untouched.
+- `collectionLayout` now clears the old packing before counting lanes and ignores collapsed (0px) `auto-fit` tracks. Glass uses `auto-fit`, so two Collections share the width. The Collection suite passed in all four modes.
+- A scripted Zen-like check covered icons with white squares, `about:` pages in Open tabs, and TabFlow entries in Recently Closed (filtered out). 38 Node regressions and the UI suite passed.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.
