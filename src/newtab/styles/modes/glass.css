@@ -330,6 +330,20 @@ body[data-design="glass"] .collection {
 body[data-design="glass"] .collection-header { margin-bottom: 12px; padding: 2px 2px 0 4px; }
 body[data-design="glass"] .collection.collapsed .collection-header { margin-bottom: 0; }
 body[data-design="glass"] .col-name { font-size: 15px; font-weight: 620; letter-spacing: -.3px; }
+/* A coloured Collection shows its colour as a dot before the name, not a side stripe. */
+body[data-design="glass"] .collection[data-color] .collection-header { border-left: 0; padding-left: 4px; }
+body[data-design="glass"] .collection[data-color="red"] { --col-dot: #f87171; }
+body[data-design="glass"] .collection[data-color="orange"] { --col-dot: #fb923c; }
+body[data-design="glass"] .collection[data-color="yellow"] { --col-dot: #facc15; }
+body[data-design="glass"] .collection[data-color="green"] { --col-dot: #4ade80; }
+body[data-design="glass"] .collection[data-color="cyan"] { --col-dot: #22d3ee; }
+body[data-design="glass"] .collection[data-color="blue"] { --col-dot: #60a5fa; }
+body[data-design="glass"] .collection[data-color="purple"] { --col-dot: #a78bfa; }
+body[data-design="glass"] .collection[data-color="pink"] { --col-dot: #f472b6; }
+body[data-design="glass"] .collection[data-color] .col-name::before {
+  content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 50%; vertical-align: 1px;
+  background: var(--col-dot); box-shadow: 0 0 10px color-mix(in srgb, var(--col-dot) 60%, transparent);
+}
 body[data-design="glass"] .col-count { border-radius: 999px; padding: 1px 8px; background: var(--fill-2); color: var(--readable-muted); }
 body[data-design="glass"] .col-actions .icon-btn,
 body[data-design="glass"] .col-chevron { border-radius: 999px; }

@@ -1,16 +1,17 @@
 /* ================================================================
    TabFlow — Stained glass (optional Glass style)
-   Each Collection becomes a softly tinted glass window in one hue
-   (its chosen colour, else a stable hue from its name). Saved tabs and
-   the navigation stay neutral, so colour means "this group". The tint
-   follows the Live scene's light (--scene-light, --sun-x).
+   Saved tabs become panes of coloured glass in their site's own colour,
+   read from the site icon (GitHub: smoky clear glass, Spotify: green,
+   YouTube: red…). Collections stay clear unless you give them a colour
+   (Collection menu → colour); then they become a tinted window. The
+   light follows the Live scene (--scene-light, --sun-x).
 
-   Self-contained so it can be removed easily. This module owns its
-   body classes, decorates Collections through a MutationObserver and
-   binds its own settings controls; no other module calls into it.
+   Self-contained so it can be removed easily: this module owns its body
+   classes, tints cards through a MutationObserver and binds its own
+   settings controls; no other module calls into it.
 
    To remove stained glass, delete:
-     · this file and src/newtab/styles/modes/stained.css
+     · this file, ui/iconTone.js and styles/modes/stained.css
      · the lines marked [stained-glass] in src/newtab/main.js,
        src/newtab/newtab.css, src/newtab/newtab.html (one block) and
        src/newtab/migrations.js (two settings and their validation)
@@ -19,26 +20,35 @@
    Stored glassStyle/stainedIntensity values are then dropped on load.
    ================================================================ */
 
-import { q, qa } from '../../common/util.js';
-import { settings, update, findCollection } from '../store.js';
+import { q, qa, siteOf } from '../../common/util.js';
+import { settings, update, findTab } from '../store.js';
 import { registerRenderer, render } from './bus.js';
+import { dominantTone } from './iconTone.js';
 
-/* Window hues that stay clear when deep and translucent (amber and gold
-   turn brown at this depth), spread so neighbours differ: sapphire,
-   emerald, violet, rose, teal, wine. A Collection's own colour wins. */
-export const STAINED_HUES = [248, 160, 292, 345, 205, 20];
-/* Collection colour keys (themes.js COLLECTION_COLORS) as hues. */
-const KEY_HUES = { red: 25, orange: 55, yellow: 92, green: 150, cyan: 205, blue: 248, purple: 292, pink: 345 };
+const CACHE_KEY = 'tabflow_icon_tones_v1';
+const MAX_CACHED = 600;
+/** site → {h, c} (c = 0: mono icon) or null (icon unreadable). */
+const tones = new Map();
+const pending = new Set();
+let saveTimer = 0;
 
-function hash(text) {
-  let h = 2166136261; // FNV-1a
-  for (const char of String(text)) h = Math.imul(h ^ char.codePointAt(0), 16777619) >>> 0;
-  return h;
+function loadCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}');
+    for (const [site, tone] of Object.entries(raw)) {
+      if (tone && Number.isFinite(tone.h) && Number.isFinite(tone.c)) tones.set(site, tone);
+    }
+  } catch { /* private mode or corrupt cache: start empty */ }
 }
 
-/** Window hue of a Collection: its chosen colour, else a stable hue from its name. */
-export function windowHue(collection) {
-  return KEY_HUES[collection?.color] ?? STAINED_HUES[hash(collection?.name ?? '') % STAINED_HUES.length];
+function saveCache() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      const entries = [...tones].filter(([, tone]) => tone).slice(-MAX_CACHED);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+    } catch { /* quota: colours are recomputed next time */ }
+  }, 800);
 }
 
 function on() {
@@ -47,19 +57,74 @@ function on() {
 }
 
 function applyClasses() {
-  const s = settings();
   document.body.classList.toggle('glass-stained', on());
-  document.body.classList.toggle('stained-rich', on() && s.stainedIntensity === 'rich');
+  document.body.classList.toggle('stained-rich', on() && settings().stainedIntensity === 'rich');
 }
 
-/** Give every rendered Collection its window hue. Cheap: one style write per Collection. */
-function decorate(root = document) {
-  if (!on()) return;
-  for (const el of qa('.collection[data-id]', root)) {
-    const hue = String(windowHue(findCollection(el.dataset.id)?.collection));
-    if (el.style.getPropertyValue('--st-h') !== hue) el.style.setProperty('--st-h', hue);
+/* ---------- reading an icon's colour ---------- */
+
+let canvas;
+function readTone(img) {
+  canvas ??= Object.assign(document.createElement('canvas'), { width: 32, height: 32 });
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.clearRect(0, 0, 32, 32);
+  ctx.drawImage(img, 0, 0, 32, 32);
+  return dominantTone(ctx.getImageData(0, 0, 32, 32).data); // throws on a cross-origin icon
+}
+
+/** Read the icon on the card; a cross-origin icon is retried once with CORS. */
+function measure(site, img) {
+  if (pending.has(site)) return;
+  pending.add(site);
+  const done = (tone) => {
+    pending.delete(site);
+    tones.set(site, tone);
+    if (tone) saveCache();
+    paintAll();
+  };
+  const fromImage = (image, retry) => {
+    try { done(readTone(image)); }
+    catch {
+      if (!retry) { done(null); return; }
+      const copy = new Image();
+      copy.crossOrigin = 'anonymous';
+      copy.onload = () => fromImage(copy, false);
+      copy.onerror = () => done(null);
+      copy.src = img.currentSrc || img.src;
+    }
+  };
+  if (img.complete && img.naturalWidth) fromImage(img, true);
+  else {
+    img.addEventListener('load', () => fromImage(img, true), { once: true });
+    img.addEventListener('error', () => pending.delete(site), { once: true });
   }
 }
+
+/* ---------- painting cards ---------- */
+
+function paintCard(card) {
+  const found = findTab(card.dataset.colId, card.dataset.tabId);
+  const site = found ? siteOf(found.tab.url) : '';
+  if (!site) return;
+  const tone = tones.get(site);
+  if (tone === undefined) {
+    const img = card.querySelector('img.card-fav');
+    if (img) measure(site, img);
+    return;
+  }
+  if (!tone) { delete card.dataset.toneIc; return; }
+  const value = tone.c ? 'color' : 'mono';
+  if (card.dataset.toneIc !== value) card.dataset.toneIc = value;
+  card.style.setProperty('--ic-h', String(tone.h));
+  card.style.setProperty('--ic-c', String(tone.c));
+}
+
+function paintAll() {
+  if (!on()) return;
+  for (const card of qa('#collections-area .tab-card[data-tab-id]')) paintCard(card);
+}
+
+/* ---------- settings ---------- */
 
 function bindPills(sel, key) {
   const wrap = q(sel);
@@ -75,7 +140,7 @@ function bindPills(sel, key) {
 
 function renderStained() {
   applyClasses();
-  decorate();
+  paintAll();
   bindPills('#glassstyle-pills', 'glassStyle');
   bindPills('#stainedintensity-pills', 'stainedIntensity');
 }
@@ -100,11 +165,12 @@ function onPointer(event) {
 }
 
 export function initStained() {
+  loadCache();
   registerRenderer('stained', renderStained);
-  // Collections re-render often; decorate whatever was just added.
+  // Collections re-render often; tint whatever was just added.
   const area = q('#collections-area');
-  if (area) new MutationObserver(() => decorate(area)).observe(area, { childList: true });
+  if (area) new MutationObserver(paintAll).observe(area, { childList: true, subtree: true });
   // Design switches go through the appearance pass; keep the classes in step.
-  new MutationObserver(applyClasses).observe(document.body, { attributeFilter: ['data-design'] });
+  new MutationObserver(() => { applyClasses(); paintAll(); }).observe(document.body, { attributeFilter: ['data-design'] });
   document.addEventListener('pointermove', onPointer, { passive: true });
 }

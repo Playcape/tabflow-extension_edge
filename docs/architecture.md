@@ -239,9 +239,15 @@ Motion and transparency preferences affect JavaScript as well as CSS. No animate
 
 ### Stained glass style (optional, removable)
 
-`glassStyle: 'stained'` is a self-contained module: `ui/stained.js` with `styles/modes/stained.css`. The module owns its body classes (`glass-stained`, `stained-rich`) and its settings controls. It gives each `.collection` a window hue (`--st-h`) through a MutationObserver, and lights the hovered card from the pointer. No other module calls into it. Following Apple's HIG Color and WWDC25 "Meet Liquid Glass", colour lives in the content layer and means grouping: one tinted window per Collection, neutral cards, monochrome navigation. The tint is colour and light only (a tinted body, light from the sun/moon side via `--sun-x`, a rim, inner light, and spill onto the scene, scaled by `--scene-light`). There are no textures or lead lines, and no per-card backdrop blur.
+`glassStyle: 'stained'` is a self-contained module: `ui/stained.js`, `ui/iconTone.js` and `styles/modes/stained.css`. The module owns its body classes (`glass-stained`, `stained-rich`) and its settings controls, and tints cards through a MutationObserver. No other module calls into it.
 
-To remove it, delete `ui/stained.js` and `styles/modes/stained.css`, then the lines marked `[stained-glass]` in `main.js`, `newtab.css`, `newtab.html` (one block) and `migrations.js`, and the stained tests in `tests/data.test.mjs`, `tests/scene.test.mjs` and `tests/ui.mjs`. Stored values are dropped on load.
+- **Card colour from the site icon.** `iconTone.js` draws the card's icon on a 32×32 canvas and takes the dominant OKLCH hue and chroma of its coloured pixels. Mostly black/white/grey icons give `c = 0` (smoky glass). Cross-origin icons are retried once with CORS; unreadable icons leave the card neutral. Tones are cached per site in `localStorage` (`tabflow_icon_tones_v1`, cleared by Clear All).
+- **Collection windows only on request.** Only Collections with a chosen colour (`data-color`) become tinted windows.
+- **No textures.** The look is colour and light: a two-tone tint, light from the sun/moon side (`--sun-x`), a rim, inner light, a fine translucent came and a coloured cast, scaled by `--scene-light`. There is no per-card backdrop blur.
+
+This follows Apple's HIG Color and WWDC25 "Meet Liquid Glass": colour in the content layer, monochrome navigation.
+
+To remove it, delete those three files, then the lines marked `[stained-glass]` in `main.js`, `newtab.css`, `newtab.html` (one block) and `migrations.js`, and the stained tests in `tests/data.test.mjs`, `tests/scene.test.mjs` and `tests/ui.mjs`.
 
 ### Glass rendering budget
 

@@ -76,7 +76,17 @@ try {
   assert.ok(await page.locator('#glassstyle-pills [data-val="clear"]').evaluate(el => el.classList.contains('active')));
   await page.click('#glassstyle-pills [data-val="stained"]');
   assert.ok(await page.locator('body').evaluate(el => el.classList.contains('glass-stained')));
-  assert.match(await page.locator('.collection').first().evaluate(el => el.style.getPropertyValue('--st-h')), /^\d+$/);
+  // A card takes its colour from its site icon (here a red data: icon, as Firefox stores them).
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const x = c.getContext('2d'); x.fillStyle = '#e1251b'; x.fillRect(0, 0, 32, 32);
+    const { update } = await import('/newtab/store.js'); const { render } = await import('/newtab/ui/bus.js');
+    update(d => { d.spaces[0].collections[0].tabs[0].favicon = c.toDataURL('image/png'); });
+    render('collections');
+  });
+  await page.waitForFunction(() => document.querySelector('.tab-card')?.dataset.toneIc === 'color');
+  const hue = Number(await page.locator('.tab-card').first().evaluate(el => el.style.getPropertyValue('--ic-h')));
+  assert.ok(hue > 15 && hue < 45, `red icon gives a red pane (hue ${hue})`);
   await page.click('#glassstyle-pills [data-val="clear"]');
   assert.ok(!(await page.locator('body').evaluate(el => el.classList.contains('glass-stained'))));
   assert.equal(await page.locator('body').getAttribute('data-scene'),'live');

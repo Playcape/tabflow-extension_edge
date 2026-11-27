@@ -77,6 +77,12 @@ Linux, Node 22, Playwright Chromium (headless):
 - Glass UX: a Collection-header **+** replaces Save-a-tab tiles when a Collection has tabs; the stats strip lost its own capsule; the Space name joins the date row; titles reserve two lines; the live-panel hint is readable; closing the scene card ends a time-travel preview.
 - 38 Node regressions, UI and Collection suites passed. Checked visually at 2560×1440: clear (night), stained subtle (night and day) and rich.
 
+## Stained glass v3 (icon colours) — 27 November 2026
+
+- `dominantTone` unit tests: green and red brand icons give their hue; black/white and mostly-grey icons give mono; transparent icons give none. The UI suite checks that a red `data:` icon makes a red pane.
+- Checked visually at 2560×1440 with brand-coloured test icons, night and day, plus a hover close-up. 38 Node regressions, UI and Collection suites passed.
+- Remote icons in Firefox (Google's favicon service) may not be readable by canvas; those cards stay neutral. Verify in Firefox/Zen with real icons.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.
