@@ -239,18 +239,22 @@ body[data-design="glass"] #workspace-eyebrow { display: none; }
 body[data-design="glass"][data-view="collections"] .workspace-greeting:not(:empty) { display: block; font-size: clamp(22px, 2.2vw, 30px); font-weight: 650; letter-spacing: -.8px; line-height: 1.12; color: var(--text); text-shadow: 0 1px 18px rgba(0,0,0,.25); }
 body[data-design="glass"] #space-breadcrumb { color: var(--text); font-weight: 620; text-shadow: 0 1px 18px rgba(0,0,0,.25); }
 /* :where() keeps this at the specificity of the other modes' breadcrumb rules, so Custom CSS still wins. */
-body[data-design="glass"] #space-breadcrumb:where([data-view="collections"] .workspace-greeting:not(:empty) ~ *) { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--readable-muted); text-shadow: none; }
+body[data-design="glass"] #space-breadcrumb:where([data-view="collections"] .workspace-greeting:not(:empty) ~ *) { font-size: 13px; font-weight: 650; letter-spacing: 0; color: var(--text); text-shadow: 0 1px 12px rgba(0,0,0,.25); }
 body[data-design="glass"][data-view="collections"] .workspace-description { display: none; }
 body[data-design="glass"].theme-light .workspace-greeting, body[data-design="glass"].theme-light #space-breadcrumb { text-shadow: none; }
 
 /* The clock stands left of the greeting, separated by a hairline, and is lit
    by the Live scene (--scene-glow); date and weather sit under the greeting. */
+/* Row 1: greeting. Row 2: Space name · date · weather chip (one line of context). */
 body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 22px; row-gap: 3px; align-items: center; align-content: end;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 22px; row-gap: 4px; align-items: center; align-content: end;
 }
-body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) > :not(.hero-clock) { grid-column: 2; }
+body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) > .workspace-greeting { grid-column: 2 / span 2; grid-row: 1; }
+body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) > #space-breadcrumb { grid-column: 2; grid-row: 2; }
+body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) > .hero-meta { grid-column: 3; grid-row: 2; margin-left: -12px; }
+body[data-design="glass"][data-view="collections"] .toolbar-left:has(> .hero-clock:not([hidden])) > #space-breadcrumb::after { content: ' ·'; color: var(--readable-faint); }
 body[data-design="glass"][data-view="collections"] .hero-clock:not([hidden]) {
-  display: flex; align-items: flex-start; gap: 4px; grid-column: 1; grid-row: 1 / span 3; position: relative; padding-right: 22px; margin-right: 0;
+  display: flex; align-items: flex-start; gap: 4px; grid-column: 1; grid-row: 1 / span 2; position: relative; padding-right: 22px; margin-right: 0;
   color: var(--text); font-size: clamp(44px, 4.4vw, 64px); font-weight: 250; letter-spacing: -.035em; line-height: .9; font-variant-numeric: tabular-nums;
   text-shadow: 0 0 26px color-mix(in srgb, var(--scene-glow, #ffffff) calc(var(--scene-glow-alpha, .35) * 100%), transparent), 0 1px 16px rgba(0,0,0,.25);
 }
@@ -289,14 +293,13 @@ body[data-design="glass"] .toolbar-left { order: 1; }
 body[data-design="glass"] .workspace-summary { order: 2; flex: 0 0 auto; margin: 0; align-self: flex-end; }
 body[data-design="glass"] .toolbar-right { order: 3; }
 body[data-design="glass"] .workspace-metrics {
-  display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; white-space: nowrap;
-  font-size: 12px; line-height: 1; color: var(--readable-muted);
-  background: var(--mt-fill); border: 1px solid var(--mt-line); box-shadow: var(--mt-drop);
-  backdrop-filter: var(--mt-filter); -webkit-backdrop-filter: var(--mt-filter);
+  display: flex; align-items: center; gap: 16px; padding: 0 4px; white-space: nowrap;
+  font-size: 12px; line-height: 1; color: var(--readable-muted); text-shadow: 0 1px 10px rgba(0,0,0,.25);
 }
-body[data-design="glass"] .workspace-metrics > span { display: inline-flex; align-items: center; gap: 7px; padding: 3px 12px 3px 3px; border-radius: 999px; }
+body[data-design="glass"].theme-light .workspace-metrics { text-shadow: none; }
+body[data-design="glass"] .workspace-metrics > span { display: inline-flex; align-items: center; gap: 7px; }
 body[data-design="glass"] .workspace-metrics > span::before {
-  content: ''; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  content: ''; flex: none; width: 22px; height: 22px; border-radius: 50%;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 10px -6px rgba(0,0,0,.5);
   background: var(--gl-metric-icon) center / 13px no-repeat, var(--gl-metric-tone);
 }
@@ -306,7 +309,7 @@ body[data-design="glass"][data-view="collections"] .workspace-greeting:not(:empt
    accessibility tree (font-size 0 keeps them readable to screen readers)
    and appear as tooltips. */
 @media (max-width: 1799px) {
-  body[data-design="glass"] .workspace-metrics > span { font-size: 0; gap: 6px; padding-right: 10px; }
+  body[data-design="glass"] .workspace-metrics > span { font-size: 0; gap: 6px; }
 }
 body[data-design="glass"] .workspace-metrics > span:nth-child(1) { --gl-metric-tone: linear-gradient(145deg, #f2c46d, #c98a2e); --gl-metric-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7' rx='1.5'/%3E%3Crect x='14' y='3' width='7' height='7' rx='1.5'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1.5'/%3E%3Crect x='14' y='14' width='7' height='7' rx='1.5'/%3E%3C/svg%3E"); }
 body[data-design="glass"] .workspace-metrics > span:nth-child(2) { --gl-metric-tone: linear-gradient(145deg, #5fd3a0, #24966a); --gl-metric-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'/%3E%3C/svg%3E"); }
@@ -346,6 +349,7 @@ body[data-design="glass"]:not(.effects-static) .tab-card:hover { transform: tran
 body[data-design="glass"] .tab-card.pinned { border-color: rgba(var(--accent-rgb), .45); }
 body[data-design="glass"] .tab-card.pinned::before { display: none; }
 body[data-design="glass"] .card-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+body[data-design="glass"] .view-card .card-title { min-height: calc(1.3em * 2); }
 body[data-design="glass"] .card-fav, body[data-design="glass"] .fav-fallback { border-radius: 7px; }
 body[data-design="glass"] .fav-fallback { background: var(--fill-3); color: var(--text); }
 body[data-design="glass"] .card-pin-indicator { color: var(--accent); }
@@ -381,6 +385,8 @@ body[data-design="glass"].glass-covers .view-card .tag-pill { background: rgba(2
 body[data-design="glass"].glass-covers .view-card .card-remove { top: 12px; right: 12px; color: #fff; background: rgba(0,0,0,.18); }
 
 
+body[data-design="glass"] .col-add-btn { display: grid !important; place-items: center; }
+body[data-design="glass"] .cards-wrap:has(.tab-card) > .add-tab-card { display: none; }
 body[data-design="glass"] .add-tab-card { border-radius: var(--gl-card-radius); border: 1px dashed color-mix(in srgb, var(--text) 18%, transparent); background: transparent; color: var(--readable-muted); }
 body[data-design="glass"] .add-tab-card:hover { background: var(--fill-1); border-color: color-mix(in srgb, var(--text) 36%, transparent); color: var(--text); }
 body[data-design="glass"] .drop-zone.drop-active { border-radius: var(--gl-card-radius); background: rgba(var(--accent-rgb), .12); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .6); }
@@ -394,6 +400,7 @@ body[data-design="glass"] .right-panel-actions .icon-btn { width: 32px; height: 
 body[data-design="glass"] .right-panel-actions .icon-btn:hover { background: var(--fill-3); }
 body[data-design="glass"] .open-tabs-filter input { border-radius: 999px; background: var(--fill-1); border: 0; padding-inline: 14px; min-height: 34px; }
 body[data-design="glass"] #open-tab-count { border-radius: 999px; border: 0; background: var(--fill-2); color: var(--readable-muted); }
+body[data-design="glass"] .panel-tip { color: var(--readable-muted); font-size: 12px; padding-inline: 18px; }
 body[data-design="glass"] #open-tabs-list { padding: 4px var(--r-pad) 10px; }
 body[data-design="glass"] .win-group { margin-bottom: 10px; }
 body[data-design="glass"] .win-group-hdr { padding: 8px 8px 6px; }

@@ -72,11 +72,11 @@ try {
   assert.equal(await page.locator('body').getAttribute('data-scene'),'night');
   assert.equal(await page.locator('.scene-live').count() === 0 || await page.locator('.scene-live').isHidden(), true);
   await page.click('#glassscene-pills [data-val="live"]');
-  // Stained glass: a Glass style, off by default; panes carry a per-site hue and Clear removes the class again.
+  // [stained-glass] An optional Glass style, off by default: each Collection gets a window hue; Clear removes the class again.
   assert.ok(await page.locator('#glassstyle-pills [data-val="clear"]').evaluate(el => el.classList.contains('active')));
   await page.click('#glassstyle-pills [data-val="stained"]');
   assert.ok(await page.locator('body').evaluate(el => el.classList.contains('glass-stained')));
-  assert.match(await page.locator('.tab-card').first().evaluate(el => el.style.getPropertyValue('--pane-h')), /^\d+$/);
+  assert.match(await page.locator('.collection').first().evaluate(el => el.style.getPropertyValue('--st-h')), /^\d+$/);
   await page.click('#glassstyle-pills [data-val="clear"]');
   assert.ok(!(await page.locator('body').evaluate(el => el.classList.contains('glass-stained'))));
   assert.equal(await page.locator('body').getAttribute('data-scene'),'live');

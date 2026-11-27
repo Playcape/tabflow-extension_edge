@@ -28,7 +28,6 @@ import { toast } from './toast.js';
 import { setDrag, getDrag, clearDrag } from './dnd.js';
 import { makeCollection, makeTab } from '../migrations.js';
 import { applyDesign } from './design.js';
-import { paneHue, frameHue, spillHues } from './stained.js';
 import { currentNav, setNav } from './layout.js';
 import { observeCollectionLayout, layoutCollections } from './collectionLayout.js';
 
@@ -350,12 +349,9 @@ function sortedTabs(collection) {
 }
 
 function buildCollectionEl(collection, space, viewMode, { tabs = null, searchContext = false } = {}) {
-  const [spillA, spillB] = spillHues(collection.tabs);
   const el = h('div', {
     class: 'collection' + (collection.collapsed ? ' collapsed' : ''),
     dataset: { id: collection.id, spId: space.id },
-    // Stained glass (Glass mode): frame colour and the colours its light spills.
-    style: `--frame-h:${frameHue(collection)};--spill-a:${spillA};--spill-b:${spillB}`,
   });
   if (collection.color) el.dataset.color = collection.color;
 
@@ -401,6 +397,16 @@ function buildCollectionEl(collection, space, viewMode, { tabs = null, searchCon
       })
     ),
     h('div', { class: 'col-actions' },
+      searchContext ? null : h('button', {
+        class: 'icon-btn col-add-btn',
+        children: icon('plus', 13),
+        title: 'Save a tab to this collection',
+        'aria-label': `Save a tab to ${collection.name}`,
+        onclick: (event) => {
+          event.stopPropagation();
+          openTabModal({ mode: 'add', collection });
+        },
+      }),
       h('button', {
         class: 'icon-btn',
         children: icon('arrow-up-down', 11),
@@ -682,7 +688,6 @@ function buildCard(tab, collection, space) {
     {
       class: 'tab-card' + (tab.pinned ? ' pinned' : ''),
       dataset: { tabId: tab.id, colId: collection.id, spId: space.id, tone: toneFor(urlText) },
-      style: `--pane-h:${paneHue(tab.url)}`,
       tabindex: '0',
       role: 'link',
       'aria-label': `${tab.title} — ${urlText}`,

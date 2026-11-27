@@ -382,6 +382,11 @@ function closeCard() {
   document.removeEventListener('keydown', escClose, true);
   if (cardReturn?.isConnected) cardReturn.focus({ preventScroll: true });
   cardReturn = null;
+  // A time-travel preview ends with the card, so scene, greeting and clock agree again.
+  if (preview.minutes != null || preview.season || preview.kind) {
+    preview.minutes = null; preview.season = null; preview.kind = null;
+    render(true);
+  }
 }
 
 function outsideClose(event) {

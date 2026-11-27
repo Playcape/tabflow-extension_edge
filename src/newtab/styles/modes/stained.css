@@ -1,148 +1,79 @@
-/* GLASS · STAINED — the content layer as tinted Liquid Glass held in lead.
- * Built from Apple's guidance: colour goes into the glass itself ("apply
- * color to some Liquid Glass elements, giving them the appearance of
- * colored or stained glass" — HIG Color), tint produces a range of tones
- * that follow the light behind it, light from coloured content spills onto
- * neighbouring surfaces and into shadows, and touched glass illuminates
- * from within (WWDC25 "Meet Liquid Glass"). The navigation stays clear and
- * monochrome so the colourful content stays legible.
- *
- * No texture images: each pane is colour + light —
- *   a tinted body (two tones, lighter where light enters),
- *   light entering from the sun/moon side of the Live scene (--sun-x),
- *   a tinted specular rim and inner glow (light inside the glass),
- *   a darker lower edge (thickness), a lead came, and coloured light cast
- *   below it. Brightness follows the scene (--scene-light, 0–1). */
+/* [stained-glass] GLASS · STAINED — optional Glass style (ui/stained.js).
+ * Colour means "this group": each Collection is a softly tinted Liquid
+ * Glass window in one hue (--st-h); the saved tabs inside and the
+ * navigation stay neutral (Apple: colour in the content layer, controls
+ * monochrome; "apply color to some Liquid Glass elements, giving them the
+ * appearance of colored or stained glass" — HIG Color).
+ * Built from colour and light only: a tinted body, light entering from the
+ * side the sun or moon is on (--sun-x), a tinted glass rim and inner light,
+ * and the window's colour spilling onto the scene below. Strength follows
+ * the Live scene (--scene-light, 0–1). No lead lines, no textures. */
 body[data-design="glass"].glass-stained {
-  --lead: #0c0b10;
-  --lead-hi: rgba(255,255,255,.1);
-  --pane-l: .52;       /* lightness of the lit tone */
-  --pane-c: .105;      /* chroma: subtle */
-  --pane-a: .5;        /* opacity of the tint */
-  --light: var(--scene-light, .85);
-  --lx-sun: calc(var(--sun-x, .22) * 100%);
-  /* Night dims and deepens the glass; day lets more light through. */
-  --pl: calc(var(--pane-l) - (1 - var(--light)) * .06);
-  --pa: calc(var(--pane-a) * (.86 + .14 * var(--light)));
+  --st-c: .06;                                 /* chroma: subtle */
+  --st-light: var(--scene-light, .8);
+  --st-sun: calc(var(--sun-x, .25) * 100%);
 }
-body[data-design="glass"].glass-stained.stained-rich { --pane-c: .165; --pane-a: .7; --pane-l: .54; }
-body[data-design="glass"].glass-stained.theme-light { --pane-l: .5; --lead: #1b1a22; }
+body[data-design="glass"].glass-stained.stained-rich { --st-c: .11; }
 
-/* ---------- panes (saved tabs) ---------- */
-body[data-design="glass"].glass-stained .tab-card {
-  --hi: oklch(.97 .045 var(--pane-h));
+body[data-design="glass"].glass-stained .collection {
   background:
-    /* light entering through the glass from the side the sun or moon is on */
-    radial-gradient(130% 115% at var(--lx-sun) -25%, oklch(.96 .06 var(--pane-h) / calc(.06 + .3 * var(--light))), transparent 62%),
-    /* the tinted glass: lit tone above, deeper tone below */
-    linear-gradient(172deg,
-      oklch(var(--pl) var(--pane-c) var(--pane-h) / var(--pa)),
-      oklch(calc(var(--pl) - .17) calc(var(--pane-c) * 1.12) calc(var(--pane-h) + 10) / calc(var(--pa) + .1)));
-  border: 2px solid var(--lead);
-  border-radius: 12px;
+    radial-gradient(110% 70% at var(--st-sun) -15%, oklch(.88 calc(var(--st-c) * 1.4) var(--st-h, 248) / calc(.05 + .14 * var(--st-light))), transparent 62%),
+    linear-gradient(180deg,
+      oklch(.4 var(--st-c) var(--st-h, 248) / calc(.34 + var(--gl-frost, .4) * .3)),
+      oklch(.3 calc(var(--st-c) * .9) var(--st-h, 248) / calc(.42 + var(--gl-frost, .4) * .3)));
+  border: 1px solid oklch(.82 calc(var(--st-c) * 1.2) var(--st-h, 248) / .22);
   box-shadow:
-    0 0 0 1px var(--lead-hi),                                                 /* light on the came */
-    inset 0 1px 0 oklch(.98 .04 var(--pane-h) / .55),                         /* specular rim, tinted */
-    inset 1px 0 0 oklch(.98 .04 var(--pane-h) / .16),
-    inset 0 -2px 0 oklch(.25 .08 var(--pane-h) / .5),                         /* glass thickness */
-    inset 0 0 22px -8px oklch(.9 .12 var(--pane-h) / calc(.08 + .4 * var(--light))), /* light inside the glass */
-    0 12px 26px -16px oklch(.66 .17 var(--pane-h) / calc(.15 + .5 * var(--light)));  /* coloured light cast below */
-  transition: transform 260ms cubic-bezier(.2,.8,.2,1), box-shadow 260ms ease;
+    inset 0 1px 0 oklch(.95 .04 var(--st-h, 248) / .3),                               /* glass rim */
+    inset 0 0 40px -18px oklch(.8 calc(var(--st-c) * 2) var(--st-h, 248) / calc(.1 + .3 * var(--st-light))), /* light inside */
+    0 36px 80px -44px oklch(.66 calc(var(--st-c) * 2.4) var(--st-h, 248) / calc(.18 + .34 * var(--st-light))); /* colour spilling onto the scene */
 }
-/* Illuminate from within: a glow that starts under the pointer (--lx/--ly,
-   set only on the hovered pane) and a soft sheen across the glass. */
+body[data-design="glass"].glass-stained.theme-light .collection {
+  background:
+    radial-gradient(110% 70% at var(--st-sun) -15%, rgba(255,255,255,.5), transparent 62%),
+    linear-gradient(180deg,
+      oklch(.95 calc(var(--st-c) * .8) var(--st-h, 248) / calc(.45 + var(--gl-frost, .4) * .35)),
+      oklch(.9 var(--st-c) var(--st-h, 248) / calc(.5 + var(--gl-frost, .4) * .35)));
+  border-color: oklch(.98 .02 var(--st-h, 248) / .7);
+}
+
+/* The window's name carries its colour; everything else stays calm. */
+body[data-design="glass"].glass-stained .col-name::before {
+  content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 50%; vertical-align: 1px;
+  background: oklch(.74 .14 var(--st-h, 248));
+  box-shadow: 0 0 10px oklch(.74 .14 var(--st-h, 248) / .65);
+}
+body[data-design="glass"].glass-stained .col-count { background: oklch(.8 .08 var(--st-h, 248) / .16); }
+
+/* Saved tabs: neutral glass, lit from within in the window's colour when
+   pointed at (the glow starts under the pointer: --lx/--ly). */
 body[data-design="glass"].glass-stained .tab-card::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
-  background: radial-gradient(160px circle at var(--lx, 30%) var(--ly, 20%), oklch(.95 .09 var(--pane-h) / .42), transparent 70%);
-  transition: opacity 240ms ease;
+  background: radial-gradient(150px circle at var(--lx, 30%) var(--ly, 25%), oklch(.9 .09 var(--st-h, 248) / .22), transparent 70%);
+  transition: opacity 220ms ease;
 }
 body[data-design="glass"].glass-stained .tab-card:hover::before,
 body[data-design="glass"].glass-stained .tab-card:focus-visible::before { opacity: 1; }
 body[data-design="glass"].glass-stained .tab-card:hover,
-body[data-design="glass"].glass-stained .tab-card:focus-visible {
-  --pa: calc(var(--pane-a) * 1.18);
-  box-shadow:
-    0 0 0 1px var(--lead-hi),
-    inset 0 1px 0 oklch(.99 .04 var(--pane-h) / .7),
-    inset 0 -2px 0 oklch(.25 .08 var(--pane-h) / .5),
-    inset 0 0 26px -6px oklch(.92 .13 var(--pane-h) / .55),
-    0 16px 34px -14px oklch(.7 .18 var(--pane-h) / .7);
-}
-body[data-design="glass"].glass-stained .tab-card.pinned { border-color: oklch(.72 .12 85); box-shadow: 0 0 0 1px oklch(.85 .1 90 / .4), inset 0 1px 0 oklch(.98 .04 var(--pane-h) / .55), inset 0 0 22px -8px oklch(.9 .12 var(--pane-h) / .35); }
-body[data-design="glass"].glass-stained .tab-card::after { display: none; }
-body[data-design="glass"].glass-stained .tab-card .card-title { color: #fff; text-shadow: 0 1px 2px oklch(.2 .06 var(--pane-h) / .7); }
-body[data-design="glass"].glass-stained .tab-card .card-url { color: rgba(255,255,255,.76); }
-/* Icon roundel: a small clear disc of glass so letters and icons stay readable. */
-body[data-design="glass"].glass-stained .tab-card .card-fav,
-body[data-design="glass"].glass-stained .tab-card .fav-fallback {
-  width: 24px; height: 24px; padding: 4px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, oklch(.93 .03 var(--pane-h)));
-  color: oklch(.36 .12 var(--pane-h)); font-weight: 700;
-  box-shadow: 0 0 0 2px var(--lead), 0 0 10px -2px oklch(.9 .1 var(--pane-h) / .6);
-}
-body[data-design="glass"].glass-stained .tab-card .tag-pill { background: rgba(255,255,255,.2); color: #fff; }
-body[data-design="glass"].glass-stained .add-tab-card { border: 2px dashed color-mix(in srgb, var(--text) 18%, transparent); border-radius: 12px; }
+body[data-design="glass"].glass-stained .tab-card:focus-visible { box-shadow: inset 0 0 0 1px oklch(.85 .08 var(--st-h, 248) / .35), 0 16px 30px -22px rgba(0,0,0,.7); }
 
-/* ---------- windows (Collections) ---------- */
-/* Each Collection is a window: a heavier came, a segmented transom in its
-   frame colour, and the colours of its panes spilling onto the scene. */
-body[data-design="glass"].glass-stained .collection {
-  position: relative;
-  border: 3px solid var(--lead);
-  box-shadow:
-    0 0 0 1px var(--lead-hi),
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    -60px 50px 110px -50px oklch(.7 .17 var(--spill-a) / calc(.22 + .4 * var(--light))),
-    60px 50px 110px -50px oklch(.7 .17 var(--spill-b) / calc(.22 + .4 * var(--light)));
-}
-body[data-design="glass"].glass-stained .collection::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; pointer-events: none;
-  border-radius: calc(var(--r-outer) - 3px) calc(var(--r-outer) - 3px) 0 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 46px, var(--lead) 46px 48px),
-    linear-gradient(90deg, oklch(.66 .16 var(--frame-h)), oklch(.6 .15 calc(var(--frame-h) + 35)), oklch(.66 .16 var(--frame-h)));
-  box-shadow: 0 1px 0 var(--lead), 0 2px 12px oklch(.7 .16 var(--frame-h) / calc(.1 + .35 * var(--light)));
-}
-body[data-design="glass"].glass-stained .col-name::before {
-  content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 9px; border-radius: 50%; vertical-align: 0;
-  background: radial-gradient(circle at 35% 30%, oklch(.85 .12 var(--frame-h)), oklch(.6 .16 var(--frame-h)));
-  box-shadow: 0 0 0 2px var(--lead), 0 0 10px oklch(.72 .16 var(--frame-h) / .7);
-}
-
-/* ---------- rose windows (Spaces in the icon rail) ---------- */
-@media (min-width: 761px) {
-  body[data-design="glass"].glass-stained.glass-rail #sidebar:not(:has(.editing)) .space-dot:not(.space-icon) {
-    --h: var(--space-h, 248);
-    color: oklch(.3 .1 var(--h)); font-size: 10.5px; font-weight: 750;
-    background:
-      radial-gradient(circle, oklch(.96 .03 var(--h)) 0 33%, var(--lead) 34% 40%, transparent 41%),
-      repeating-conic-gradient(from 22.5deg, var(--lead) 0 5deg, transparent 5deg 45deg),
-      conic-gradient(from 22.5deg,
-        oklch(.62 .15 var(--h)) 0 45deg, oklch(.56 .15 calc(var(--h) + 45)) 45deg 90deg,
-        oklch(.62 .15 calc(var(--h) + 90)) 90deg 135deg, oklch(.56 .15 calc(var(--h) + 135)) 135deg 180deg,
-        oklch(.62 .15 var(--h)) 180deg 225deg, oklch(.56 .15 calc(var(--h) + 45)) 225deg 270deg,
-        oklch(.62 .15 calc(var(--h) + 90)) 270deg 315deg, oklch(.56 .15 calc(var(--h) + 135)) 315deg 360deg) !important;
-    box-shadow: 0 0 0 2px var(--lead), inset 0 1px 0 rgba(255,255,255,.35), 0 0 12px -2px oklch(.7 .15 var(--h) / calc(.15 + .45 * var(--light)));
-    text-shadow: none;
-  }
-  body[data-design="glass"].glass-stained.glass-rail #sidebar:not(:has(.editing)) .space-item.active .space-dot:not(.space-icon) {
-    box-shadow: 0 0 0 2px var(--lead), 0 0 0 4px oklch(.85 .1 var(--h) / .8), 0 0 18px oklch(.75 .16 var(--h) / .7);
-  }
-}
-body[data-design="glass"].glass-stained:not(.glass-rail) .space-dot:not(.space-icon) { background: oklch(.68 .15 var(--space-h, 248)) !important; opacity: 1; box-shadow: 0 0 0 1.5px var(--lead); }
-
-/* ---------- motion, transparency, contrast ---------- */
-body.glass-stained.effects-static .tab-card, body.glass-stained.fx-reduce-motion .tab-card { transition: none; }
-body.glass-stained.effects-opaque .tab-card {
-  background: oklch(.42 .1 var(--pane-h)); box-shadow: 0 0 0 1px var(--lead-hi);
-}
+/* Fallbacks: solid tinted windows, no glow. */
+body[data-design="glass"].glass-stained.effects-opaque .collection { background: oklch(.3 .05 var(--st-h, 248)); box-shadow: none; }
 @media (prefers-reduced-transparency: reduce) {
-  body[data-design="glass"].glass-stained .tab-card { background: oklch(.42 .1 var(--pane-h)); box-shadow: 0 0 0 1px var(--lead-hi); }
-  body[data-design="glass"].glass-stained .collection { box-shadow: none; }
+  body[data-design="glass"].glass-stained .collection { background: oklch(.3 .05 var(--st-h, 248)); box-shadow: none; }
 }
 @media (prefers-contrast: more) {
-  body[data-design="glass"].glass-stained .tab-card { background: oklch(.3 .08 var(--pane-h)); border-color: CanvasText; box-shadow: none; }
+  body[data-design="glass"].glass-stained .collection { background: var(--sidebar-bg); border-color: currentColor; box-shadow: none; }
 }
-@media (forced-colors: active) {
-  body[data-design="glass"].glass-stained .tab-card::before, body[data-design="glass"].glass-stained .collection::before { display: none; }
-}
+
+/* Colour belongs to the window, so card covers stand down in this style
+   (same card as with covers off). */
+body[data-design="glass"].glass-stained.glass-covers .view-card .tab-card { padding: 12px; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .tab-card::after { display: none; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .card-body { padding: 0; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .card-fav-row { min-height: 0; margin: 0 0 8px; padding: 0; color: inherit; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .fav-fallback { width: 22px; height: 22px; padding: 0; display: grid; place-items: center; font-size: 11px; background: var(--fill-3); color: var(--text); box-shadow: none; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .card-fav { width: 22px; height: 22px; padding: 0; background: transparent; box-shadow: none; }
+body[data-design="glass"].glass-stained.glass-covers .view-card :is(.card-pin-indicator, .card-note-indicator) { color: var(--accent); }
+body[data-design="glass"].glass-stained.glass-covers .view-card .card-tags { position: static; max-width: none; }
+body[data-design="glass"].glass-stained.glass-covers .view-card .tag-pill { background: var(--fill-2); color: var(--text); }
+body[data-design="glass"].glass-stained.glass-covers .view-card .card-remove { color: var(--text); background: var(--fill-2); }

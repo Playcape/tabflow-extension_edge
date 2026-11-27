@@ -71,9 +71,11 @@ Linux, Node 22, Playwright Chromium (headless):
 - Water reflections (Live scene and the fixed Dusk/Night/Dawn SVGs) were checked by screenshot at night (moonlight) and with a low sun. The header stats strip was checked at 2560 px (with labels) and 1440 px (icons and numbers). UI and Collection suites passed.
 - The Firefox icon permission prompt (**Allow icons**) needs a manual check in Firefox/Zen; this container has no Firefox.
 
-## Stained glass style — 27 November 2026
+## Stained glass v2 and Glass UX fixes — 27 November 2026
 
-- **38 Node regressions passed**, including Glass style normalization and stable per-site/Collection hues. The UI suite toggles Stained on and off and checks the per-site pane hue. UI and Collection suites passed. The look was checked by screenshot at 2048×1152: night (Subtle and Rich), day, the hover glow and the rose-window rail.
+- Stained glass was rebuilt after review as a calm, removable module: one tinted window per Collection, neutral cards, no lead lines, rosettes or textures. `spaces.js`, `appearance.js` and `settings.js` are back to their pre-stained state, and `collections.js` has no stained code.
+- Glass UX: a Collection-header **+** replaces Save-a-tab tiles when a Collection has tabs; the stats strip lost its own capsule; the Space name joins the date row; titles reserve two lines; the live-panel hint is readable; closing the scene card ends a time-travel preview.
+- 38 Node regressions, UI and Collection suites passed. Checked visually at 2560×1440: clear (night), stained subtle (night and day) and rich.
 
 ## Remaining browser release checks
 

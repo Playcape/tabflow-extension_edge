@@ -146,7 +146,9 @@ The clock is optional. Enable it in Layout, then set its greeting and time forma
 
 Glass follows Apple's Liquid Glass guidance. The navigation layer is glass: the sidebar or icon rail, the top bar, the grouped toolbar actions, the Open tabs inspector, menus and popovers. Collections, statistics and settings sit beneath it on a quieter frosted material. Inside them, cards and rows are plain fills with corners that nest inside their container. Only the primary action (**+ Collection**) carries your accent colour. The workspace counts (Collections, saved tabs, pinned) sit in a small strip beside the actions; on narrower windows it shows icons and numbers, with the names as tooltips. Expand all, Collapse all and View share one icon group; hover or focus shows their names. On wide screens Collections use the full width.
 
-**Style → Stained glass** (off by default) turns saved tabs into panes of coloured glass: one jewel colour per website, so the same site is easy to spot everywhere. The panes sit in lead and are lit by the Live scene: brighter by day, warm at sunset, softly glowing at night. They light up under the pointer. Each Collection becomes a window with a coloured transom, and its colours spill softly onto the scene. Spaces in the icon rail become small rose windows. The navigation stays clear. **Colour intensity** switches between Subtle and Rich.
+**Style → Stained glass** (off by default) gives each Collection its own softly tinted glass window. The colour comes from the Collection's colour (set it from the Collection menu) or a stable colour from its name. The window is lit by the Live scene, and its colour spills faintly onto the landscape. Saved tabs stay neutral and glow in the window's colour under the pointer, so colour always means "this group". The navigation stays clear, and card covers stand down in this style. **Colour intensity** switches between Subtle and Rich.
+
+In Glass, each Collection header has a **+** to save a tab; the Save-a-tab tile only appears in empty Collections. Leaving the scene card ends a time-travel preview.
 
 ### The Live scene (Glass)
 

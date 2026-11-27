@@ -78,6 +78,7 @@ test('new workspaces pick 12- or 24-hour time from the browser language', () => 
   assert.equal(normalizeDoc({ spaces: [], settings: { clock24h: false } }).settings.clock24h, false, 'a stored choice wins');
 });
 
+// [stained-glass]
 test('Glass style defaults to clear and validates stained-glass options', () => {
   const s = normalizeDoc({ spaces: [], settings: {} }).settings;
   assert.equal(s.glassStyle, 'clear');
