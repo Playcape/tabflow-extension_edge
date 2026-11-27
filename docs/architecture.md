@@ -40,7 +40,7 @@ src/
       sky.js                  Pure model: sun/moon position, palette, seasons, weather effects
       weather.js              Open-Meteo forecast and city search, WMO mapping, cache
       particles.js            Canvas rain, snow, leaves, petals, fireflies, lightning
-      live.js                 Live scene DOM, timers, parallax, clock, details card
+      live.js                 Live scene DOM, timers, weather chip, details card
       responsive.css          Viewport-specific composition
       accessibility.css       Focus, motion, transparency, contrast fallbacks
     main.js                   Initialization and cross-window render subscriptions
@@ -233,11 +233,15 @@ Pointer work is delegated and animation-frame-bounded; update only the active ta
 
 Motion and transparency preferences affect JavaScript as well as CSS. No animated ghost should remain running simply because CSS made it invisible. Prefer transforms and opacity for movement, limit geometry reads, and clean up inline transforms when the mode changes.
 
+### Glass layers (Liquid Glass)
+
+`modes/glass.css` follows Apple's Liquid Glass guidance ("Adopting Liquid Glass", HIG "Materials"). `--lq-*` tokens style the navigation layer: sidebar/rail, top-bar controls, the `.toolbar-group` capsule, the live-tab inspector and floating surfaces. They combine fill, backdrop blur and saturation, a rim highlight, inner "lens" light, and a masked specular edge (`::before`). `--mt-*` tokens are the quieter standard material of the content layer (Collections, statistics, settings sections). `--fill-1..3` are the vibrant fills used inside either. Radii are concentric (`--r-outer − --r-pad`). Only the primary action is tinted, and headers are title case. Do not put `mask`, `filter` or `opacity < 1` on an ancestor of a blurred surface: it becomes the backdrop root and the surface stops blurring the scene, which is why `#collections-area` has no scroll-edge mask. Lensing is approximated in CSS so Firefox and Chromium match; no SVG backdrop filters are used.
+
 ### Glass rendering budget
 
-Backdrop blur is limited to panels: the sidebar/rail, the live-tab panel, top-bar controls, statistic tiles, and one per Collection. Cards inside a panel are tinted, never blurred again, so blur count follows the number of Collections rather than saved tabs. Every surface reads its fill from `--gl-*` tokens; `effects-opaque` and the reduced-transparency/contrast preferences swap those tokens to solid theme colors and remove the scene. Dusk, Night and Dawn are static SVG files rendered once per resize.
+Backdrop blur is limited to panels: the sidebar/rail, the live-tab panel, top-bar controls and the toolbar group, statistic tiles, and one per Collection. Cards inside a panel are tinted, never blurred again, so blur count follows the number of Collections rather than saved tabs. Every surface reads its fill from `--gl-*` tokens; `effects-opaque` and the reduced-transparency/contrast preferences swap those tokens to solid theme colors and remove the scene. Dusk, Night and Dawn are static SVG files rendered once per resize.
 
-The Live scene (`scene/live.js`) builds two inline SVGs (sky; land and lake) from generated geometry, with HTML cloud and fog layers and one particle canvas between and above them. `scene/sky.js` is pure: given a time, a place and the weather it returns every colour as a `--sc-*` custom property, plus sun/moon positions, foliage and particle amounts. The palette is recomputed once a minute (or on preview, resize or a weather change); the clock text updates every 5 seconds, or every second with seconds shown. Particles are batched, capped near 30 fps, sized to the viewport, and stop entirely while the page is hidden. Under `effects-static`, reduce motion or **Still**, the canvas draws one frame and no animation-frame loop runs. Parallax only translates layers. The clock is decorative (`aria-hidden`); the toolbar chip is its keyboard-reachable equivalent. Clicking empty workspace over the clock opens the same card.
+The Live scene (`scene/live.js`) builds two inline SVGs (sky; land and lake) from generated geometry, with HTML cloud and fog layers and one particle canvas between and above them. `scene/sky.js` is pure: given a time, a place and the weather it returns every colour as a `--sc-*` custom property, plus sun/moon positions, foliage and particle amounts. The palette is recomputed once a minute (or on preview, resize or a weather change); the clock text updates every 5 seconds, or every second with seconds shown. Particles are batched, capped near 30 fps, sized to the viewport, and stop entirely while the page is hidden. Under `effects-static`, reduce motion or **Still**, the canvas draws one frame and no animation-frame loop runs. The scene does not follow the pointer. The clock lives in the Glass header (`ui/heroClock.js`, a `<time>` element beside the greeting); the Live scene only tints it through `--scene-glow` on `body`. The weather chip beside the date is the keyboard route to the scene card; clicking the clock opens the same card.
 
 ## Accessibility boundaries
 

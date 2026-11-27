@@ -58,6 +58,12 @@ Linux, Node 22, Playwright Chromium (headless):
 - In the preview, the page leaves focus alone by default and focuses its search box in search mode. UI and Collection suites passed.
 - `tests/extension.mjs` now also asserts that a new tab is kept unredirected in Address bar mode before switching to search mode for the dedupe checks. It still cannot start in this headless container. Address-bar focus itself is browser UI and must be checked by hand: press Ctrl+T in Chrome and Edge and confirm the cursor is in the address bar.
 
+## Glass Liquid Glass pass — 27 November 2026
+
+- Fixed a duplicated Glass settings panel (introduced with the Live scene) that showed Aurora-only effect controls in the Glass tab and duplicated element ids. `tests/ui.mjs` now fails on any duplicate id; it fails on the previous commit and passes now.
+- The UI suite also checks that the clock sits beside the greeting and that pointer movement no longer moves the scene. The weather opt-in path was re-checked with mocked Open-Meteo responses, opening the card from the chip and the clock.
+- Checked visually at 2560×1392 (three full-width Collection columns; previously capped at 1600 px), 1440×900 in dark and light themes, and the Glass settings tab. 34 Node regressions, UI and Collection suites passed.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

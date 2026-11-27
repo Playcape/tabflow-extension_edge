@@ -11,6 +11,7 @@ import { settings } from '../store.js';
 import { registerRenderer } from './bus.js';
 import { applyDesign, initDesign } from './design.js';
 import { syncLiveScene, initLiveScene } from '../scene/live.js';
+import { renderHeroClock } from './heroClock.js';
 
 const FONT_SIZES = { small: '12px', normal: '13px', large: '14px' };
 const BG_STYLES = ['gradient-diag', 'gradient-radial', 'gradient-sunset'];
@@ -115,6 +116,7 @@ export function applyAppearance() {
 
   applyDesign();
   syncLiveScene();
+  renderHeroClock();
   applyCustomCss(s.customCss);
 }
 
