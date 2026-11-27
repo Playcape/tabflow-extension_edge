@@ -58,6 +58,10 @@ function renderSettings() {
   renderPills('#tempunit-pills', 'tempUnit');
   renderPills('#scenemotion-pills', 'sceneMotion');
   renderPills('#newtabfocus-pills', 'newTabFocus');
+  renderPills('#clockformat-pills', 'clock24h', () => bindToggle('#clock24h-toggle', 'clock24h'), {
+    toValue: (raw) => raw === '24',
+    toString: (value) => (value ? '24' : '12'),
+  });
   renderSceneSettings();
   renderDesignPicker();
   renderDesignTabs();

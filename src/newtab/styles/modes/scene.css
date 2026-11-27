@@ -46,7 +46,13 @@ body[data-design="glass"][data-scene="live"] .atmosphere > .scene-live { display
 .lv-snowcap0 { opacity: calc(var(--lv-snowcap, 0) * .5); }
 .lv-snowcap1 { opacity: calc(var(--lv-snowcap, 0) * .72); }
 .lv-glint-soft { fill: var(--sc-glow); }
-.lv-glint-lines line { stroke: var(--sc-glow); stroke-opacity: .6; stroke-width: 1.4; }
+.lv-glint-soft { opacity: .55; }
+.lv-glint-sparks { fill: none; stroke: var(--sc-glow); stroke-width: 1.5; stroke-linecap: round; stroke-opacity: .7; }
+.lv-glint-sparks-1 { stroke-opacity: 0; }
+.scene-live[data-motion="full"] .lv-glint-sparks-0 { animation: lv-shimmer 5.5s ease-in-out infinite; }
+.scene-live[data-motion="full"] .lv-glint-sparks-1 { animation: lv-shimmer 5.5s ease-in-out -2.75s infinite; }
+@keyframes lv-shimmer { 0%, 100% { stroke-opacity: .7; } 50% { stroke-opacity: .08; } }
+.lv-shoreline { fill: var(--sc-lake); opacity: .6; }
 .lv-ice { fill: var(--sc-snow); opacity: var(--lv-ice, 0); }
 .lv-shore { fill: var(--sc-shore); }
 .lv-pines { fill: var(--sc-pine); }

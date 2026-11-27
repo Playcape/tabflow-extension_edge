@@ -144,7 +144,7 @@ The clock is optional. Enable it in Layout, then set its greeting and time forma
 
 ### Glass and Liquid Glass
 
-Glass follows Apple's Liquid Glass guidance. The navigation layer is glass: the sidebar or icon rail, the top bar, the grouped toolbar actions, the Open tabs inspector, menus and popovers. Collections, statistics and settings sit beneath it on a quieter frosted material. Inside them, cards and rows are plain fills with corners that nest inside their container. Only the primary action (**+ Collection**) carries your accent colour. Expand all, Collapse all and View share one icon group; hover or focus shows their names. On wide screens Collections use the full width.
+Glass follows Apple's Liquid Glass guidance. The navigation layer is glass: the sidebar or icon rail, the top bar, the grouped toolbar actions, the Open tabs inspector, menus and popovers. Collections, statistics and settings sit beneath it on a quieter frosted material. Inside them, cards and rows are plain fills with corners that nest inside their container. Only the primary action (**+ Collection**) carries your accent colour. The workspace counts (Collections, saved tabs, pinned) sit in a small strip beside the actions; on narrower windows it shows icons and numbers, with the names as tooltips. Expand all, Collapse all and View share one icon group; hover or focus shows their names. On wide screens Collections use the full width.
 
 ### The Live scene (Glass)
 
@@ -152,7 +152,7 @@ Glass follows Apple's Liquid Glass guidance. The navigation layer is glass: the 
 
 - **Time of day.** The sky moves through night, dawn, morning, midday, golden hour and dusk. The sun and moon travel across it, stars come out, and the lake reflects the light. The moon shows its real phase.
 - **Seasons.** The shore trees bud and blossom in spring, are full in summer, turn and drop their leaves in autumn, and stand bare in winter, when snow settles on the peaks, pines and ground and the lake ices over. Fireflies come out on summer nights. The southern hemisphere gets the opposite season; the tropics stay green.
-- **Clock.** A large clock stands beside the greeting, with today's date underneath; with the Live scene it glows in the scene's light. It follows the **24-hour clock** and **Show seconds** settings. Turn it off with **Clock**.
+- **Clock.** A large clock stands beside the greeting, with today's date underneath; with the Live scene it glows in the scene's light. Choose **Clock format** (24-hour or 12-hour) right below the Clock switch; new workspaces follow your browser language. **Show seconds** adds seconds. Turn the clock off with **Clock**.
 - **Weather (optional).** Turn on **Live weather** and search for your city to see its real conditions in the scene: drifting clouds, drizzle and rain with ripples on the lake, snow, thunderstorms with lightning, and fog. Weather comes from [Open-Meteo](https://open-meteo.com/) (free, no account). Your city search and the chosen coordinates, rounded to about 1 km, are sent to Open-Meteo about every 30 minutes while a TabFlow tab is open. Nothing is sent while Live weather is off. Firefox also asks for its optional *location* data-collection permission.
 
 Without a chosen city, the sun is placed from your time zone and no weather is shown. Choosing a city also places the sun, moon and seasons there.

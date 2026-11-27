@@ -94,6 +94,26 @@ function trees(seed, side, color) {
   return `<g fill="${color}" filter="url(#near)">${s}</g>`;
 }
 
+/** Light on water: short broken glints under the light source, narrow at
+ * the horizon and wider/longer toward the viewer (perspective). Centred on
+ * x = 0; callers translate it under the sun or moon. */
+function shimmer(seed, top, rows = 36) {
+  const rand = rng(seed);
+  let d = '';
+  for (let i = 0; i < rows; i++) {
+    const t = i / (rows - 1);
+    const y = top + 5 + t ** 1.4 * 190;
+    const spread = 14 + t * 130;
+    const count = 2 + Math.round(t * 5);
+    for (let k = 0; k < count; k++) {
+      const g = (rand() + rand() + rand()) / 1.5 - 1; // roughly normal, −1…1
+      const len = 3 + rand() * (6 + t * 30);
+      d += `M${(g * spread - len / 2).toFixed(1)},${y.toFixed(1)}h${len.toFixed(1)}`;
+    }
+  }
+  return d;
+}
+
 function scene({ name, sky, glow, cloud, layers, lake, shore, extra = '', vignette }) {
   const mountains = layers.map(([seed, base, amp, color, opacity = 1], i) =>
     `<path d="${ridge(seed, base, amp, .52)}" fill="${color}" opacity="${opacity}"${i < 2 ? ' filter="url(#mist)"' : ''}/>`).join('');
@@ -122,8 +142,9 @@ ${mountains}
 <rect y="${lake.top - 120}" width="${W}" height="170" fill="url(#haze)"/>
 <rect y="${lake.top}" width="${W}" height="${H - lake.top}" fill="url(#lake)"/>
 <g clip-path="url(#water)"><g filter="url(#mist)">${reflected}</g></g>
-<ellipse cx="${glow.x}" cy="${lake.top + 70}" rx="46" ry="120" fill="${glow.color}" opacity="${lake.shine}" filter="url(#soft)"/>
-<g stroke="${glow.color}" stroke-opacity="${lake.shine * .6}" stroke-width="1.4">${[0, 1, 2, 3, 4, 5].map(i => `<line x1="${glow.x - 120 + i * 17}" y1="${lake.top + 24 + i * 18}" x2="${glow.x + 40 + i * 15}" y2="${lake.top + 24 + i * 18}"/>`).join('')}</g>
+<rect y="${lake.top - 5}" width="${W}" height="12" fill="${lake.stops[0][1]}" opacity=".55" filter="url(#mist)"/>
+<ellipse cx="${glow.x}" cy="${lake.top + 80}" rx="70" ry="130" fill="${glow.color}" opacity="${lake.shine * .7}" filter="url(#soft)"/>
+<path d="${shimmer(5, lake.top)}" transform="translate(${glow.x} 0)" fill="none" stroke="${glow.color}" stroke-opacity="${(lake.shine * .75).toFixed(2)}" stroke-width="1.5" stroke-linecap="round" filter="url(#near)"/>
 <path d="${ridge(991, 905, 40, .45)}" fill="${shore}"/>
 ${trees(17, 'left', shore)}${trees(23, 'right', shore)}
 <rect width="${W}" height="${H}" fill="url(#vig)"/>
@@ -183,6 +204,7 @@ function landscape() {
     ridges: layers.map(([seed, base, amp]) => ridge(seed, base, amp, .52)),
     reflections: layers.slice(0, 2).map(([seed, base, amp]) => ridge(seed, base, amp)),
     shore: ridge(991, 905, 40, .45),
+    glint: [shimmer(5, lakeTop), shimmer(19, lakeTop)],
     pines: [...pineShapes(17, 'left'), ...pineShapes(23, 'right')],
     ...(({ trees, banks }) => ({ broadleaves: trees, banks }))(broadleafShapes(37, shorePts, [[170, 520, 5], [1030, 1320, 4]])),
   };

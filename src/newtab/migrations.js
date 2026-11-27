@@ -82,14 +82,25 @@ export const DEFAULT_SETTINGS = {
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
   greetingName: '',            // shown in the clock greeting ("Good morning, X")
-  clock24h: false,             // 24-hour clock
+  clock24h: localeUses24h(),   // 24-hour clock; new workspaces follow the browser language
   clockSeconds: false,         // show seconds in the clock
 };
+
+/** Whether the browser's language writes times as 21:30 rather than 9:30 PM. */
+export function localeUses24h(locale) {
+  try {
+    const cycle = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle;
+    return cycle === 'h23' || cycle === 'h24';
+  } catch {
+    return false;
+  }
+}
 
 export const DEFAULT_UI = {
   sidebarOpen: true,
   rightPanelOpen: true,
   zenHintDismissed: false,
+  faviconHintDismissed: false,
 };
 
 /* ---------- constructors ---------- */
@@ -345,6 +356,7 @@ export function normalizeDoc(raw) {
       sidebarOpen: raw.ui?.sidebarOpen !== false,
       rightPanelOpen: raw.ui?.rightPanelOpen !== false,
       zenHintDismissed: !!raw.ui?.zenHintDismissed,
+      faviconHintDismissed: !!raw.ui?.faviconHintDismissed,
     },
   };
 }

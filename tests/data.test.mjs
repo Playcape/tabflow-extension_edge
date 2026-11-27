@@ -9,7 +9,7 @@ globalThis.browser = {
   tabs: {},
 };
 
-const { normalizeDoc, migrateV2, parseImport } = await import('../src/newtab/migrations.js?data-test');
+const { normalizeDoc, migrateV2, parseImport, localeUses24h } = await import('../src/newtab/migrations.js?data-test');
 const { mergeDocuments } = await import('../src/newtab/merge.js?data-test');
 
 test('normalizes unsafe data and repairs settings, references, and page payload metadata', () => {
@@ -68,6 +68,14 @@ test('new tabs focus the address bar unless TabFlow search is chosen', () => {
   assert.equal(normalizeDoc({ spaces: [], settings: {} }).settings.newTabFocus, 'address');
   assert.equal(normalizeDoc({ spaces: [], settings: { newTabFocus: 'search' } }).settings.newTabFocus, 'search');
   assert.equal(normalizeDoc({ spaces: [], settings: { newTabFocus: 'omnibox' } }).settings.newTabFocus, 'address');
+});
+
+test('new workspaces pick 12- or 24-hour time from the browser language', () => {
+  assert.equal(localeUses24h('de-DE'), true);
+  assert.equal(localeUses24h('en-GB'), true);
+  assert.equal(localeUses24h('en-US'), false);
+  assert.equal(normalizeDoc({ spaces: [], settings: { clock24h: true } }).settings.clock24h, true);
+  assert.equal(normalizeDoc({ spaces: [], settings: { clock24h: false } }).settings.clock24h, false, 'a stored choice wins');
 });
 
 test('normalizes Live scene settings', () => {

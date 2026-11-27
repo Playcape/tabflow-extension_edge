@@ -165,10 +165,11 @@ function buildLand() {
   const reflections = svg('g', { 'clip-path': 'url(#lv-water)' },
     svg('g', { filter: 'url(#lv-mist)', opacity: '.3' }, ...L.reflections.map((d, i) =>
       svg('path', { d, class: `lv-ridge${i}`, transform: `translate(0 ${2 * lakeTop}) scale(1 -1)` }))));
+  // Light on water: a soft column plus two layers of broken glints that
+  // trade places slowly, so the path shimmers instead of drawing lines.
   els.glint = svg('g', { class: 'lv-glint' },
-    svg('ellipse', { cx: '0', cy: String(lakeTop + 70), rx: '46', ry: '120', class: 'lv-glint-soft', filter: 'url(#lv-soft)' }),
-    svg('g', { class: 'lv-glint-lines' }, ...[0, 1, 2, 3, 4, 5].map((i) =>
-      svg('line', { x1: String(-120 + i * 17), x2: String(40 + i * 15), y1: String(lakeTop + 24 + i * 18), y2: String(lakeTop + 24 + i * 18) }))));
+    svg('ellipse', { cx: '0', cy: String(lakeTop + 80), rx: '70', ry: '130', class: 'lv-glint-soft', filter: 'url(#lv-soft)' }),
+    ...L.glint.map((d, i) => svg('path', { d, class: `lv-glint-sparks lv-glint-sparks-${i}`, filter: 'url(#lv-near)' })));
   const broadleaves = svg('g', { class: 'lv-broadleaves' }, ...L.broadleaves.map(({ trunk, branches, canopy }, t) => {
     const rand = seeded(100 + t);
     const blossom = svg('g', { class: 'lv-blossom' });
@@ -203,7 +204,9 @@ function buildLand() {
     svg('g', { class: 'lv-lake' },
       svg('rect', { x: '-60', y: String(lakeTop), width: '1720', height: String(1060 - lakeTop), fill: 'url(#lv-lake)' }),
       reflections, els.glint,
-      svg('rect', { x: '-60', y: String(lakeTop), width: '1720', height: String(1060 - lakeTop), class: 'lv-ice' })),
+      svg('rect', { x: '-60', y: String(lakeTop), width: '1720', height: String(1060 - lakeTop), class: 'lv-ice' }),
+      // A soft mist line where the far shore meets the water (no hard edge).
+      svg('rect', { x: '-60', y: String(lakeTop - 5), width: '1720', height: '12', class: 'lv-shoreline', filter: 'url(#lv-mist)' })),
     svg('g', { class: 'lv-near', filter: 'url(#lv-near)' },
       svg('path', { d: L.shore, class: 'lv-shore' }),
       broadleaves,

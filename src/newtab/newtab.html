@@ -96,7 +96,7 @@
         <button id="btn-add-collection" class="toolbar-btn accent"></button>
       </div>
       <div id="workspace-overview" class="workspace-summary" aria-label="Workspace statistics">
-        <div class="workspace-metrics"><span><strong id="metric-collections">0</strong> collections</span><span><strong id="metric-tabs">0</strong> saved tabs</span><span><strong id="metric-pinned">0</strong> pinned</span></div>
+        <div class="workspace-metrics"><span title="Collections"><strong id="metric-collections">0</strong> collections</span><span title="Saved tabs"><strong id="metric-tabs">0</strong> saved tabs</span><span title="Pinned tabs"><strong id="metric-pinned">0</strong> pinned</span></div>
       </div>
     </div>
 
@@ -395,6 +395,15 @@
               <input type="checkbox" id="sceneclock-toggle" />
               <span class="switch-track" aria-hidden="true"></span>
             </label>
+          </div>
+          <div class="settings-row" style="display:block">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Clock format</div>
+            </div>
+            <div class="pill-row" id="clockformat-pills" style="margin-top:8px">
+              <button class="pill" data-val="24">24-hour (21:30)</button>
+              <button class="pill" data-val="12">12-hour (9:30 PM)</button>
+            </div>
           </div>
           <div class="settings-row">
             <div class="settings-row-info">

@@ -16,6 +16,18 @@ await mkdir(output, {recursive:true});
 try {
   await page.goto('http://127.0.0.1:4173/newtab/newtab.html');
   await page.waitForSelector('.tab-card');
+  // Saved tabs without an icon borrow one from an open tab on the same host (Firefox reports data: icons).
+  assert.equal(await page.evaluate(async () => {
+    const { update, getDoc } = await import('/newtab/store.js');
+    const { backfillFavicons } = await import('/newtab/ui/opentabs.js');
+    update(d => d.spaces[0].collections[0].tabs.push({ id: 'icon-test', title: 'Icon test', url: 'https://icons.example/page', favicon: '' }));
+    const icon = 'data:image/png;base64,iVBORw0KGgo=';
+    const n = backfillFavicons([{ url: 'https://icons.example/other', favIconUrl: icon }, { url: 'https://nothing.example', favIconUrl: 'chrome://x' }]);
+    const saved = getDoc().spaces[0].collections[0].tabs.find(t => t.id === 'icon-test');
+    const ok = n >= 1 && saved.favicon === icon && backfillFavicons([{ url: 'https://icons.example/', favIconUrl: icon }]) === 0;
+    update(d => { const tabs = d.spaces[0].collections[0].tabs; tabs.splice(tabs.findIndex(t => t.id === 'icon-test'), 1); });
+    return ok;
+  }), true);
   // Every id in the shell must be unique: duplicated settings panels once shipped controls that did nothing.
   assert.deepEqual(await page.evaluate(() => { const seen = new Set(), dup = []; for (const el of document.querySelectorAll('[id]')) { if (seen.has(el.id)) dup.push(el.id); seen.add(el.id); } return dup; }), []);
   await page.evaluate(async () => {

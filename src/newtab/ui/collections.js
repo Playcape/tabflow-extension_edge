@@ -10,6 +10,7 @@
    ================================================================ */
 
 import { ext, caps, shortcutsPage, IS_FIREFOX } from '../../common/ext.js';
+import { remoteIconsAllowed, requestFaviconConsent } from '../../common/faviconConsent.js';
 import {
   q, qa, h, domainOf, normalizeUrl, faviconEl, highlight, deepClone,
 } from '../../common/util.js';
@@ -141,7 +142,7 @@ function renderCollections() {
   }
 
   const nodes = [];
-  const callout = zenSetupCallout();
+  const callout = zenSetupCallout() ?? faviconCallout();
   if (callout) nodes.push(callout);
 
   if (!space || !space.collections.length) {
@@ -193,6 +194,32 @@ function zenSetupCallout() {
       },
     })
   );
+}
+
+/* Firefox has no local favicon service: without permission to load icons
+   from the web, saved tabs whose icon wasn't captured show letter tiles.
+   Offer that permission where people see the problem, once. */
+function faviconCallout() {
+  if (!IS_FIREFOX || getDoc().ui.faviconHintDismissed) return null;
+  if (settings().remoteFavicons && remoteIconsAllowed()) return null;
+  const space = activeSpace();
+  const lettered = space?.collections.some((c) => c.tabs.some((t) => !/^data:image\//.test(t.favicon || '')));
+  if (!lettered) return null;
+  const dismiss = () => { update((doc) => (doc.ui.faviconHintDismissed = true)); render('collections'); };
+  return h('div', { class: 'zen-callout', role: 'note' },
+    h('div', { class: 'zen-callout-text' },
+      h('strong', { text: 'Show website icons? ' }),
+      'Firefox has no local icon service, so TabFlow needs your permission to load icons from the web (this shares the site’s domain with Google’s icon service). Icons from tabs you have open are kept automatically.'),
+    h('button', {
+      class: 'settings-btn slim', text: 'Allow icons',
+      onclick: async () => {
+        const granted = await requestFaviconConsent(); // straight from the click, before any other await
+        update((doc) => { doc.settings.remoteFavicons = granted; if (granted) doc.ui.faviconHintDismissed = true; });
+        render('collections', 'opentabs', 'settings');
+        toast(granted ? 'Website icons are on.' : 'Icons stay as letters. You can change this in Settings → Advanced.');
+      },
+    }),
+    h('button', { class: 'icon-btn small', children: icon('x', 11), 'aria-label': 'Dismiss website icon hint', onclick: dismiss }));
 }
 
 function emptyState() {

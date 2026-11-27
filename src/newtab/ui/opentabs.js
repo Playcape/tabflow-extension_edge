@@ -8,7 +8,7 @@
    ================================================================ */
 
 import { ext, caps, isTabFlowTab, focusTab } from '../../common/ext.js';
-import { q, h, debounce, faviconEl, letterTile, timestampLabel, domainOf } from '../../common/util.js';
+import { q, h, debounce, faviconEl, letterTile, timestampLabel, domainOf, storableFavicon } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { getDoc, activeSpace, settings, update } from '../store.js';
 import { registerRenderer, render } from './bus.js';
@@ -30,6 +30,35 @@ async function loadOpenTabs() {
     openTabs = [];
   }
   renderOpenTabs();
+  backfillFavicons(openTabs);
+}
+
+/**
+ * Saved tabs without an icon borrow one from an open tab on the same host
+ * and keep it, so cards saved before icons were stored (or imported from
+ * bookmarks) gain real icons as their sites are visited.
+ */
+export function backfillFavicons(tabs) {
+  const icons = new Map();
+  for (const tab of tabs) {
+    const icon = storableFavicon(tab.favIconUrl);
+    const host = /^https?:/i.test(tab.url ?? '') ? domainOf(tab.url) : '';
+    if (icon && host && !icons.has(host)) icons.set(host, icon);
+  }
+  if (!icons.size) return 0;
+  const missing = [];
+  for (const space of getDoc().spaces) {
+    for (const collection of space.collections) {
+      for (const saved of collection.tabs) {
+        const icon = !saved.favicon && icons.get(domainOf(saved.url));
+        if (icon) missing.push([saved, icon]);
+      }
+    }
+  }
+  if (!missing.length) return 0;
+  update(() => { for (const [saved, icon] of missing) saved.favicon = icon; });
+  render('collections');
+  return missing.length;
 }
 
 const refreshSoon = debounce(loadOpenTabs, 250);
@@ -40,7 +69,7 @@ function toSavedTab(tab) {
   return makeTab({
     title: tab.title || tab.url,
     url: tab.url,
-    favicon: tab.favIconUrl && tab.favIconUrl.startsWith('https:') ? tab.favIconUrl : '',
+    favicon: storableFavicon(tab.favIconUrl),
   });
 }
 
@@ -140,7 +169,7 @@ function buildTabRow(tab) {
       type: 'open-tab',
       title: tab.title || tab.url,
       url: tab.url,
-      favicon: tab.favIconUrl && tab.favIconUrl.startsWith('https:') ? tab.favIconUrl : '',
+      favicon: storableFavicon(tab.favIconUrl),
     });
     row.classList.add('dragging-src');
     event.dataTransfer.effectAllowed = 'copy';
@@ -217,7 +246,7 @@ async function openAddCurrentTab() {
   const pending = {
     title: currentTab.title || currentTab.url,
     url: currentTab.url,
-    favicon: currentTab.favIconUrl && currentTab.favIconUrl.startsWith('https:') ? currentTab.favIconUrl : '',
+    favicon: storableFavicon(currentTab.favIconUrl),
   };
 
   q('#add-to-col-info').textContent = `${pending.title} (${domainOf(pending.url) || pending.url})`;
