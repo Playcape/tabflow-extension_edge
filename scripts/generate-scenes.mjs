@@ -1,5 +1,7 @@
 /* Generates the Glass design mode's bundled landscape scenes as SVG.
- * Output: src/newtab/scenes/{dusk,night,dawn}.svg
+ * Output: src/newtab/scenes/{dusk,night,dawn}.svg — the fixed scenes — and
+ *         src/newtab/scenes/landscape.js — shapes for the Live scene, which
+ *         colours each layer at runtime (time of day, season, weather).
  * Deterministic (seeded) so regenerating produces identical files.
  * Usage: node scripts/generate-scenes.mjs */
 import { writeFile, mkdir } from 'node:fs/promises';
@@ -13,8 +15,8 @@ function rng(seed) {
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
 }
 
-/** Midpoint-displacement ridge, returned as a smooth closed SVG path. */
-function ridge(seed, base, amp, rough = .55, steps = 6) {
+/** Midpoint-displacement ridge points, left to right. */
+function ridgePoints(seed, base, amp, rough = .55, steps = 6) {
   const rand = rng(seed);
   let pts = [[-40, base + (rand() - .5) * amp], [W + 40, base + (rand() - .5) * amp]];
   let a = amp;
@@ -26,6 +28,12 @@ function ridge(seed, base, amp, rough = .55, steps = 6) {
     }
     pts = next; a *= rough;
   }
+  return pts;
+}
+
+/** Midpoint-displacement ridge, returned as a smooth closed SVG path. */
+function ridge(seed, base, amp, rough = .55, steps = 6) {
+  const pts = ridgePoints(seed, base, amp, rough, steps);
   // Catmull-Rom → cubic Bézier for soft, photographic silhouettes.
   let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -47,25 +55,42 @@ function stars(seed, count, maxY) {
   return `<g fill="#fff">${s}</g>`;
 }
 
-/** Tiered pines, tallest toward the frame edge, for a sense of foreground. */
-function trees(seed, side, color) {
+/** Tiered pines, tallest toward the frame edge, for a sense of foreground.
+ * Each pine also carries a snow outline: a cap on its tip and a shelf on
+ * the upper slope of every tier, used by the live scene in winter. */
+function pineShapes(seed, side) {
   const rand = rng(seed);
-  let s = '';
+  const out = [];
+  const f = (n) => n.toFixed(0);
   for (let i = 0; i < 18; i++) {
     const t = rand();
     const edge = side === 'left' ? t * 240 - 30 : W - t * 260 + 30;
     const h = (1 - t) * 190 + 50 + rand() * 50, w = h * (.3 + rand() * .08), y = 930 - rand() * 25;
-    let d = `M${edge.toFixed(0)},${(y - h).toFixed(0)}`;
+    let d = `M${f(edge)},${f(y - h)}`;
     for (let k = 1; k <= 4; k++) {
       const ty = y - h + (h * k) / 4, tw = (w / 2) * (k / 4 + .25);
-      d += `L${(edge + tw).toFixed(0)},${ty.toFixed(0)}L${(edge + tw * .45).toFixed(0)},${(ty - h * .06).toFixed(0)}`;
+      d += `L${f(edge + tw)},${f(ty)}L${f(edge + tw * .45)},${f(ty - h * .06)}`;
     }
     for (let k = 4; k >= 1; k--) {
       const ty = y - h + (h * k) / 4, tw = (w / 2) * (k / 4 + .25);
-      d += `L${(edge - tw * .45).toFixed(0)},${(ty - h * .06).toFixed(0)}L${(edge - tw).toFixed(0)},${ty.toFixed(0)}`;
+      d += `L${f(edge - tw * .45)},${f(ty - h * .06)}L${f(edge - tw)},${f(ty)}`;
     }
-    s += `<path d="${d.replace(/L([^L]*)$/, 'L$1')}Z"/>`;
+    let snow = '';
+    for (let k = 1; k <= 4; k++) {
+      const ty = y - h + (h * k) / 4, tw = (w / 2) * (k / 4 + .25);
+      const topY = k === 1 ? y - h : y - h + (h * (k - 1)) / 4 - h * .06;
+      const topW = k === 1 ? 0 : (w / 2) * ((k - 1) / 4 + .25) * .45;
+      const m = .42; // how far down each slope the snow reaches
+      const lx = edge - topW + (topW - tw) * m, rx = edge + topW + (tw - topW) * m, sy = topY + (ty - topY) * m;
+      snow += `M${f(edge - topW)},${f(topY)}L${f(edge + topW)},${f(topY)}L${f(rx)},${f(sy)}L${f(edge)},${f(sy - h * .03)}L${f(lx)},${f(sy)}Z`;
+    }
+    out.push({ d: `${d.replace(/L([^L]*)$/, 'L$1')}Z`, snow });
   }
+  return out;
+}
+
+function trees(seed, side, color) {
+  const s = pineShapes(seed, side).map(({ d }) => `<path d="${d}"/>`).join('');
   return `<g fill="${color}" filter="url(#near)">${s}</g>`;
 }
 
@@ -106,6 +131,63 @@ ${trees(17, 'left', shore)}${trees(23, 'right', shore)}
 `;
 }
 
+/** Broadleaf trees on low banks along the near shore: the Live scene's
+ * season markers. They leaf out, blossom, turn and go bare through the year. */
+function broadleafShapes(seed, shore, spans) {
+  const rand = rng(seed);
+  const shoreY = (x) => {
+    for (let i = 1; i < shore.length; i++) {
+      if (shore[i][0] >= x) {
+        const [x0, y0] = shore[i - 1], [x1, y1] = shore[i];
+        return y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+      }
+    }
+    return shore.at(-1)[1];
+  };
+  const f = (n) => n.toFixed(0);
+  const trees = [], banks = [];
+  for (const [from, to, count] of spans) {
+    // A soft mound rising out of the shore so the trees stand on land.
+    const c = (from + to) / 2, hw = (to - from) / 2 + 110, rise = 46;
+    const bankY = (x) => shoreY(x) + 6 - rise * Math.max(0, 1 - ((x - c) / hw) ** 2) ** .7;
+    let d = `M${f(c - hw)},${f(shoreY(c - hw) + 12)}`;
+    for (let x = c - hw; x <= c + hw; x += 16) d += `L${f(x)},${f(bankY(x))}`;
+    banks.push(`${d}L${f(c + hw)},${f(shoreY(c + hw) + 12)}L${f(c + hw)},1040L${f(c - hw)},1040Z`);
+    for (let i = 0; i < count; i++) {
+      const x = from + ((to - from) * (i + .2 + rand() * .6)) / count;
+      const base = bankY(x) + 6, h = 58 + rand() * 50, r = h * (.26 + rand() * .06), tw = h * .045;
+      const cy = base - h * .68;
+      const trunk = `M${f(x - tw)},${f(base)}L${f(x - tw * .45)},${f(cy)}L${f(x + tw * .45)},${f(cy)}L${f(x + tw)},${f(base)}Z`;
+      // Bare branches, visible in winter when the canopy is gone.
+      let branches = '';
+      for (let b = 0; b < 5; b++) {
+        const by = base - h * (.38 + b * .1), dir = b % 2 ? 1 : -1, len = r * (.75 + rand() * .45);
+        branches += `M${f(x)},${f(by)}Q${f(x + dir * len * .5)},${f(by - len * .2)} ${f(x + dir * len)},${f(by - len * .75)}`;
+      }
+      branches += `M${f(x)},${f(cy)}L${f(x + (rand() - .5) * 10)},${f(cy - r * .9)}`;
+      const canopy = [[0, 0, 1], [-.62, .25, .72], [.62, .22, .75], [-.3, -.45, .7], [.32, -.42, .66]]
+        .map(([dx, dy, k]) => [Math.round(x + dx * r), Math.round(cy + dy * r), Math.round(r * k)]);
+      trees.push({ trunk, branches, canopy });
+    }
+  }
+  return { trees, banks };
+}
+
+/** Geometry for the Live scene, shared with the fixed Dusk composition. */
+function landscape() {
+  const lakeTop = 760;
+  const layers = [[11, 560, 300], [29, 620, 240], [47, 680, 170], [83, 730, 90]];
+  const shorePts = ridgePoints(991, 905, 40, .45);
+  return {
+    width: W, height: H, lakeTop,
+    ridges: layers.map(([seed, base, amp]) => ridge(seed, base, amp, .52)),
+    reflections: layers.slice(0, 2).map(([seed, base, amp]) => ridge(seed, base, amp)),
+    shore: ridge(991, 905, 40, .45),
+    pines: [...pineShapes(17, 'left'), ...pineShapes(23, 'right')],
+    ...(({ trees, banks }) => ({ broadleaves: trees, banks }))(broadleafShapes(37, shorePts, [[170, 520, 5], [1030, 1320, 4]])),
+  };
+}
+
 const scenes = {
   dusk: scene({
     name: 'Dusk',
@@ -138,4 +220,6 @@ const scenes = {
 
 await mkdir(out, { recursive: true });
 for (const [name, svg] of Object.entries(scenes)) await writeFile(new URL(`${name}.svg`, `file://${out}`), svg);
-console.log(`Wrote ${Object.keys(scenes).length} scenes to ${out}`);
+await writeFile(new URL('landscape.js', `file://${out}`),
+  `/* Live scene geometry (viewBox ${W}×${H}). Generated by scripts/generate-scenes.mjs — do not edit. */\nexport const LANDSCAPE = ${JSON.stringify(landscape())};\n`);
+console.log(`Wrote ${Object.keys(scenes).length} scenes and the live landscape to ${out}`);

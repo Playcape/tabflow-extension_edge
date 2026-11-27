@@ -283,7 +283,7 @@ export async function clearAllData() {
   await clearPageContents();
   for (let index = (globalThis.localStorage?.length ?? 0) - 1; index >= 0; index--) {
     const key = localStorage.key(index);
-    if (key?.startsWith('tabflow_form_')) localStorage.removeItem(key);
+    if (key?.startsWith('tabflow_form_') || key?.startsWith('tabflow_weather')) localStorage.removeItem(key);
   }
   await ext.storage.local.remove([LEGACY_KEY, SNAPSHOT_KEY, 'tabflow_first_run']);
 }

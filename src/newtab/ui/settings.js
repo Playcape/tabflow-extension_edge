@@ -19,6 +19,9 @@ import { toast } from './toast.js';
 import { themeVars, applyCustomCss } from './appearance.js';
 import { DEFAULT_SETTINGS, buildExport, parseImport, makeCollection, makeTab } from '../migrations.js';
 import { hydratePageSpaces, preparePageSpaces } from '../pageStorage.js';
+import { locationAllowed, requestLocationConsent, removeLocationConsent } from '../../common/locationConsent.js';
+import { searchPlaces, clearWeatherCache } from '../scene/weather.js';
+import { refreshSceneWeather } from '../scene/live.js';
 
 /* ============================================================
    Render entry
@@ -52,6 +55,10 @@ function renderSettings() {
   renderSlider('#sl-glassblur', '#sl-glassblur-val', 'glassBlur');
   renderSlider('#sl-glassfrost', '#sl-glassfrost-val', 'glassFrost', '%');
   renderPills('#glassscene-pills', 'glassScene');
+  renderPills('#tempunit-pills', 'tempUnit');
+  renderPills('#scenemotion-pills', 'sceneMotion');
+  renderPills('#newtabfocus-pills', 'newTabFocus');
+  renderSceneSettings();
   renderDesignPicker();
   renderDesignTabs();
   renderToggles();
@@ -106,6 +113,87 @@ function bindToggle(sel, key, extraRender = []) {
   if (!el) return;
   el.checked = !!settings()[key];
   el.onchange = () => setSetting(key, el.checked, { extraRender });
+}
+
+/* ---------- Live scene: weather + location ---------- */
+
+function describePlace() {
+  const s = settings();
+  const loc = s.sceneLocation;
+  if (!loc) return 'Without a city, the sun is placed from your time zone and no weather is shown. Searching sends the city name to Open-Meteo.';
+  const coords = `${Math.abs(loc.lat).toFixed(2)}°${loc.lat < 0 ? 'S' : 'N'}, ${Math.abs(loc.lon).toFixed(2)}°${loc.lon < 0 ? 'W' : 'E'}`;
+  return `${loc.name} (${coords}). The sun, moon and seasons follow this place${s.sceneWeather ? ', and so does the weather.' : '. Turn on Live weather to see its weather too.'}`;
+}
+
+function renderSceneSettings() {
+  const desc = q('#scene-place-desc');
+  if (desc) desc.textContent = describePlace();
+  const weatherToggle = q('#sceneweather-toggle');
+  if (weatherToggle) {
+    weatherToggle.checked = !!settings().sceneWeather && locationAllowed();
+    weatherToggle.onchange = async () => {
+      const enabled = weatherToggle.checked;
+      // Firefox: ask for data-collection consent directly from the gesture.
+      const granted = enabled ? await requestLocationConsent() : false;
+      if (enabled && !granted) toast('Live weather needs Firefox 140+ and your permission to share your location.');
+      if (!enabled) {
+        clearWeatherCache();
+        try { await removeLocationConsent(); } catch { /* still off in TabFlow */ }
+      }
+      setSetting('sceneWeather', enabled && granted, { extraRender: ['settings'] });
+      if (enabled && granted && !settings().sceneLocation) toast('Now search for your city below.');
+      refreshSceneWeather();
+    };
+  }
+  bindToggle('#sceneclock-toggle', 'sceneClock');
+
+  const form = q('#scene-place-form');
+  const input = q('#scene-place-input');
+  const results = q('#scene-place-results');
+  if (!form || !input || !results) return;
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    if (query.length < 2) { input.focus(); return; }
+    if (!locationAllowed() && !(await requestLocationConsent())) {
+      toast('City search needs your permission to share a location with Open-Meteo.');
+      return;
+    }
+    const button = q('#scene-place-search');
+    button.disabled = true;
+    results.replaceChildren(h('div', { class: 'settings-row-desc', text: 'Searching…' }));
+    try {
+      const places = await searchPlaces(query);
+      results.replaceChildren(...(places.length ? places.map((place) =>
+        h('button', {
+          type: 'button', class: 'scene-place-result', role: 'listitem',
+          onclick: () => {
+            const country = place.detail.split(', ').at(-1);
+            const name = country && country !== place.name ? `${place.name}, ${country}` : place.name;
+            setSetting('sceneLocation', { name, lat: place.lat, lon: place.lon }, { extraRender: ['settings'] });
+            results.replaceChildren();
+            input.value = '';
+            refreshSceneWeather();
+            toast(`Scene set to ${name}.`);
+          },
+        }, h('span', { text: place.name }), h('span', { text: place.detail }))
+      ) : [h('div', { class: 'settings-row-desc', text: 'No places found. Try another spelling.' })]));
+    } catch {
+      results.replaceChildren(h('div', { class: 'settings-row-desc', text: 'Search is unavailable right now. Check your connection and try again.' }));
+    } finally {
+      button.disabled = false;
+    }
+  };
+  const clear = q('#scene-place-clear');
+  if (clear) {
+    clear.disabled = !settings().sceneLocation;
+    clear.onclick = () => {
+      clearWeatherCache();
+      setSetting('sceneLocation', null, { extraRender: ['settings'] });
+      results.replaceChildren();
+      refreshSceneWeather();
+    };
+  }
 }
 
 /* ---------- design-mode picker (top of Appearance) ---------- */

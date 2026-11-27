@@ -10,6 +10,7 @@ import { THEMES, fontStackFor } from '../../common/themes.js';
 import { settings } from '../store.js';
 import { registerRenderer } from './bus.js';
 import { applyDesign, initDesign } from './design.js';
+import { syncLiveScene, initLiveScene } from '../scene/live.js';
 
 const FONT_SIZES = { small: '12px', normal: '13px', large: '14px' };
 const BG_STYLES = ['gradient-diag', 'gradient-radial', 'gradient-sunset'];
@@ -103,8 +104,7 @@ export function applyAppearance() {
   root.style.setProperty('--m3-tint', String(s.myTint / 100));
   root.style.setProperty('--m3-radius', `${s.myRadius}px`);
   // Glass (glassmorphism dashboard) — mutually exclusive with the others.
-  const lightTheme = document.body.classList.contains('theme-light');
-  document.body.dataset.scene = s.glassScene === 'auto' ? (lightTheme ? 'dawn' : 'dusk') : s.glassScene;
+  document.body.dataset.scene = s.glassScene;
   document.body.classList.toggle('glass-rail', !!s.glassmorphism && !!s.glassRail);
   document.body.classList.toggle('glass-covers', !!s.glassmorphism && !!s.glassCovers);
   root.style.setProperty('--gl-blur', `${s.glassBlur}px`);
@@ -114,6 +114,7 @@ export function applyAppearance() {
   document.body.classList.toggle('zen', !!s.zenMode);
 
   applyDesign();
+  syncLiveScene();
   applyCustomCss(s.customCss);
 }
 
@@ -129,5 +130,6 @@ export function applyCustomCss(css) {
 
 export function initAppearance() {
   initDesign();
+  initLiveScene();
   registerRenderer('appearance', applyAppearance);
 }

@@ -17,6 +17,7 @@
       "128": "icons/icon128.png"
     }
   },
+  "chrome_url_overrides": { "newtab": "newtab/newtab.html" },
   "omnibox": { "keyword": "to" },
   "commands": {
     "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: open hotkey slot 1" },
@@ -43,7 +44,7 @@
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": ["none"],
-        "optional": ["browsingActivity"]
+        "optional": ["browsingActivity", "locationInfo"]
       }
     },
     "gecko_android": {

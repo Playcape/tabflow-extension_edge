@@ -24,7 +24,10 @@ import { uid, normalizeUrl } from '../common/util.js';
 import { THEMES } from '../common/themes.js';
 
 export const SCHEMA_VERSION = 3;
-export const GLASS_SCENES = new Set(['auto', 'dusk', 'night', 'dawn', 'none']);
+export const GLASS_SCENES = new Set(['live', 'dusk', 'night', 'dawn', 'none']);
+export const SCENE_MOTIONS = new Set(['full', 'calm', 'still']);
+export const TEMP_UNITS = new Set(['auto', 'c', 'f']);
+export const NEWTAB_FOCUS = new Set(['address', 'search']);
 
 export const DEFAULT_SETTINGS = {
   theme: 'dark',
@@ -46,6 +49,7 @@ export const DEFAULT_SETTINGS = {
   showLinks: false,            // show "Links" in sidebar (default off per requirements)
   cmdPalette: true,            // Ctrl/⌘+K quick launcher
   focusExistingTab: false,     // open a saved tab → focus it if already open
+  newTabFocus: 'address',      // address (browser address bar) | search (TabFlow search box)
   glass: false,                // frosted-glass panels (backdrop blur)
   liquidGlass: false,          // Aurora glass + gooey drag physics (opt-in; Normal is the safe default)
   lgOpacity: 62,               // Liquid Glass surface opacity, % (20–90)
@@ -64,7 +68,12 @@ export const DEFAULT_SETTINGS = {
   myBold: true,                // bold expressive typography
   // ---- Glass (glassmorphism dashboard) design language ----
   glassmorphism: false,        // mutually exclusive with liquidGlass / materialYou
-  glassScene: 'auto',          // auto | dusk | night | dawn | none
+  glassScene: 'live',          // live | dusk | night | dawn | none
+  sceneClock: true,            // Live scene: digital clock above the lake
+  sceneWeather: false,         // Live scene: real weather from Open-Meteo (opt-in, network)
+  sceneLocation: null,         // Live scene: { name, lat, lon } chosen by city search
+  tempUnit: 'auto',            // auto | c | f
+  sceneMotion: 'full',         // full | calm | still — particles, drift and parallax
   glassBlur: 24,               // backdrop blur, px (0–40)
   glassFrost: 40,              // frost/tint strength, % (10–90)
   glassRail: true,             // compact icon rail for Spaces
@@ -240,10 +249,23 @@ function normalizeSettings(raw) {
   settings.myRadius = Math.min(28, Math.max(8, Number(settings.myRadius) || 20));
   if (settings.materialYou && settings.liquidGlass) settings.liquidGlass = false;
   if (settings.glassmorphism && (settings.materialYou || settings.liquidGlass)) settings.glassmorphism = false;
+  // 'auto' (light/dark-picked Dawn or Dusk) became the Live scene.
   if (!GLASS_SCENES.has(settings.glassScene)) settings.glassScene = DEFAULT_SETTINGS.glassScene;
+  if (!SCENE_MOTIONS.has(settings.sceneMotion)) settings.sceneMotion = DEFAULT_SETTINGS.sceneMotion;
+  if (!TEMP_UNITS.has(settings.tempUnit)) settings.tempUnit = DEFAULT_SETTINGS.tempUnit;
+  if (!NEWTAB_FOCUS.has(settings.newTabFocus)) settings.newTabFocus = DEFAULT_SETTINGS.newTabFocus;
+  settings.sceneLocation = normalizeLocation(settings.sceneLocation);
   settings.glassBlur = clamp0(settings.glassBlur, 24, 40);
   settings.glassFrost = Math.min(90, Math.max(10, Number(settings.glassFrost) || 40));
   return settings;
+}
+
+export function normalizeLocation(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const lat = Number(raw.lat), lon = Number(raw.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim().slice(0, 80) : 'Chosen place';
+  return { name, lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
 }
 
 function normalizePage(raw) {

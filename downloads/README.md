@@ -7,6 +7,14 @@ fix, pull the current GitHub source and run `scripts/package.ps1` locally before
 submitting the Firefox package to Mozilla. This source update does not rebuild
 the downloadable archives.
 
+The archives also predate the Glass design mode and its Live scene (time of
+day, seasons, optional weather and the in-scene clock). Load `src/` or run
+`scripts/package.ps1` to try them.
+
+They also predate **New tab focus**: in those builds a new tab always puts the
+cursor in TabFlow's search box. Current source focuses the browser address bar
+by default.
+
 - [Chrome / Edge package](tabflow-2.0.0-chrome-edge.zip): download and extract into a folder, then choose **Load unpacked** on the browser's extensions page and select the extracted folder containing `manifest.json`.
 - [Firefox / Zen package](tabflow-2.0.0-zen-firefox.zip): download and extract, then use **Load Temporary Add-on** in `about:debugging` and select its `manifest.json`. This is an unsigned temporary/development build.
 

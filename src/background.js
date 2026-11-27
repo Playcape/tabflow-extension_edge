@@ -10,6 +10,12 @@
    tab per window: a duplicate new tab sends the user back to the existing
    tab (and focuses its search box) instead of piling up copies.
 
+   That redirect costs the browser's address-bar focus, so it is opt-in
+   (Settings → Advanced → New tab focus → TabFlow search). The default,
+   "Address bar", leaves new tabs on the manifest's chrome_url_overrides
+   page: the browser opens it with its own address bar focused, and
+   TabFlow neither redirects nor deduplicates those tabs.
+
    Responsibilities:
      • global hotkey slots (commands API)
      • omnibox "to <alias>" navigation
@@ -121,11 +127,25 @@ const NEWTAB_SURFACE_URLS = new Set([
 ]);
 const windowQueues = new Map();
 
+/* Cached `newTabFocus` setting; refreshed whenever the workspace changes. */
+let newTabFocus = null;
+async function newTabMode() {
+  if (newTabFocus) return newTabFocus;
+  const doc = await loadDoc();
+  newTabFocus = doc?.settings?.newTabFocus === 'search' ? 'search' : 'address';
+  return newTabFocus;
+}
+ext.storage.onChanged?.addListener((changes, area) => {
+  if (area === 'local' && changes[STORAGE_KEY]) newTabFocus = null;
+});
+
 function isBrowserNewTab(tab) {
   return NEWTAB_SURFACE_URLS.has(tab?.pendingUrl || tab?.url || '');
 }
 
 async function reconcileWindow(tabId) {
+  // Address-bar mode: the new tab stays the browser's own, focused surface.
+  if (await newTabMode() !== 'search') return;
   let tab = await ext.tabs.get(tabId).catch(() => null);
   if (!tab || !(isTabFlowTab(tab) || (IS_CHROMIUM && isBrowserNewTab(tab)))) return;
   const tabs = await ext.tabs.query({ windowId: tab.windowId });

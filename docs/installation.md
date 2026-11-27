@@ -84,25 +84,27 @@ an update manifest. [Mozilla's update guide](https://extensionworkshop.com/docum
 
 ## How new tabs work
 
-### Chromium: redirect and reuse
-
-The Chromium manifest intentionally has no `chrome_url_overrides`. Background tab listeners recognize browser new-tab URLs such as `chrome://newtab/` and `edge://newtab/`, then navigate those tabs to `newtab/newtab.html` inside the extension.
-
-This makes TabFlow an ordinary extension page, including an ordinary page icon where the browser displays one. The background also keeps one TabFlow workspace per window. Opening another new tab in that window can focus the existing workspace and remove the redundant tab. A new window can still have its own workspace.
-
-Only recognized new-tab/workspace URLs participate. An unrelated blank tab, an external website, or a separate Page viewer is not a TabFlow workspace duplicate. New-tab redirection is event-driven, so behavior can be affected by browser policies and other new-tab extensions.
-
-### Firefox / Zen: declarative override and reuse
-
-The generated manifest declares:
+Both manifests declare TabFlow as the browser's new-tab page:
 
 ```json
 "chrome_url_overrides": { "newtab": "newtab/newtab.html" }
 ```
 
-The shared background skips Chromium's privileged-URL redirect. It can still reuse duplicate TabFlow workspace tabs once they resolve to the extension page. Firefox-based new-tab pages do not necessarily display favicons like ordinary extension pages; TabFlow does not force that browser UI behavior.
+**Settings → Advanced → New tab focus** decides what happens next. Chrome and Edge may ask once whether to keep the extension's new-tab change; keep it.
 
-The browser-toolbar action is separate from per-window deduplication: it searches for an existing TabFlow workspace across windows and focuses it, or opens one if needed. Reusing a workspace asks the page to focus its search launcher.
+### Address bar (default)
+
+A new tab opens TabFlow with the browser's own address bar focused, so you can type a search or URL straight away, as on a normal new tab. TabFlow does not move the cursor into its own search box and does not redirect, reuse or close new tabs. Each new tab is its own TabFlow page. Browsers may show a generic icon in the tab strip for a new-tab page.
+
+### TabFlow search
+
+**Chromium:** background tab listeners recognize browser new-tab URLs such as `chrome://newtab/` and `edge://newtab/`, then navigate those tabs to `newtab/newtab.html` inside the extension. TabFlow becomes an ordinary extension page with an ordinary page icon, and the cursor goes into TabFlow's search box. The browser address bar loses focus in the process; no extension can give it back. The background also keeps one TabFlow workspace per window: opening another new tab in that window focuses the existing workspace and removes the redundant tab. A new window can still have its own workspace.
+
+**Firefox / Zen:** the privileged new-tab URL cannot be redirected, so the override page stays. Duplicate TabFlow workspace tabs are still reused once they resolve to the extension page.
+
+Only recognized new-tab/workspace URLs participate. An unrelated blank tab, an external website, or a separate Page viewer is not a TabFlow workspace duplicate. New-tab handling is event-driven, so behavior can be affected by browser policies and other new-tab extensions.
+
+The browser-toolbar action is separate from per-window deduplication: it searches for an existing TabFlow workspace across windows and focuses it, or opens one if needed. In TabFlow search mode, reusing a workspace asks the page to focus its search launcher.
 
 ## Permissions
 

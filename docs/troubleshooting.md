@@ -4,21 +4,25 @@ Start by checking the installed browser build and reloading TabFlow after an ext
 
 ## A new tab does not open TabFlow
 
-**Chrome / Edge:** confirm TabFlow is enabled on the extensions page and inspect background/service-worker errors. The current Chromium implementation redirects recognized new-tab URLs; it does not register a declarative new-tab override. Another extension or browser policy may change the URL before TabFlow sees it. Temporarily disable a competing new-tab extension to isolate that interaction. Try the TabFlow toolbar action.
+**Chrome / Edge:** confirm TabFlow is enabled on the extensions page and inspect background/service-worker errors. TabFlow declares a new-tab override; if Chrome or Edge asked whether to keep the extension's new-tab change, choose to keep it. In **TabFlow search** mode it also redirects recognized new-tab URLs. Another extension or browser policy may change the URL before TabFlow sees it. Temporarily disable a competing new-tab extension to isolate that interaction. Try the TabFlow toolbar action.
 
 **Firefox / Zen:** load the generated **`dist/zen/manifest.json`**. Raw `src/` has the wrong background configuration for this package. Check whether the browser accepted the extension's new-tab override.
 
 **Zen's floating URL bar:** if no new-tab page is created, TabFlow has no surface to replace. Set `zen.urlbar.replace-newtab` to `false` in `about:config`, or open TabFlow through the toolbar action. See [Zen setup](installation.md#zen).
 
+## The cursor is in the address bar, not TabFlow's search
+
+This is the default (**Settings → Advanced → New tab focus → Address bar**): new tabs behave like the browser's own and you can type a search or URL immediately. Choose **TabFlow search** to put the cursor in TabFlow's search box instead; the browser address bar then loses focus.
+
 ## A new tab returns to an existing workspace
 
-This is expected. TabFlow reuses its workspace within the same window and requests focus for its search launcher. A new window can have another workspace. The toolbar action can focus a workspace in another window.
+This happens only with **New tab focus → TabFlow search**. TabFlow reuses its workspace within the same window and requests focus for its search launcher. A new window can have another workspace. The toolbar action can focus a workspace in another window.
 
 Separate Pages opened in a viewer tab are not workspace duplicates. If unrelated tabs are closed or redirected, report the exact URL, whether the tab was created by a link or Ctrl+T, and the browser/version.
 
 ## The tab-strip icon differs between browsers
 
-Chromium loads an ordinary extension page after redirection. Firefox/Zen use a declarative new-tab override, and browser new-tab surfaces may display a generic icon. A missing favicon there does not mean the workspace failed to load. Reload the extension if the toolbar still shows an old icon.
+With **New tab focus → TabFlow search**, Chromium loads an ordinary extension page after redirection. In the default Address bar mode, and always on Firefox/Zen, TabFlow is a declarative new-tab override, and browser new-tab surfaces may display a generic icon. A missing favicon there does not mean the workspace failed to load. Reload the extension if the toolbar still shows an old icon.
 
 ## The Firefox / Zen add-on disappears after restart
 

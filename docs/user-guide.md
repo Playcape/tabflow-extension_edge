@@ -132,15 +132,30 @@ Settings applies changes immediately and saves automatically. Design, theme, and
 | **Appearance** | Normal / Aurora / Tonal / Glass; 20 built-in themes including Prism Dark and Prism Light; custom themes with live color preview; accent presets and custom accent; solid, gradient, or custom background; dots, grid, noise, or no pattern |
 | **Aurora** | Surface opacity, blur, edge highlight, depth, unified glass treatment, drag physics, pointer sheen, ambient glow; appears when Aurora is selected |
 | **Tonal** | Accent tint strength, corner roundness, expressive typography, and motion; appears when Tonal is selected |
-| **Glass** | Scene (Auto, Dusk, Night, Dawn, or None), blur, frost, icon rail for Spaces, and card covers; appears when Glass is selected. The scene replaces the Background and Pattern choices while Glass is active; the greeting uses the Advanced greeting name |
+| **Glass** | Scene (Live, Dusk, Night, Dawn, or None); Live scene clock, optional live weather and city, temperature unit and scene motion; blur, frost, icon rail for Spaces, and card covers; appears when Glass is selected. The scene replaces the Background and Pattern choices while Glass is active; the greeting uses the Advanced greeting name |
 | **Typography** | System, Humanist, Geometric, Rounded, or Monospace system-font stacks; Small, Normal, or Large text |
 | **Layout** | Corner radius, Comfortable / Cozy / Compact density, sidebar width, clock visibility, and default saved-tab view |
-| **Advanced** | Links visibility, palette, existing-tab focusing, Zen mode, optional frosted glass and animated background, Reduce motion, greeting name, 24-hour time, seconds, favicon fallback, and custom CSS |
+| **Advanced** | Links visibility, palette, existing-tab focusing, new tab focus (browser address bar or TabFlow search), Zen mode, optional frosted glass and animated background, Reduce motion, greeting name, 24-hour time, seconds, favicon fallback, and custom CSS |
 | **Data** | Storage estimate, snapshots, bookmarks import, homepage URL, JSON export/import, reset settings, clear data; Firefox-based builds also show setup guidance |
 
 **Default View applies to all existing collection Spaces**, as well as the default for newly created ones. The generic corner-radius preference can be superseded by the mode's own shape language, especially Tonal's roundness control.
 
 The clock is optional. Enable it in Layout, then set its greeting and time format in Advanced. **Zen mode** hides the surrounding interface; use **Ctrl/⌘ + .**, Escape, or the exit control to return.
+
+### The Live scene (Glass)
+
+**Live** is Glass's default scene. It follows the real sky:
+
+- **Time of day.** The sky moves through night, dawn, morning, midday, golden hour and dusk. The sun and moon travel across it, stars come out, and the lake reflects the light. The moon shows its real phase.
+- **Seasons.** The shore trees bud and blossom in spring, are full in summer, turn and drop their leaves in autumn, and stand bare in winter, when snow settles on the peaks, pines and ground and the lake ices over. Fireflies come out on summer nights. The southern hemisphere gets the opposite season; the tropics stay green.
+- **Clock.** A large digital clock stands above the lake and is mirrored in the water. It follows the **24-hour clock** and **Show seconds** settings. Turn it off with **Clock in the scene**.
+- **Weather (optional).** Turn on **Live weather** and search for your city to see its real conditions in the scene: drifting clouds, drizzle and rain with ripples on the lake, snow, thunderstorms with lightning, and fog. Weather comes from [Open-Meteo](https://open-meteo.com/) (free, no account). Your city search and the chosen coordinates, rounded to about 1 km, are sent to Open-Meteo about every 30 minutes while a TabFlow tab is open. Nothing is sent while Live weather is off. Firefox also asks for its optional *location* data-collection permission.
+
+Without a chosen city, the sun is placed from your time zone and no weather is shown. Choosing a city also places the sun, moon and seasons there.
+
+Select the chip under the greeting (or click the clock) for sunrise, sunset, the moon phase, current conditions and a five-day forecast. Its **Time travel** controls preview any time of day, season or weather; **Back to live** returns to now.
+
+**Scene motion** sets how lively the scene is. **Full** has falling weather, drifting clouds and depth that follows your pointer; **Calm** has lighter weather without pointer depth; **Still** shows a single frame. Reduce motion, your system's reduced-motion setting, and large workspaces keep the scene still. Reduced transparency and increased contrast hide the scene.
 
 Aurora limits expensive rendering to selected surfaces and active interactions. Reduced-motion settings suppress movement; reduced-transparency and contrast preferences favor solid, readable surfaces. Those fallbacks may make a mode look quieter than its preview. Font availability depends on your operating system; TabFlow does not download the built-in font choices.
 
