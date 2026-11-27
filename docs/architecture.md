@@ -237,6 +237,18 @@ Motion and transparency preferences affect JavaScript as well as CSS. No animate
 
 `modes/glass.css` follows Apple's Liquid Glass guidance ("Adopting Liquid Glass", HIG "Materials"). `--lq-*` tokens style the navigation layer: sidebar/rail, top-bar controls, the `.toolbar-group` capsule, the live-tab inspector and floating surfaces. They combine fill, backdrop blur and saturation, a rim highlight, inner "lens" light, and a masked specular edge (`::before`). `--mt-*` tokens are the quieter standard material of the content layer (Collections, statistics, settings sections). `--fill-1..3` are the vibrant fills used inside either. Radii are concentric (`--r-outer − --r-pad`). Only the primary action is tinted, and headers are title case. Do not put `mask`, `filter` or `opacity < 1` on an ancestor of a blurred surface: it becomes the backdrop root and the surface stops blurring the scene, which is why `#collections-area` has no scroll-edge mask. Lensing is approximated in CSS so Firefox and Chromium match; no SVG backdrop filters are used.
 
+### Stained glass style (optional, removable)
+
+`glassStyle: 'stained'` is a self-contained module: `ui/stained.js`, `ui/iconTone.js` and `styles/modes/stained.css`. The module owns its body classes (`glass-stained`, `stained-rich`) and its settings controls, and tints cards through a MutationObserver. No other module calls into it.
+
+- **Card colour from the site icon.** `iconTone.js` draws the card's icon on a 32×32 canvas and takes the dominant OKLCH hue and chroma of its coloured pixels. Mostly black/white/grey icons give `c = 0` (smoky glass). Cross-origin icons are retried once with CORS; unreadable icons leave the card neutral. Tones are cached per site in `localStorage` (`tabflow_icon_tones_v1`, cleared by Clear All).
+- **Collection windows only on request.** Only Collections with a chosen colour (`data-color`) become tinted windows.
+- **No textures.** The look is colour and light: a two-tone tint, light from the sun/moon side (`--sun-x`), a rim, inner light, a fine translucent came and a coloured cast, scaled by `--scene-light`. There is no per-card backdrop blur.
+
+This follows Apple's HIG Color and WWDC25 "Meet Liquid Glass": colour in the content layer, monochrome navigation.
+
+To remove it, delete those three files, then the lines marked `[stained-glass]` in `main.js`, `newtab.css`, `newtab.html` (one block) and `migrations.js`, and the stained tests in `tests/data.test.mjs`, `tests/scene.test.mjs` and `tests/ui.mjs`.
+
 ### Glass rendering budget
 
 Backdrop blur is limited to panels: the sidebar/rail, the live-tab panel, top-bar controls and the toolbar group, statistic tiles, and one per Collection. Cards inside a panel are tinted, never blurred again, so blur count follows the number of Collections rather than saved tabs. Every surface reads its fill from `--gl-*` tokens; `effects-opaque` and the reduced-transparency/contrast preferences swap those tokens to solid theme colors and remove the scene. Dusk, Night and Dawn are static SVG files rendered once per resize.

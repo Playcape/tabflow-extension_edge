@@ -125,6 +125,21 @@ export function faviconSrc(url, savedIcon, allowRemote) {
   return '';
 }
 
+/** Max length of an inline (data:) icon kept with a saved tab — a 32px PNG/ICO is a few KB. */
+const MAX_INLINE_ICON = 24_000;
+
+/**
+ * The part of a browser tab's favIconUrl worth storing with a saved tab.
+ * Firefox often reports icons as data: images; those must be kept, or the
+ * card falls back to a letter tile (Firefox has no local favicon service).
+ */
+export function storableFavicon(src) {
+  if (typeof src !== 'string') return '';
+  if (src.startsWith('https:')) return src;
+  if (/^data:image\//.test(src) && src.length <= MAX_INLINE_ICON) return src;
+  return '';
+}
+
 /** <img> with automatic letter-tile fallback. */
 export function faviconEl(url, savedIcon, allowRemote, cls, fallbackCls) {
   const src = faviconSrc(url, savedIcon, allowRemote);

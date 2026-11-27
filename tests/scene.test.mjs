@@ -180,3 +180,18 @@ test('generated landscape geometry is complete', () => {
   assert.equal(LANDSCAPE.banks.length, 2);
   assert.ok(LANDSCAPE.broadleaves.every((t) => t.canopy.length === 5));
 });
+
+test('stained glass reads a brand colour from a site icon', async () => {
+  const { dominantTone, rgbToOklch } = await import('../src/newtab/ui/iconTone.js');
+  const icon = (pixels) => { const d = new Uint8ClampedArray(pixels.length * 4); pixels.forEach(([r, g, b, a = 255], i) => d.set([r, g, b, a], i * 4)); return d; };
+  const fill = (n, px) => Array.from({ length: n }, () => px);
+  const spotify = dominantTone(icon([...fill(300, [29, 185, 84]), ...fill(200, [0, 0, 0])]));
+  near(spotify.h, rgbToOklch(29, 185, 84).h, 12, 'green brand hue');
+  assert.ok(spotify.c >= .07 && spotify.c <= .16);
+  const youtube = dominantTone(icon([...fill(400, [255, 0, 0]), ...fill(100, [255, 255, 255])]));
+  near(youtube.h, rgbToOklch(255, 0, 0).h, 12, 'red brand hue');
+  assert.deepEqual(dominantTone(icon([...fill(300, [20, 20, 20]), ...fill(200, [250, 250, 250])])), { h: 0, c: 0 }, 'black/white icon is mono');
+  assert.equal(dominantTone(icon(fill(50, [255, 0, 0, 0]))), null, 'fully transparent icon');
+  // A small coloured accent on a mostly grey icon still counts as mono.
+  assert.equal(dominantTone(icon([...fill(480, [120, 120, 120]), ...fill(20, [0, 120, 255])])).c, 0);
+});

@@ -64,6 +64,25 @@ Linux, Node 22, Playwright Chromium (headless):
 - The UI suite also checks that the clock sits beside the greeting and that pointer movement no longer moves the scene. The weather opt-in path was re-checked with mocked Open-Meteo responses, opening the card from the chip and the clock.
 - Checked visually at 2560×1392 (three full-width Collection columns; previously capped at 1600 px), 1440×900 in dark and light themes, and the Glass settings tab. 34 Node regressions, UI and Collection suites passed.
 
+## Icons, clock format, stats strip, water — 27 November 2026
+
+- **36 Node regressions passed**, including `storableFavicon` (Firefox `data:` icons kept within a size limit, other schemes rejected) and the browser-language 12/24-hour default.
+- The UI suite now checks that a saved tab without an icon takes the icon of an open tab on the same host, keeps it, and is not rewritten again.
+- Water reflections (Live scene and the fixed Dusk/Night/Dawn SVGs) were checked by screenshot at night (moonlight) and with a low sun. The header stats strip was checked at 2560 px (with labels) and 1440 px (icons and numbers). UI and Collection suites passed.
+- The Firefox icon permission prompt (**Allow icons**) needs a manual check in Firefox/Zen; this container has no Firefox.
+
+## Stained glass v2 and Glass UX fixes — 27 November 2026
+
+- Stained glass was rebuilt after review as a calm, removable module: one tinted window per Collection, neutral cards, no lead lines, rosettes or textures. `spaces.js`, `appearance.js` and `settings.js` are back to their pre-stained state, and `collections.js` has no stained code.
+- Glass UX: a Collection-header **+** replaces Save-a-tab tiles when a Collection has tabs; the stats strip lost its own capsule; the Space name joins the date row; titles reserve two lines; the live-panel hint is readable; closing the scene card ends a time-travel preview.
+- 38 Node regressions, UI and Collection suites passed. Checked visually at 2560×1440: clear (night), stained subtle (night and day) and rich.
+
+## Stained glass v3 (icon colours) — 27 November 2026
+
+- `dominantTone` unit tests: green and red brand icons give their hue; black/white and mostly-grey icons give mono; transparent icons give none. The UI suite checks that a red `data:` icon makes a red pane.
+- Checked visually at 2560×1440 with brand-coloured test icons, night and day, plus a hover close-up. 38 Node regressions, UI and Collection suites passed.
+- Remote icons in Firefox (Google's favicon service) may not be readable by canvas; those cards stay neutral. Verify in Firefox/Zen with real icons.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

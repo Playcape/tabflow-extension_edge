@@ -16,6 +16,18 @@ await mkdir(output, {recursive:true});
 try {
   await page.goto('http://127.0.0.1:4173/newtab/newtab.html');
   await page.waitForSelector('.tab-card');
+  // Saved tabs without an icon borrow one from an open tab on the same host (Firefox reports data: icons).
+  assert.equal(await page.evaluate(async () => {
+    const { update, getDoc } = await import('/newtab/store.js');
+    const { backfillFavicons } = await import('/newtab/ui/opentabs.js');
+    update(d => d.spaces[0].collections[0].tabs.push({ id: 'icon-test', title: 'Icon test', url: 'https://icons.example/page', favicon: '' }));
+    const icon = 'data:image/png;base64,iVBORw0KGgo=';
+    const n = backfillFavicons([{ url: 'https://icons.example/other', favIconUrl: icon }, { url: 'https://nothing.example', favIconUrl: 'chrome://x' }]);
+    const saved = getDoc().spaces[0].collections[0].tabs.find(t => t.id === 'icon-test');
+    const ok = n >= 1 && saved.favicon === icon && backfillFavicons([{ url: 'https://icons.example/', favIconUrl: icon }]) === 0;
+    update(d => { const tabs = d.spaces[0].collections[0].tabs; tabs.splice(tabs.findIndex(t => t.id === 'icon-test'), 1); });
+    return ok;
+  }), true);
   // Every id in the shell must be unique: duplicated settings panels once shipped controls that did nothing.
   assert.deepEqual(await page.evaluate(() => { const seen = new Set(), dup = []; for (const el of document.querySelectorAll('[id]')) { if (seen.has(el.id)) dup.push(el.id); seen.add(el.id); } return dup; }), []);
   await page.evaluate(async () => {
@@ -60,6 +72,23 @@ try {
   assert.equal(await page.locator('body').getAttribute('data-scene'),'night');
   assert.equal(await page.locator('.scene-live').count() === 0 || await page.locator('.scene-live').isHidden(), true);
   await page.click('#glassscene-pills [data-val="live"]');
+  // [stained-glass] An optional Glass style, off by default: each Collection gets a window hue; Clear removes the class again.
+  assert.ok(await page.locator('#glassstyle-pills [data-val="clear"]').evaluate(el => el.classList.contains('active')));
+  await page.click('#glassstyle-pills [data-val="stained"]');
+  assert.ok(await page.locator('body').evaluate(el => el.classList.contains('glass-stained')));
+  // A card takes its colour from its site icon (here a red data: icon, as Firefox stores them).
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const x = c.getContext('2d'); x.fillStyle = '#e1251b'; x.fillRect(0, 0, 32, 32);
+    const { update } = await import('/newtab/store.js'); const { render } = await import('/newtab/ui/bus.js');
+    update(d => { d.spaces[0].collections[0].tabs[0].favicon = c.toDataURL('image/png'); });
+    render('collections');
+  });
+  await page.waitForFunction(() => document.querySelector('.tab-card')?.dataset.toneIc === 'color');
+  const hue = Number(await page.locator('.tab-card').first().evaluate(el => el.style.getPropertyValue('--ic-h')));
+  assert.ok(hue > 15 && hue < 45, `red icon gives a red pane (hue ${hue})`);
+  await page.click('#glassstyle-pills [data-val="clear"]');
+  assert.ok(!(await page.locator('body').evaluate(el => el.classList.contains('glass-stained'))));
   assert.equal(await page.locator('body').getAttribute('data-scene'),'live');
   // Live scene: renders without any network request until weather is opted in.
   const weatherRequests = [];

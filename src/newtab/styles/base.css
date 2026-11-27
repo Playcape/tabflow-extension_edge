@@ -219,6 +219,8 @@ h1, h2 { font-weight: 600; }
 .toolbar-group { display: contents; }
 /* Glass-only header pieces. */
 .hero-clock, .hero-meta { display: none; }
+/* Header "+" for a Collection: Glass uses it instead of the Save-a-tab tile. */
+.col-add-btn { display: none !important; }
 
 /* ===== DROPDOWN ===== */
 .dropdown { position: relative; }

@@ -18,6 +18,7 @@ import { initPalette } from './ui/palette.js';
 import { initLiquid } from './ui/liquid.js';
 import { initFaviconConsent } from '../common/faviconConsent.js';
 import { initLocationConsent } from '../common/locationConsent.js';
+import { initStained } from './ui/stained.js'; // [stained-glass] optional Glass style
 
 async function boot() {
   await initFaviconConsent(() => renderAll());
@@ -35,6 +36,7 @@ async function boot() {
   initSettings();
   initPalette();
   initLiquid();
+  initStained(); // [stained-glass]
 
   renderAll();
   setNav('collections');

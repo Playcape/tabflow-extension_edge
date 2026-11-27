@@ -32,7 +32,7 @@ globalThis.browser = {
   },
 };
 const consent = await import('../src/common/faviconConsent.js');
-const { faviconSrc } = await import('../src/common/util.js');
+const { faviconSrc, storableFavicon } = await import('../src/common/util.js');
 
 beforeEach(async () => {
   granted = [];
@@ -94,4 +94,15 @@ test('previously granted Firefox consent is restored on page startup', async () 
   granted = ['browsingActivity'];
   await consent.initFaviconConsent();
   assert.equal(consent.remoteIconsAllowed(), true);
+});
+
+test('saving a tab keeps Firefox data: icons so the card shows them without network access', () => {
+  const inline = 'data:image/png;base64,' + 'A'.repeat(200);
+  assert.equal(storableFavicon(inline), inline);
+  assert.equal(faviconSrc('https://site.test', storableFavicon(inline), false), inline, 'shown before any consent');
+  assert.equal(storableFavicon('https://site.test/favicon.ico'), 'https://site.test/favicon.ico');
+  assert.equal(storableFavicon('data:image/png;base64,' + 'A'.repeat(30_000)), '', 'oversized inline icons are not stored');
+  assert.equal(storableFavicon('chrome://branding/icon.png'), '');
+  assert.equal(storableFavicon('data:text/html,<b>x</b>'), '');
+  assert.equal(storableFavicon(undefined), '');
 });

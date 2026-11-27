@@ -28,6 +28,9 @@ export const GLASS_SCENES = new Set(['live', 'dusk', 'night', 'dawn', 'none']);
 export const SCENE_MOTIONS = new Set(['full', 'calm', 'still']);
 export const TEMP_UNITS = new Set(['auto', 'c', 'f']);
 export const NEWTAB_FOCUS = new Set(['address', 'search']);
+// [stained-glass] Optional Glass style; see src/newtab/ui/stained.js to remove it.
+export const GLASS_STYLES = new Set(['clear', 'stained']);
+export const STAINED_INTENSITIES = new Set(['subtle', 'rich']);
 
 export const DEFAULT_SETTINGS = {
   theme: 'dark',
@@ -78,18 +81,31 @@ export const DEFAULT_SETTINGS = {
   glassFrost: 40,              // frost/tint strength, % (10–90)
   glassRail: true,             // compact icon rail for Spaces
   glassCovers: true,           // tinted cover band on saved-tab cards
+  glassStyle: 'clear',         // [stained-glass] clear | stained — tinted Collection windows
+  stainedIntensity: 'subtle',  // [stained-glass] subtle | rich
   animatedBg: false,           // slow "aurora" gradient behind collections
   reduceMotion: false,         // kill transitions/animations
   zenMode: false,              // hide chrome for a minimal, centered view
   greetingName: '',            // shown in the clock greeting ("Good morning, X")
-  clock24h: false,             // 24-hour clock
+  clock24h: localeUses24h(),   // 24-hour clock; new workspaces follow the browser language
   clockSeconds: false,         // show seconds in the clock
 };
+
+/** Whether the browser's language writes times as 21:30 rather than 9:30 PM. */
+export function localeUses24h(locale) {
+  try {
+    const cycle = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle;
+    return cycle === 'h23' || cycle === 'h24';
+  } catch {
+    return false;
+  }
+}
 
 export const DEFAULT_UI = {
   sidebarOpen: true,
   rightPanelOpen: true,
   zenHintDismissed: false,
+  faviconHintDismissed: false,
 };
 
 /* ---------- constructors ---------- */
@@ -254,6 +270,9 @@ function normalizeSettings(raw) {
   if (!SCENE_MOTIONS.has(settings.sceneMotion)) settings.sceneMotion = DEFAULT_SETTINGS.sceneMotion;
   if (!TEMP_UNITS.has(settings.tempUnit)) settings.tempUnit = DEFAULT_SETTINGS.tempUnit;
   if (!NEWTAB_FOCUS.has(settings.newTabFocus)) settings.newTabFocus = DEFAULT_SETTINGS.newTabFocus;
+  // [stained-glass]
+  if (!GLASS_STYLES.has(settings.glassStyle)) settings.glassStyle = DEFAULT_SETTINGS.glassStyle;
+  if (!STAINED_INTENSITIES.has(settings.stainedIntensity)) settings.stainedIntensity = DEFAULT_SETTINGS.stainedIntensity;
   settings.sceneLocation = normalizeLocation(settings.sceneLocation);
   settings.glassBlur = clamp0(settings.glassBlur, 24, 40);
   settings.glassFrost = Math.min(90, Math.max(10, Number(settings.glassFrost) || 40));
@@ -345,6 +364,7 @@ export function normalizeDoc(raw) {
       sidebarOpen: raw.ui?.sidebarOpen !== false,
       rightPanelOpen: raw.ui?.rightPanelOpen !== false,
       zenHintDismissed: !!raw.ui?.zenHintDismissed,
+      faviconHintDismissed: !!raw.ui?.faviconHintDismissed,
     },
   };
 }

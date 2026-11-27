@@ -58,7 +58,9 @@ For aliases, type `to`, a space, then the name in the **browser address bar**. E
 
 ## Favicons show letter tiles
 
-Letter tiles are the fallback when no usable icon loads. Saved HTTPS favicon URLs are tried first, then Chromium's local favicon endpoint, then Google's favicon service if allowed and no local endpoint is available.
+Letter tiles are the fallback when no usable icon loads. An icon stored with the saved tab is tried first. Saving a tab keeps its icon, including the inline `data:` icons Firefox usually reports. Saved tabs without one take the icon of any open tab on the same site, and keep it. Next come Chromium's local favicon endpoint, then Google's favicon service if allowed and no local endpoint is available.
+
+**Firefox / Zen:** there is no local favicon endpoint, so cards saved without an icon show letters until the site is open in a tab, or until you allow website icons. The Collections view offers this once (**Allow icons**); otherwise use **Settings → Advanced → Remote favicon fallback**. Firefox then asks for its optional permission to share site domains.
 
 **Remote favicon fallback** controls the Google service, not every remote image. A stored website icon can still request its own URL. Firewall, offline mode, a changed icon URL, or a cold browser cache can cause fallback tiles.
 
