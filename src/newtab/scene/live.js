@@ -34,7 +34,6 @@ let lastMinute = -1;
 let state = null;
 let weatherData = null;
 let weatherError = '';
-let pointerFrame = 0;
 let lakeBottom = 0;
 let weatherKey = '';
 let card = null;
@@ -95,13 +94,6 @@ function sceneDate() {
   const d = new Date();
   d.setHours(0, preview.minutes, 0, 0);
   return d;
-}
-
-function timeParts(date, s = settings(), seconds = s.clockSeconds) {
-  const parts = new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit', ...(seconds ? { second: '2-digit' } : {}), hour12: !s.clock24h }).formatToParts(date);
-  const main = parts.filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim();
-  const period = parts.find((p) => p.type === 'dayPeriod')?.value ?? '';
-  return { main, period };
 }
 
 function shortTime(date, s = settings()) {
@@ -224,23 +216,13 @@ function build() {
   const atmosphere = q('.atmosphere');
   if (!atmosphere) return false;
   root = h('div', { class: 'scene-live' });
-  els.clockTime = h('span', { class: 'lv-clock-time' });
-  els.clockPeriod = h('span', { class: 'lv-clock-period' });
-  els.clockMeta = h('div', { class: 'lv-clock-meta' });
-  els.mirror = h('div', { class: 'lv-clock-mirror' });
-  els.clock = h('div', { class: 'lv-clock' },
-    h('div', { class: 'lv-clock-stack' }, els.clockMeta, h('div', { class: 'lv-clock-face' }, els.clockTime, els.clockPeriod)),
-    els.mirror);
   els.canvas = h('canvas', { class: 'lv-layer lv-particles' });
   root.append(
     buildSky(), buildClouds(), buildLand(),
     h('div', { class: 'lv-layer lv-fog' }, h('div', { class: 'lv-fog-band' }), h('div', { class: 'lv-fog-band lv-fog-band-2' })),
-    els.clock, els.canvas);
+    els.canvas);
   atmosphere.append(root);
   particles = new Particles(els.canvas);
-  // Panels opening or closing move the workspace; keep the clock centred on it.
-  const main = q('#main-content');
-  if (main && globalThis.ResizeObserver) new ResizeObserver(() => { if (active) layout(); }).observe(main);
   return true;
 }
 
@@ -252,10 +234,7 @@ function layout() {
   const offset = (vh - 1000 * scale) / 2;
   const lakeY = offset + L.lakeTop * scale;
   lakeBottom = offset + 860 * scale; // where the near shore starts to cover the water
-  const main = q('#main-content')?.getBoundingClientRect();
-  const cx = main && main.width > 0 ? main.left + main.width / 2 : vw / 2;
   root.style.setProperty('--lv-lake-y', `${lakeY.toFixed(1)}px`);
-  root.style.setProperty('--lv-clock-x', `${cx.toFixed(1)}px`);
   return lakeY;
 }
 
@@ -281,7 +260,6 @@ function render(force = false) {
   const wx = sceneWeather(s);
   const minute = Math.floor(date.getTime() / 60_000);
   const key = [minute, place.lat, place.lon, wx?.kind, wx?.cloud, wx?.intensity, wx?.wind, preview.season, motionLevel(), innerWidth, innerHeight].join('|');
-  renderClock(date, s);
   if (!force && key === lastKey) return;
   lastKey = key;
   lastMinute = minute;
@@ -335,27 +313,13 @@ function applyState(st, s) {
   els.glint.setAttribute('transform', `translate(${glintX.toFixed(1)} 0)`);
   els.glint.style.opacity = (glint * (1 - frozen * .6) * (1 - st.grey * .8)).toFixed(3);
 
+  // The header clock glows with the scene's light (see styles/modes/scene.css).
+  document.body.style.setProperty('--scene-glow', st.colors['--sc-glow']);
+  document.body.style.setProperty('--scene-glow-alpha', Math.max(.25, st.glowAlpha).toFixed(3));
+  root.classList.toggle('is-preview', preview.minutes != null || !!preview.season || !!preview.kind);
+
   const lakeY = layout();
   particles.configure({ ...fx, stars: st.stars, wind: st.wind, light: st.light, lakeY: frozen ? 0 : lakeY, lakeBottom, motion });
-}
-
-function renderClock(date = sceneDate(), s = settings()) {
-  if (!root) return;
-  els.clock.hidden = !s.sceneClock;
-  if (!s.sceneClock) return;
-  const { main, period } = timeParts(date, s);
-  if (els.clockTime.textContent !== main) {
-    els.clockTime.textContent = main;
-    els.clockPeriod.textContent = period;
-    els.mirror.textContent = `${main}${period ? ` ${period}` : ''}`;
-  }
-  const day = date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-  const wx = liveWeather(s);
-  const meta = wx && !preview.kind
-    ? `${day} · ${formatTemp(wx.temp, preferredUnit(s.tempUnit))} ${wx.label}`
-    : preview.kind ? `${day} · ${WEATHER_KINDS[preview.kind].label} (preview)` : day;
-  if (els.clockMeta.textContent !== meta) els.clockMeta.textContent = meta;
-  root.classList.toggle('is-preview', preview.minutes != null || !!preview.season || !!preview.kind);
 }
 
 /* ---------- toolbar chip ---------- */
@@ -422,7 +386,7 @@ function escClose(event) {
 
 function positionCard(anchor) {
   if (!card) return;
-  const rect = (anchor?.isConnected ? anchor : els.clock).getBoundingClientRect();
+  const rect = (anchor?.isConnected ? anchor : q('#scene-chip')).getBoundingClientRect();
   const w = card.offsetWidth, hgt = card.offsetHeight;
   const left = Math.min(innerWidth - w - 12, Math.max(12, anchor ? rect.left : rect.left + rect.width / 2 - w / 2));
   const top = anchor ? rect.bottom + 10 : Math.max(12, rect.top - hgt - 12);
@@ -591,6 +555,8 @@ function stopScene() {
   clearTimeout(weatherTimer);
   closeCard();
   if (root) { root.hidden = true; particles.destroy(); }
+  document.body.style.removeProperty('--scene-glow');
+  document.body.style.removeProperty('--scene-glow-alpha');
   renderChip();
   lastKey = '';
   weatherKey = '';
@@ -603,38 +569,11 @@ export function syncLiveScene() {
   clearInterval(tickTimer);
   tickTimer = setInterval(() => {
     if (document.hidden) return;
-    const minute = Math.floor(sceneDate().getTime() / 60_000);
-    if (minute !== lastMinute) render(); else renderClock();
-  }, settings().clockSeconds ? 1000 : 5000);
-}
-
-function onPointer(event) {
-  if (!active || motionLevel() !== 'full' || event.pointerType === 'touch') return;
-  const { clientX, clientY } = event;
-  if (pointerFrame) return;
-  pointerFrame = requestAnimationFrame(() => {
-    pointerFrame = 0;
-    root.style.setProperty('--lv-px', ((clientX / innerWidth) * 2 - 1).toFixed(3));
-    root.style.setProperty('--lv-py', ((clientY / innerHeight) * 2 - 1).toFixed(3));
-  });
-}
-
-/* The clock sits behind the workspace layers. A click on empty workspace
-   that lands on the clock opens the details card, as if it were on top. */
-const SCENE_SURFACE = '#app, #main-content, .view-panel, #collections-area, #collections-area > :not(.collection)';
-function overClock(event) {
-  if (!active || !settings().sceneClock || els.clock.hidden || document.body.dataset.view !== 'collections') return false;
-  if (!event.target.matches?.(SCENE_SURFACE)) return false;
-  const r = els.clock.querySelector('.lv-clock-stack').getBoundingClientRect();
-  return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+    if (Math.floor(sceneDate().getTime() / 60_000) !== lastMinute) render();
+  }, 5000);
 }
 
 export function initLiveScene() {
-  document.addEventListener('pointermove', (event) => {
-    onPointer(event);
-    if (active) document.body.classList.toggle('scene-clock-hover', overClock(event));
-  }, { passive: true });
-  document.addEventListener('click', (event) => { if (overClock(event)) openCard(null); });
   document.addEventListener('visibilitychange', () => {
     if (!active) return;
     if (document.hidden) particles.stop();
@@ -647,4 +586,6 @@ export function initLiveScene() {
     if (card) positionCard(q('#scene-chip'));
   });
   q('#scene-chip')?.addEventListener('click', (event) => openCard(event.currentTarget));
+  // The header clock is a mouse shortcut to the same card; the chip is the keyboard route.
+  q('#hero-clock')?.addEventListener('click', () => { if (active) openCard(q('#scene-chip')); });
 }

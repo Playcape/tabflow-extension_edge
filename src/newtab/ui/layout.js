@@ -4,7 +4,7 @@
    keyboard handling ("/" focuses search, Escape unwinds UI state).
    ================================================================ */
 
-import { q, qa } from '../../common/util.js';
+import { q, qa, h } from '../../common/util.js';
 import { icon } from '../../common/icons.js';
 import { ext } from '../../common/ext.js';
 import { getDoc, settings, update } from '../store.js';
@@ -134,8 +134,8 @@ function initStaticIcons() {
   setIcon('.search-icon-wrap', 'search', 13);
   qa('.nav-icon[data-icon]').forEach((el) => el.replaceChildren(icon(el.dataset.icon, 14)));
   setIcon('#btn-add-space', 'plus', 12);
-  q('#btn-expand-all').replaceChildren(icon('chevron-down', 12), ' Expand all');
-  q('#btn-collapse-all').replaceChildren(icon('chevron-up', 12), ' Collapse all');
+  q('#btn-expand-all').replaceChildren(icon('chevron-down', 12), h('span', { class: 'btn-label', text: 'Expand all' }));
+  q('#btn-collapse-all').replaceChildren(icon('chevron-up', 12), h('span', { class: 'btn-label', text: 'Collapse all' }));
   q('#btn-add-collection').replaceChildren(icon('plus', 12), ' Collection');
   setIcon('#btn-refresh-tabs', 'refresh');
   setIcon('#btn-save-session', 'download');

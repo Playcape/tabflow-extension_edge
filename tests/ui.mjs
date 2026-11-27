@@ -16,6 +16,8 @@ await mkdir(output, {recursive:true});
 try {
   await page.goto('http://127.0.0.1:4173/newtab/newtab.html');
   await page.waitForSelector('.tab-card');
+  // Every id in the shell must be unique: duplicated settings panels once shipped controls that did nothing.
+  assert.deepEqual(await page.evaluate(() => { const seen = new Set(), dup = []; for (const el of document.querySelectorAll('[id]')) { if (seen.has(el.id)) dup.push(el.id); seen.add(el.id); } return dup; }), []);
   await page.evaluate(async () => {
     const {getDoc, update, flush} = await import('/newtab/store.js');
     const {renderAll} = await import('/newtab/ui/bus.js');
@@ -66,7 +68,12 @@ try {
   assert.ok(!(await page.locator('#sceneweather-toggle').isChecked()));
   await page.click('.nav-item[data-view="collections"]');
   assert.ok(await page.locator('.scene-live').isVisible());
-  assert.match(await page.locator('.lv-clock-time').textContent(), /^\d{1,2}:\d{2}/);
+  // The clock stands beside the greeting (left of it, vertically overlapping) and the scene no longer follows the pointer.
+  assert.match(await page.locator('#hero-clock .hero-time').textContent(), /^\d{1,2}:\d{2}/);
+  const [clockBox, greetingBox] = await Promise.all([page.locator('#hero-clock').boundingBox(), page.locator('#workspace-greeting').boundingBox()]);
+  assert.ok(clockBox.x + clockBox.width <= greetingBox.x && clockBox.y < greetingBox.y + greetingBox.height && greetingBox.y < clockBox.y + clockBox.height, 'clock beside greeting');
+  await page.mouse.move(40, 40); await page.mouse.move(1500, 900);
+  assert.equal(await page.locator('.scene-live').evaluate(el => el.style.getPropertyValue('--lv-px')), '');
   assert.ok(await page.locator('#scene-chip').isVisible());
   await page.locator('#scene-chip').focus();
   await page.keyboard.press('Enter');

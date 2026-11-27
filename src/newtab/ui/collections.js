@@ -965,7 +965,7 @@ function renderViewMenu() {
     )
   );
   const active = VIEW_MODES.find((mode) => mode.key === current) ?? VIEW_MODES[0];
-  q('#view-trigger').replaceChildren(icon(active.icon, 12), ' View ', icon('chevron-down', 10));
+  q('#view-trigger').replaceChildren(icon(active.icon, 12), h('span', { class: 'btn-label', text: 'View' }), icon('chevron-down', 10));
 }
 
 /* ============================================================
