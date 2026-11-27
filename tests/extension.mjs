@@ -43,6 +43,16 @@ try {
   assert.equal(await host.frameLocator('#page-frame').locator('body').evaluate(()=>typeof chrome?.runtime?.getURL),'undefined');
   await page.click('[data-view="collections"]');
   const current=await page.evaluate(()=>chrome.tabs.getCurrent());
+  // Default "Address bar" mode: a new tab stays the browser's override page (no redirect, no dedupe).
+  const kept=await worker.evaluate(async windowId=>(await chrome.tabs.create({windowId,url:'chrome://newtab/'})).id,current.windowId);
+  await page.waitForTimeout(400);
+  const keptTab=await worker.evaluate(id=>chrome.tabs.get(id).catch(()=>null),kept);
+  assert.ok(keptTab,'Address-bar mode keeps the new tab');
+  assert.ok(!keptTab.url.endsWith('/newtab/newtab.html'),'Address-bar mode does not redirect');
+  await worker.evaluate(id=>chrome.tabs.remove(id),kept);
+  await page.bringToFront();
+  // The remaining checks cover the opt-in "TabFlow search" redirect and single-instance mode.
+  await page.evaluate(async()=>{const {update,flush}=await import('./store.js');update(d=>d.settings.newTabFocus='search');await flush();});
   await page.locator('#search-input').blur();
   await worker.evaluate(async windowId=>{await chrome.tabs.create({windowId,url:'edge://newtab/'});},current.windowId);
   await page.waitForTimeout(300);

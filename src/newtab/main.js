@@ -2,7 +2,7 @@
    TabFlow — new tab page entry point
    ================================================================ */
 
-import { initStore, onExternalChange } from './store.js';
+import { initStore, onExternalChange, settings } from './store.js';
 import { warmFavicons } from '../common/util.js';
 import { renderAll } from './ui/bus.js';
 import { initAppearance } from './ui/appearance.js';
@@ -39,10 +39,11 @@ async function boot() {
   renderAll();
   setNav('collections');
 
-  // New tabs land as an ordinary page (see background.js redirect), so there's
-  // no browser omnibox to preserve — put the cursor in the search launcher so
-  // the user can type a query, a URL, or a Links alias straight away.
-  focusSearch();
+  // "Address bar" (default): TabFlow is the browser's new-tab page and the
+  // browser focuses its own address bar — never take focus from it.
+  // "TabFlow search": the new tab was redirected here (see background.js), so
+  // put the cursor in the search launcher for a query, URL or Links alias.
+  if (settings().newTabFocus === 'search') focusSearch();
 
   // Another TabFlow page saved changes — reflect them here.
   onExternalChange(() => renderAll());

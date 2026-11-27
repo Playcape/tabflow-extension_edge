@@ -64,6 +64,12 @@ test('normalizes Glass design settings and keeps design languages exclusive', ()
   assert.equal(both.glassmorphism, false);
 });
 
+test('new tabs focus the address bar unless TabFlow search is chosen', () => {
+  assert.equal(normalizeDoc({ spaces: [], settings: {} }).settings.newTabFocus, 'address');
+  assert.equal(normalizeDoc({ spaces: [], settings: { newTabFocus: 'search' } }).settings.newTabFocus, 'search');
+  assert.equal(normalizeDoc({ spaces: [], settings: { newTabFocus: 'omnibox' } }).settings.newTabFocus, 'address');
+});
+
 test('normalizes Live scene settings', () => {
   const defaults = normalizeDoc({ spaces: [], settings: {} }).settings;
   assert.equal(defaults.glassScene, 'live');

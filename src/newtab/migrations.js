@@ -27,6 +27,7 @@ export const SCHEMA_VERSION = 3;
 export const GLASS_SCENES = new Set(['live', 'dusk', 'night', 'dawn', 'none']);
 export const SCENE_MOTIONS = new Set(['full', 'calm', 'still']);
 export const TEMP_UNITS = new Set(['auto', 'c', 'f']);
+export const NEWTAB_FOCUS = new Set(['address', 'search']);
 
 export const DEFAULT_SETTINGS = {
   theme: 'dark',
@@ -48,6 +49,7 @@ export const DEFAULT_SETTINGS = {
   showLinks: false,            // show "Links" in sidebar (default off per requirements)
   cmdPalette: true,            // Ctrl/⌘+K quick launcher
   focusExistingTab: false,     // open a saved tab → focus it if already open
+  newTabFocus: 'address',      // address (browser address bar) | search (TabFlow search box)
   glass: false,                // frosted-glass panels (backdrop blur)
   liquidGlass: false,          // Aurora glass + gooey drag physics (opt-in; Normal is the safe default)
   lgOpacity: 62,               // Liquid Glass surface opacity, % (20–90)
@@ -251,6 +253,7 @@ function normalizeSettings(raw) {
   if (!GLASS_SCENES.has(settings.glassScene)) settings.glassScene = DEFAULT_SETTINGS.glassScene;
   if (!SCENE_MOTIONS.has(settings.sceneMotion)) settings.sceneMotion = DEFAULT_SETTINGS.sceneMotion;
   if (!TEMP_UNITS.has(settings.tempUnit)) settings.tempUnit = DEFAULT_SETTINGS.tempUnit;
+  if (!NEWTAB_FOCUS.has(settings.newTabFocus)) settings.newTabFocus = DEFAULT_SETTINGS.newTabFocus;
   settings.sceneLocation = normalizeLocation(settings.sceneLocation);
   settings.glassBlur = clamp0(settings.glassBlur, 24, 40);
   settings.glassFrost = Math.min(90, Math.max(10, Number(settings.glassFrost) || 40));

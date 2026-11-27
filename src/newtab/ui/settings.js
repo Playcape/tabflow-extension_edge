@@ -57,6 +57,7 @@ function renderSettings() {
   renderPills('#glassscene-pills', 'glassScene');
   renderPills('#tempunit-pills', 'tempUnit');
   renderPills('#scenemotion-pills', 'sceneMotion');
+  renderPills('#newtabfocus-pills', 'newTabFocus');
   renderSceneSettings();
   renderDesignPicker();
   renderDesignTabs();

@@ -101,7 +101,7 @@ flowchart LR
   Appearance[ui/appearance.js] --> Styles[Shared and mode CSS]
 ```
 
-Boot loads and normalizes state, initializes feature modules, registers their renderers, then renders the workspace. The initial view is Collections. Background activation messages ask the page to focus its launcher when a new-tab duplicate is reused.
+Boot loads and normalizes state, initializes feature modules, registers their renderers, then renders the workspace. The initial view is Collections. The page focuses its search launcher on boot only when `newTabFocus` is `search`; in the default `address` mode it leaves focus with the browser's address bar. Background activation messages ask the page to focus its launcher when a new-tab duplicate is reused (search mode only).
 
 Features mutate through `update(fn)` and request only the render regions they changed. Full render passes happen at boot, import/restore, and accepted external changes. Rendering is direct DOM replacement within feature roots; there is no virtual DOM.
 
@@ -113,14 +113,14 @@ API capabilities (`tabGroups`, `sessions`, `bookmarks`, and `localFavicons`) con
 
 | Target | Background | New-tab mechanism | Favicon permission |
 | --- | --- | --- | --- |
-| Source / Chromium package | `service_worker: background.js`, module | Event-driven recognized-URL redirect | Kept |
+| Source / Chromium package | `service_worker: background.js`, module | `chrome_url_overrides.newtab`; recognized-URL redirect in `search` mode | Kept |
 | Firefox / Zen package | `scripts: [background.js]`, module event page | `chrome_url_overrides.newtab` | Removed |
 
 The source manifest is not an identical four-browser development manifest. `package.ps1` removes foreign keys and generates the appropriate target. Zip entries use forward slashes and manifests use UTF-8 without a BOM. The script rebuilds its generated `dist/` directory.
 
 ### New-tab lifecycle
 
-The background recognizes explicit browser new-tab surfaces and the exact TabFlow workspace page. It redirects only on Chromium. Deduplication is scoped to a window and serialized so overlapping tab events do not independently delete each other's chosen keeper.
+Both targets declare `chrome_url_overrides.newtab`, so the browser opens new tabs on TabFlow with its own address bar focused; no extension API can focus the address bar after a navigation. The `newTabFocus` setting selects the lifecycle. In `address` (default) the background does nothing for new tabs. In `search` it recognizes explicit browser new-tab surfaces and the exact TabFlow workspace page, redirects only on Chromium, and deduplicates. The background caches the setting and drops the cache on any `storage.onChanged` for the workspace key, so a change applies to the next new tab. Deduplication is scoped to a window and serialized so overlapping tab events do not independently delete each other's chosen keeper.
 
 The workspace classifier must distinguish `newtab/newtab.html` from other pages belonging to the same extension. Matching the whole extension origin would also close standalone Page viewers. Transient empty URLs, `about:blank`, and `about:home` must not be treated as proof that an unrelated tab is a new-tab request.
 

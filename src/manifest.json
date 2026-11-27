@@ -17,6 +17,7 @@
       "128": "icons/icon128.png"
     }
   },
+  "chrome_url_overrides": { "newtab": "newtab/newtab.html" },
   "omnibox": { "keyword": "to" },
   "commands": {
     "tabflow-slot-1": { "suggested_key": { "default": "Alt+1" }, "description": "TabFlow: open hotkey slot 1" },

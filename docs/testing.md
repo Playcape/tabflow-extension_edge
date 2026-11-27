@@ -52,6 +52,12 @@ Linux, Node 22, Playwright Chromium (headless):
 - Reduced motion and **Still** ran no animation-frame loop; the seconds clock ticked; a 390 px phone layout had no horizontal overflow.
 - `tests/extension.mjs` still cannot start the extension service worker in this headless container (also on the previous commit).
 
+## New tab focus — 27 November 2026
+
+- **34 Node regressions passed**, including `newTabFocus` normalization and background tests: in the default Address bar mode (and for a workspace without the setting) new tabs are neither redirected nor deduplicated, and switching to TabFlow search takes effect on the next new tab without a restart. The existing redirect/dedupe tests run in search mode.
+- In the preview, the page leaves focus alone by default and focuses its search box in search mode. UI and Collection suites passed.
+- `tests/extension.mjs` now also asserts that a new tab is kept unredirected in Address bar mode before switching to search mode for the dedupe checks. It still cannot start in this headless container. Address-bar focus itself is browser UI and must be checked by hand: press Ctrl+T in Chrome and Edge and confirm the cursor is in the address bar.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

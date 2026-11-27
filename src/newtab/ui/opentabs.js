@@ -60,9 +60,13 @@ function saveTabsAsCollection(tabs, namePrefix) {
 
 /* ---------- render: open tabs ---------- */
 
+// TabFlow itself: its page URL, or a browser new-tab surface showing TabFlow.
+const NEWTAB_SURFACE = /^(?:chrome|edge):\/\/newtab\/?$|^about:newtab$/;
+const isWorkspaceTab = (tab) => isTabFlowTab(tab) || NEWTAB_SURFACE.test(tab?.url ?? '');
+
 function renderOpenTabs() {
   const list = q('#open-tabs-list');
-  const available = openTabs.filter((tab) => !isTabFlowTab(tab));
+  const available = openTabs.filter((tab) => !isWorkspaceTab(tab));
   q('#open-tab-count').textContent = String(available.length);
   const visible = available.filter(tab => `${tab.title} ${tab.url}`.toLowerCase().includes(filter));
 

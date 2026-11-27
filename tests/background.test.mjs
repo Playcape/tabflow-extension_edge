@@ -10,6 +10,7 @@ const events = {
   inputEntered: [],
   action: [],
   installed: [],
+  changed: [],
 };
 const listener = (name) => ({
   addListener(fn) { events[name].push(fn); },
@@ -83,11 +84,19 @@ before(async () => {
   ({ ext } = await import('../src/common/ext.js?background-test')); // retained for a clear test fixture contract
   onCreated = events.created[0];
   onUpdated = events.updated[0];
+  // These tests cover the opt-in "TabFlow search" redirect/dedup mode.
+  setNewTabFocus('search');
   assert.ok(onCreated);
   assert.ok(onUpdated);
 });
 
 const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+/** Store the workspace setting and tell the background, as storage would. */
+function setNewTabFocus(mode) {
+  storageValues.tabflow_v3 = { settings: mode ? { newTabFocus: mode } : {} };
+  for (const fn of events.changed) fn({ tabflow_v3: { newValue: storageValues.tabflow_v3 } }, 'local');
+}
 
 test('redirects a browser new-tab surface to the TabFlow page', async () => {
   tabs = [{ id: 10, windowId: 1, url: 'chrome://newtab/' }];
@@ -142,4 +151,42 @@ test('updated events reconcile only URL or completion lifecycle changes', async 
   assert.deepEqual(updates, []);
   await onUpdated(40, { url: tabs[0].url }, tabs[0]);
   assert.equal(tabs[0].url, newtabPage);
+});
+
+test('address-bar mode leaves browser new tabs alone so the address bar keeps focus', async () => {
+  for (const mode of ['address', null]) { // explicit, and the default for a workspace without the setting
+    setNewTabFocus(mode);
+    tabs = [
+      { id: 50, windowId: 5, url: newtabPage },
+      { id: 51, windowId: 5, url: 'chrome://newtab/' },
+      { id: 52, windowId: 5, url: newtabPage },
+    ];
+    updates.length = 0;
+    removed.length = 0;
+    windowUpdates.length = 0;
+    await onCreated(tabs[1]);
+    await onCreated(tabs[2]);
+    await onUpdated(51, { status: 'complete' }, tabs[1]);
+    await settle();
+    assert.deepEqual(updates, [], 'no redirect or focus change');
+    assert.deepEqual(removed, [], 'no deduplication');
+    assert.deepEqual(windowUpdates, []);
+  }
+  delete storageValues.tabflow_v3;
+  for (const fn of events.changed) fn({ tabflow_v3: { newValue: undefined } }, 'local');
+  tabs = [{ id: 53, windowId: 5, url: 'chrome://newtab/' }];
+  await onCreated(tabs[0]);
+  assert.deepEqual(updates, [], 'a fresh install also defaults to the address bar');
+  setNewTabFocus('search');
+});
+
+test('switching back to TabFlow search takes effect without a restart', async () => {
+  setNewTabFocus('address');
+  tabs = [{ id: 60, windowId: 6, url: 'chrome://newtab/' }];
+  updates.length = 0;
+  await onCreated(tabs[0]);
+  assert.deepEqual(updates, []);
+  setNewTabFocus('search');
+  await onCreated(tabs[0]);
+  assert.deepEqual(updates, [{ id: 60, change: { url: newtabPage } }]);
 });

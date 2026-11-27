@@ -135,7 +135,7 @@ Settings applies changes immediately and saves automatically. Design, theme, and
 | **Glass** | Scene (Live, Dusk, Night, Dawn, or None); Live scene clock, optional live weather and city, temperature unit and scene motion; blur, frost, icon rail for Spaces, and card covers; appears when Glass is selected. The scene replaces the Background and Pattern choices while Glass is active; the greeting uses the Advanced greeting name |
 | **Typography** | System, Humanist, Geometric, Rounded, or Monospace system-font stacks; Small, Normal, or Large text |
 | **Layout** | Corner radius, Comfortable / Cozy / Compact density, sidebar width, clock visibility, and default saved-tab view |
-| **Advanced** | Links visibility, palette, existing-tab focusing, Zen mode, optional frosted glass and animated background, Reduce motion, greeting name, 24-hour time, seconds, favicon fallback, and custom CSS |
+| **Advanced** | Links visibility, palette, existing-tab focusing, new tab focus (browser address bar or TabFlow search), Zen mode, optional frosted glass and animated background, Reduce motion, greeting name, 24-hour time, seconds, favicon fallback, and custom CSS |
 | **Data** | Storage estimate, snapshots, bookmarks import, homepage URL, JSON export/import, reset settings, clear data; Firefox-based builds also show setup guidance |
 
 **Default View applies to all existing collection Spaces**, as well as the default for newly created ones. The generic corner-radius preference can be superseded by the mode's own shape language, especially Tonal's roundness control.

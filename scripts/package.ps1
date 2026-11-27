@@ -98,9 +98,11 @@ foreach ($target in $targets) {
         Remove-Item -LiteralPath (Join-Path $out 'newtab/sandbox.html')
         Remove-Item -LiteralPath (Join-Path $out 'newtab/sandbox.js')
 
-        # Firefox can't redirect its privileged new-tab page (that's the
-        # Chromium-only approach in src), so it takes over the new tab the
-        # declarative way. background.js already skips the redirect off-Chromium.
+        # Firefox can't redirect its privileged new-tab page (the Chromium-only
+        # "TabFlow search" mode), so it always takes over the new tab the
+        # declarative way. src/manifest.json declares the same override for
+        # Chromium's default "Address bar" mode; re-adding it keeps this
+        # package correct even if that key is ever removed from src.
         $m | Add-Member -NotePropertyName 'chrome_url_overrides' `
             -NotePropertyValue ([pscustomobject]@{ newtab = 'newtab/newtab.html' }) -Force
     }
