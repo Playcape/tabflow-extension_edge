@@ -94,7 +94,7 @@ Both manifests declare TabFlow as the browser's new-tab page:
 
 ### Address bar (default)
 
-A new tab opens TabFlow with the browser's own address bar focused, so you can type a search or URL straight away, as on a normal new tab. TabFlow does not move the cursor into its own search box and does not redirect, reuse or close new tabs. Each new tab is its own TabFlow page. Browsers may show a generic icon in the tab strip for a new-tab page.
+A new tab opens TabFlow with the browser's own address bar focused, so you can type a search or URL straight away, as on a normal new tab. TabFlow does not move the cursor into its own search box or redirect the tab. To keep one workspace per window, the newest TabFlow tab wins: opening a new tab closes older idle TabFlow tabs in that window. Pinned or audible TabFlow tabs are kept, and switching back to or reloading a workspace never closes anything. Browsers may show a generic icon in the tab strip for a new-tab page.
 
 ### TabFlow search
 

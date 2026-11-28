@@ -40,18 +40,21 @@ async function loadOpenTabs() {
  */
 export function backfillFavicons(tabs) {
   const icons = new Map();
+  const isInline = (src) => /^data:image\//.test(src ?? '');
   for (const tab of tabs) {
     const icon = storableFavicon(tab.favIconUrl);
     const host = /^https?:/i.test(tab.url ?? '') ? domainOf(tab.url) : '';
-    if (icon && host && !icons.has(host)) icons.set(host, icon);
+    // Prefer an inline (data:) icon: it shows offline and its colour can be read.
+    if (icon && host && (!icons.has(host) || (isInline(icon) && !isInline(icons.get(host))))) icons.set(host, icon);
   }
   if (!icons.size) return 0;
   const missing = [];
   for (const space of getDoc().spaces) {
     for (const collection of space.collections) {
       for (const saved of collection.tabs) {
-        const icon = !saved.favicon && icons.get(domainOf(saved.url));
-        if (icon) missing.push([saved, icon]);
+        const icon = icons.get(domainOf(saved.url));
+        // Fill missing icons, and upgrade a web icon to the open tab's inline one.
+        if (icon && (!saved.favicon || (isInline(icon) && !isInline(saved.favicon)))) missing.push([saved, icon]);
       }
     }
   }
@@ -155,7 +158,8 @@ function browserPageIcon(url = '') {
 }
 
 function tabIcon(tab) {
-  if (tab.favIconUrl && !/^chrome:\/\/(theme|favicon)/i.test(tab.favIconUrl)) {
+  // Only web or inline icons can be shown; browser-internal ones (chrome://…) can't be loaded here.
+  if (/^(https:|data:image\/)/i.test(tab.favIconUrl ?? '')) {
     return faviconEl(tab.url ?? '', tab.favIconUrl, settings().remoteFavicons, 'tab-fav-img', 'tab-fav-fallback');
   }
   return BROWSER_PAGE.test(tab.url ?? '') ? browserPageIcon(tab.url) : letterTile(tab.url ?? '', 'tab-fav-fallback');

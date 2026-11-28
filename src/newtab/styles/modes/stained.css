@@ -38,7 +38,14 @@ body[data-design="glass"].glass-stained .tab-card[data-tone-ic] {
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic="mono"] { --st-a: .5; }
 /* Multi-colour logos (Google, Microsoft, Slack…): clear glass with the logo's
    own colours running around a fine rim, instead of one arbitrary colour. */
-body[data-design="glass"].glass-stained .tab-card[data-tone-ic="multi"] { --st-a: .5; }
+body[data-design="glass"].glass-stained .tab-card[data-tone-ic="multi"] {
+  --st-a: .5;
+  /* A gentle wash of the logo's own colours, like a small mosaic of glass. */
+  background:
+    radial-gradient(130% 115% at var(--st-sun) -25%, rgba(255,255,255, calc(.04 + .18 * var(--st-light))), transparent 62%),
+    linear-gradient(135deg, oklch(.52 .1 var(--ic-m1) / .34), oklch(.46 .1 var(--ic-m2) / .3) 50%, oklch(.42 .1 var(--ic-m3) / .32)),
+    linear-gradient(172deg, oklch(.4 0 0 / .42), oklch(.3 0 0 / .52));
+}
 /* The rim is its own ring (masked to the border), so the colours stay on the edge. */
 body[data-design="glass"].glass-stained .tab-card[data-tone-ic="multi"]::after,
 body[data-design="glass"].glass-stained.glass-covers .view-card .tab-card[data-tone-ic="multi"]::after {
