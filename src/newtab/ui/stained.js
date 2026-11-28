@@ -20,7 +20,8 @@
    Stored glassStyle/stainedIntensity values are then dropped on load.
    ================================================================ */
 
-import { q, qa, siteOf } from '../../common/util.js';
+import { q, qa, siteOf, domainOf } from '../../common/util.js';
+import { remoteIconsAllowed } from '../../common/faviconConsent.js';
 import { settings, update, findTab } from '../store.js';
 import { registerRenderer, render } from './bus.js';
 import { dominantTone, knockOutWhite } from './iconTone.js';
@@ -68,11 +69,11 @@ function applyClasses() {
 
 /* ---------- reading an icon's colour ---------- */
 
-let canvas;
 function readTone(img, site) {
-  canvas ??= Object.assign(document.createElement('canvas'), { width: 32, height: 32 });
+  // A fresh canvas every time: drawing one unshared cross-origin icon taints a
+  // canvas for good, and a shared one would then refuse every later icon too.
+  const canvas = Object.assign(document.createElement('canvas'), { width: 32, height: 32 });
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.clearRect(0, 0, 32, 32);
   ctx.drawImage(img, 0, 0, 32, 32);
   const pixels = ctx.getImageData(0, 0, 32, 32); // throws on a cross-origin icon
   const tone = dominantTone(pixels.data);
@@ -85,32 +86,48 @@ function readTone(img, site) {
   return tone;
 }
 
-/** Read the icon on the card; a cross-origin icon is retried once with CORS. */
-function measure(site, img) {
+/** A CORS-readable copy of an icon address, or null if the server refuses. */
+function corsImage(src) {
+  return new Promise((resolve) => {
+    if (!src) { resolve(null); return; }
+    const copy = new Image();
+    copy.crossOrigin = 'anonymous';
+    copy.referrerPolicy = 'no-referrer';
+    copy.onload = () => resolve(copy);
+    copy.onerror = () => resolve(null);
+    copy.src = src;
+  });
+}
+
+/* Browsers let a page show any icon but only read the pixels of icons the
+   server explicitly shares. Try, in order: the icon as shown (stored data:
+   icons and Chromium's local favicons always work), the same address again
+   with CORS, and — only if you allowed remote icons — Google's favicon
+   service for that site, which shares its images. */
+async function measure(site, img, host) {
   if (pending.has(site)) return;
   pending.add(site);
-  const done = (tone) => {
-    pending.delete(site);
-    tones.set(site, tone);
-    if (tone) saveCache();
-    paintAll();
-  };
-  const fromImage = (image, retry) => {
-    try { done(readTone(image, site)); }
-    catch {
-      if (!retry) { done(null); return; }
-      const copy = new Image();
-      copy.crossOrigin = 'anonymous';
-      copy.onload = () => fromImage(copy, false);
-      copy.onerror = () => done(null);
-      copy.src = img.currentSrc || img.src;
-    }
-  };
-  if (img.complete && img.naturalWidth) fromImage(img, true);
-  else {
-    img.addEventListener('load', () => fromImage(img, true), { once: true });
-    img.addEventListener('error', () => pending.delete(site), { once: true });
+  const tryRead = (image) => { try { return image ? readTone(image, site) : undefined; } catch { return undefined; } };
+  if (!(img.complete && img.naturalWidth)) {
+    const ok = await new Promise((resolve) => {
+      img.addEventListener('load', () => resolve(true), { once: true });
+      img.addEventListener('error', () => resolve(false), { once: true });
+    });
+    if (!ok) { pending.delete(site); checkedSites.delete(site); return; } // another card may have a working icon
   }
+  let tone = tryRead(img);
+  if (tone === undefined) tone = tryRead(await corsImage(img.currentSrc || img.src));
+  if (tone === undefined && host && settings().remoteFavicons && remoteIconsAllowed()) {
+    // gstatic serves the images directly (www.google.com/s2 redirects there, and a
+    // redirect can drop the sharing header), so ask it first.
+    const page = encodeURIComponent(`https://${host}`);
+    tone = tryRead(await corsImage(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${page}&size=64`));
+    if (tone === undefined) tone = tryRead(await corsImage(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`));
+  }
+  pending.delete(site);
+  tones.set(site, tone ?? null); // null: unreadable this session (not saved; retried next time)
+  if (tone) saveCache();
+  paintAll();
 }
 
 /** Background check only, for sites whose colour came from the cache. */
@@ -131,7 +148,7 @@ function paintCard(card) {
   if (img && !checkedSites.has(site)) {
     // Cached colours skip the read, but the white-background check runs once per site and page.
     checkedSites.add(site);
-    if (tone === undefined) measure(site, img); else measureClean(site, img);
+    if (tone === undefined) measure(site, img, domainOf(found.tab.url)); else measureClean(site, img);
   }
   if (tone === undefined) return;
   const clean = cleanIcons.get(site);

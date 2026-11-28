@@ -89,6 +89,12 @@ Linux, Node 22, Playwright Chromium (headless):
 - `collectionLayout` now clears the old packing before counting lanes and ignores collapsed (0px) `auto-fit` tracks. Glass uses `auto-fit`, so two Collections share the width. The Collection suite passed in all four modes.
 - A scripted Zen-like check covered icons with white squares, `about:` pages in Open tabs, and TabFlow entries in Recently Closed (filtered out). 38 Node regressions and the UI suite passed.
 
+## New-tab and icon-colour fixes — 28 November 2026
+
+- Background tests: in Address-bar mode a freshly opened TabFlow tab closes older idle TabFlow tabs in its window (pinned tabs, other windows and websites are untouched), and updates to existing tabs close nothing. 39 Node regressions passed.
+- The stained-glass "sometimes no colour" bug was reproduced with a real second origin: one unshared cross-origin icon taints a canvas for good, so a shared canvas then refused even inline icons. Reads now use a fresh canvas. With a mocked Google favicon response that shares its image, the fallback colours the card. UI and Collection suites passed.
+- Not verified here: real Google/gstatic CORS headers and Firefox/Zen tab URLs for new tabs; check on a desktop.
+
 ## Remaining browser release checks
 
 Chrome, Firefox and Zen runtime certification remains manual. The installed consumer Chrome executable did not expose the loaded extension's service worker to this harness; it was not counted as a pass. Firefox/Zen package structure is checked separately, but their CSP, new-tab preferences and event background must still be exercised in those browsers. Use the generated `dist/zen` manifest.

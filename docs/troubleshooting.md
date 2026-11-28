@@ -16,7 +16,7 @@ This is the default (**Settings → Advanced → New tab focus → Address bar**
 
 ## A new tab returns to an existing workspace
 
-This happens only with **New tab focus → TabFlow search**. TabFlow reuses its workspace within the same window and requests focus for its search launcher. A new window can have another workspace. The toolbar action can focus a workspace in another window.
+With **New tab focus → Address bar** (default), the new tab stays and older idle TabFlow tabs in that window close instead, so you keep the focused address bar. With **TabFlow search**, TabFlow reuses its workspace within the same window and requests focus for its search launcher. A new window can have another workspace. The toolbar action can focus a workspace in another window.
 
 Separate Pages opened in a viewer tab are not workspace duplicates. If unrelated tabs are closed or redirected, report the exact URL, whether the tab was created by a link or Ctrl+T, and the browser/version.
 

@@ -13,8 +13,10 @@
    That redirect costs the browser's address-bar focus, so it is opt-in
    (Settings → Advanced → New tab focus → TabFlow search). The default,
    "Address bar", leaves new tabs on the manifest's chrome_url_overrides
-   page: the browser opens it with its own address bar focused, and
-   TabFlow neither redirects nor deduplicates those tabs.
+   page: the browser opens it with its own address bar focused. To still
+   keep one workspace per window, the newest TabFlow tab wins there: when
+   a new tab opens, older idle TabFlow tabs in that window are closed
+   (never pinned or audible ones, never the new tab).
 
    Responsibilities:
      • global hotkey slots (commands API)
@@ -126,6 +128,11 @@ const NEWTAB_SURFACE_URLS = new Set([
   'about:newtab',
 ]);
 const windowQueues = new Map();
+/* Tabs the user just opened (id → time). In Address-bar mode only a freshly
+   opened tab may close older TabFlow tabs, so switching back to an older
+   workspace or reloading it never closes anything. */
+const freshTabs = new Map();
+const FRESH_MS = 20_000;
 
 /* Cached `newTabFocus` setting; refreshed whenever the workspace changes. */
 let newTabFocus = null;
@@ -143,9 +150,29 @@ function isBrowserNewTab(tab) {
   return NEWTAB_SURFACE_URLS.has(tab?.pendingUrl || tab?.url || '');
 }
 
+/** Address-bar mode: keep the newly opened TabFlow tab (its address bar is
+ *  focused) and close older idle TabFlow tabs in the same window. */
+async function keepNewest(tabId) {
+  const opened = freshTabs.get(tabId);
+  if (!opened || Date.now() - opened > FRESH_MS) return;
+  const tab = await ext.tabs.get(tabId).catch(() => null);
+  if (!tab || !tab.active || !(isTabFlowTab(tab) || isBrowserNewTab(tab))) return;
+  freshTabs.delete(tabId);
+  const tabs = await ext.tabs.query({ windowId: tab.windowId });
+  for (const other of tabs) {
+    if (other.id === tab.id || other.pinned || other.audible) continue;
+    if (!(isTabFlowTab(other) || isBrowserNewTab(other))) continue;
+    // Re-read right before closing: it may have navigated away meanwhile.
+    const live = await ext.tabs.get(other.id).catch(() => null);
+    if (live && !live.active && !live.pinned && (isTabFlowTab(live) || isBrowserNewTab(live))) {
+      await ext.tabs.remove(live.id).catch(() => {});
+    }
+  }
+}
+
 async function reconcileWindow(tabId) {
   // Address-bar mode: the new tab stays the browser's own, focused surface.
-  if (await newTabMode() !== 'search') return;
+  if (await newTabMode() !== 'search') return keepNewest(tabId);
   let tab = await ext.tabs.get(tabId).catch(() => null);
   if (!tab || !(isTabFlowTab(tab) || (IS_CHROMIUM && isBrowserNewTab(tab)))) return;
   const tabs = await ext.tabs.query({ windowId: tab.windowId });
@@ -184,7 +211,8 @@ async function reconcileWindow(tabId) {
 
 function queueNewTab(tab) {
   if (tab?.id == null || tab.windowId == null) return Promise.resolve();
-  if (!(isTabFlowTab(tab) || (IS_CHROMIUM && isBrowserNewTab(tab)))) return Promise.resolve();
+  // Browser new-tab surfaces pass on every engine; only the redirect itself is Chromium-only.
+  if (!(isTabFlowTab(tab) || isBrowserNewTab(tab))) return Promise.resolve();
   const previous = windowQueues.get(tab.windowId) ?? Promise.resolve();
   const next = previous.then(() => reconcileWindow(tab.id)).catch(() => {
     // Closing/moving a tab during an event is an expected lifecycle race.
@@ -196,7 +224,14 @@ function queueNewTab(tab) {
   return next;
 }
 
-ext.tabs.onCreated.addListener(queueNewTab);
+ext.tabs.onCreated.addListener((tab) => {
+  if (tab?.id != null) {
+    freshTabs.set(tab.id, Date.now());
+    for (const [id, at] of freshTabs) if (Date.now() - at > FRESH_MS) freshTabs.delete(id);
+  }
+  return queueNewTab(tab);
+});
+ext.tabs.onRemoved?.addListener((tabId) => freshTabs.delete(tabId));
 ext.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url || changeInfo.status === 'complete') return queueNewTab(tab);
 });

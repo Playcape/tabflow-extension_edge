@@ -153,40 +153,50 @@ test('updated events reconcile only URL or completion lifecycle changes', async 
   assert.equal(tabs[0].url, newtabPage);
 });
 
-test('address-bar mode leaves browser new tabs alone so the address bar keeps focus', async () => {
+test('address-bar mode keeps the newest TabFlow tab and closes older idle ones', async () => {
   for (const mode of ['address', null]) { // explicit, and the default for a workspace without the setting
     setNewTabFocus(mode);
     tabs = [
-      { id: 50, windowId: 5, url: newtabPage },
-      { id: 51, windowId: 5, url: 'chrome://newtab/' },
-      { id: 52, windowId: 5, url: newtabPage },
+      { id: 50, windowId: 5, url: newtabPage },                         // older workspace
+      { id: 51, windowId: 5, url: 'chrome://newtab/' },                 // older TabFlow new tab
+      { id: 52, windowId: 5, url: newtabPage, pinned: true },           // pinned: kept
+      { id: 53, windowId: 5, url: 'https://example.com' },              // unrelated: kept
+      { id: 54, windowId: 6, url: newtabPage },                         // other window: kept
+      { id: 55, windowId: 5, url: 'chrome://newtab/', active: true },   // the tab just opened
     ];
     updates.length = 0;
     removed.length = 0;
     windowUpdates.length = 0;
-    await onCreated(tabs[1]);
-    await onCreated(tabs[2]);
-    await onUpdated(51, { status: 'complete' }, tabs[1]);
+    await onCreated(tabs.at(-1));
     await settle();
-    assert.deepEqual(updates, [], 'no redirect or focus change');
-    assert.deepEqual(removed, [], 'no deduplication');
-    assert.deepEqual(windowUpdates, []);
+    assert.deepEqual(removed.sort((a, b) => a - b), [50, 51]);
+    assert.deepEqual(updates, [], 'no redirect, so the address bar keeps focus');
+    assert.deepEqual(windowUpdates, [], 'no focus change');
+    assert.ok(tabs.some((t) => t.id === 55) && tabs.some((t) => t.id === 52) && tabs.some((t) => t.id === 54));
   }
-  delete storageValues.tabflow_v3;
-  for (const fn of events.changed) fn({ tabflow_v3: { newValue: undefined } }, 'local');
-  tabs = [{ id: 53, windowId: 5, url: 'chrome://newtab/' }];
-  await onCreated(tabs[0]);
-  assert.deepEqual(updates, [], 'a fresh install also defaults to the address bar');
+});
+
+test('address-bar mode never closes anything for tabs that were not just opened', async () => {
+  setNewTabFocus('address');
+  tabs = [
+    { id: 60, windowId: 7, url: newtabPage },
+    { id: 61, windowId: 7, url: newtabPage, active: true },
+  ];
+  removed.length = 0;
+  // Reloading or returning to a workspace is an update, not a new tab.
+  await onUpdated(61, { status: 'complete' }, tabs[1]);
+  await settle();
+  assert.deepEqual(removed, []);
   setNewTabFocus('search');
 });
 
 test('switching back to TabFlow search takes effect without a restart', async () => {
   setNewTabFocus('address');
-  tabs = [{ id: 60, windowId: 6, url: 'chrome://newtab/' }];
+  tabs = [{ id: 70, windowId: 8, url: 'chrome://newtab/' }];
   updates.length = 0;
   await onCreated(tabs[0]);
   assert.deepEqual(updates, []);
   setNewTabFocus('search');
   await onCreated(tabs[0]);
-  assert.deepEqual(updates, [{ id: 60, change: { url: newtabPage } }]);
+  assert.deepEqual(updates, [{ id: 70, change: { url: newtabPage } }]);
 });
